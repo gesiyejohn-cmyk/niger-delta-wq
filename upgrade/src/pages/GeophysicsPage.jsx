@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
 import { calculateVES, validateVES, validateERT } from '../engine/geophysics.js';
+import VESInterpretation from './VESInterpretation.jsx';
 import { saveVES, listVES, deleteVES, saveERT, listERT, deleteERT } from '../storage/geophysics.js';
 
 const input = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
@@ -179,6 +180,7 @@ export default function GeophysicsPage() {
           <button onClick={async () => { await deleteVES(record.id); await refresh(); }}>Delete</button>
         </div>)}
         {ves.length > 0 && <VESPlot rows={ves.flatMap(record => record.readings)} />}
+        <VESInterpretation records={ves} onSaved={refresh} notify={notify} />
       </> : <>
         <h2>ERT line metadata</h2>
         <div className="form-grid">
