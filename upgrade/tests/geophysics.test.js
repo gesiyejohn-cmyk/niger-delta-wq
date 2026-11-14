@@ -6,7 +6,9 @@ import {
   validateVES,
   validateERT,
   descriptiveStats,
-  pearsonCorrelation
+  pearsonCorrelation,
+  classifyVESCurve,
+  validateVESLayers
 } from '../src/engine/geophysics.js';
 
 test('Schlumberger geometric factor uses AB/2 and MN/2', () => {
@@ -46,4 +48,37 @@ test('descriptive statistics use measured numeric values', () => {
 });
 test('Pearson correlation detects perfect positive association', () => {
   assert.equal(pearsonCorrelation([1, 2, 3], [2, 4, 6]), 1);
+});
+
+
+test('VES curve trend classifies an H-type first-three-point trend', () => {
+  const rows = [
+    { ab2: 5, apparentResistivity: 100 },
+    { ab2: 10, apparentResistivity: 70 },
+    { ab2: 15, apparentResistivity: 90 }
+  ];
+  assert.equal(classifyVESCurve(rows).code, 'H');
+});
+
+test('VES curve trend requires at least three valid readings', () => {
+  assert.equal(classifyVESCurve([{ ab2: 5, apparentResistivity: 100 }]).code, null);
+});
+
+test('VES layer validation calculates cumulative interface depths and half-space', () => {
+  const result = validateVESLayers([
+    { resistivity: 100, thickness: 5 },
+    { resistivity: 35, thickness: 12 },
+    { resistivity: 250, thickness: '' }
+  ]);
+  assert.equal(result[0].bottomDepth, 5);
+  assert.equal(result[1].bottomDepth, 17);
+  assert.equal(result[2].bottomDepth, null);
+  assert.equal(result[2].thickness, null);
+});
+
+test('VES layer validation rejects missing or non-positive thickness', () => {
+  assert.throws(() => validateVESLayers([
+    { resistivity: 100, thickness: '' },
+    { resistivity: 35, thickness: '' }
+  ]));
 });
