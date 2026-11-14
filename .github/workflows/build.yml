@@ -74,6 +74,9 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: true
+
 
       - name: Install dependencies
         working-directory: source/niger-delta-wq
