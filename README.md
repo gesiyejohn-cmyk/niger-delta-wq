@@ -23,3 +23,4 @@ To support groundwater quality monitoring, environmental research and water reso
 
 ## Important Note
 Scientific outputs should be interpreted alongside laboratory results, applicable Nigerian standards and WHO guidelines. This application is a research-support tool and does not replace accredited laboratory testing.
+.
