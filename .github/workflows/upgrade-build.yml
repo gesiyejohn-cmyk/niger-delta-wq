@@ -1,7 +1,7 @@
 name: Validate integrated geophysics upgrade
 on:
   push:
-    branches: [ndwq-integrated-geophysics-upgrade]
+    branches: [ndwq-integrated-geophysics-upgrade, ndwq-desktop-build-integration]
   workflow_dispatch:
 permissions:
   contents: read
@@ -74,4 +74,32 @@ jobs:
         with:
           name: ndwq-integrated-android-apk-fix3
           path: source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+  windows-desktop:
+    runs-on: windows-latest
+    needs: web-and-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Extract and apply upgrade overlay
+        shell: pwsh
+        run: |
+          Expand-Archive -Path NDWQ-Source-Compact.zip -DestinationPath source
+          Copy-Item -Path upgrade/src/* -Destination source/niger-delta-wq/src/ -Recurse -Force
+          Copy-Item -Path upgrade/tests/* -Destination source/niger-delta-wq/tests/ -Recurse -Force
+          node upgrade/scripts/integrate-ert-tomogram.mjs
+      - name: Install dependencies and build desktop installer
+        working-directory: source/niger-delta-wq
+        run: |
+          npm install
+          npm run build
+          npx electron-builder --win nsis
+      - name: Upload Windows desktop installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndwq-integrated-windows-desktop
+          path: source/niger-delta-wq/release/*.exe
+          if-no-files-found: error
           retention-days: 14
