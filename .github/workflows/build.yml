@@ -1,0 +1,144 @@
+
+name: Build and publish Niger Delta WQ
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract application source
+        run: |
+          unzip NDWQ-Source-Compact.zip -d source
+          test -f source/niger-delta-wq/package.json
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: source/niger-delta-wq
+        run: npm install
+
+      - name: Run tests
+        working-directory: source/niger-delta-wq
+        run: npm test
+
+      - name: Build web application
+        working-directory: source/niger-delta-wq
+        run: npm run build
+
+      - name: Upload web application
+        uses: actions/upload-artifact@v4
+        with:
+          name: niger-delta-wq-web
+          path: source/niger-delta-wq/dist
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: source/niger-delta-wq/dist
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract source
+        run: unzip NDWQ-Source-Compact.zip -d source
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        working-directory: source/niger-delta-wq
+        run: npm install
+
+      - name: Build web assets
+        working-directory: source/niger-delta-wq
+        run: npm run build
+
+      - name: Create Android project
+        working-directory: source/niger-delta-wq
+        run: npx cap add android
+
+      - name: Sync Android project
+        working-directory: source/niger-delta-wq
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: source/niger-delta-wq/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: niger-delta-wq-android-apk
+          path: source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract source
+        shell: pwsh
+        run: Expand-Archive -Path NDWQ-Source-Compact.zip -DestinationPath source
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: source/niger-delta-wq
+        run: npm install
+
+      - name: Build application
+        working-directory: source/niger-delta-wq
+        run: npm run build
+
+      - name: Build Windows installer
+        working-directory: source/niger-delta-wq
+        run: npx electron-builder --win nsis
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: niger-delta-wq-windows-installer
+          path: source/niger-delta-wq/release/*.exe
+
+  deploy-pages:
+    needs: web
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Deploy website
+        uses: actions/deploy-pages@v4
