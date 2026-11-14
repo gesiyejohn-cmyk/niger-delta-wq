@@ -60,6 +60,9 @@ jobs:
         run: |
           npm install
           npm run build
+          # Use a separate Android package ID so the upgraded test app installs
+          # alongside the existing app without uninstalling it or risking local data.
+          node -e "const fs=require('fs'); const p='capacitor.config.json'; const c=JSON.parse(fs.readFileSync(p,'utf8')); c.appId='com.nigerdeltawq.mobile.upgrade'; c.appName='Niger Delta WQ Upgrade'; fs.writeFileSync(p, JSON.stringify(c,null,2)+'\\n');"
           npx cap add android
           npx cap sync android
       - name: Build debug APK
