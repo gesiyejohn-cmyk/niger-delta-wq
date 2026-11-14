@@ -22,6 +22,25 @@ export default function VESInterpretation({ records, onSaved, notify }) {
     if (selectedId && !records.some(record => record.id === selectedId)) setSelectedId(records[0]?.id || '');
   }, [records, selectedId]);
 
+  useEffect(() => {
+    const record = records.find(item => item.id === selectedId) || (!selectedId ? records[0] : null);
+    const saved = record?.interpretation;
+    if (saved?.layers?.length >= 2) {
+      setLayers(saved.layers.map((layer, index) => ({
+        resistivity: String(layer.resistivity),
+        thickness: index === saved.layers.length - 1 ? '' : String(layer.thickness)
+      })));
+      setSoftware(saved.inversionSoftware || '');
+      setRms(saved.rmsErrorPercent == null ? '' : String(saved.rmsErrorPercent));
+      setNotes(saved.notes || '');
+    } else {
+      setLayers([{ resistivity: '', thickness: '' }, { resistivity: '', thickness: '' }, { resistivity: '', thickness: '' }]);
+      setSoftware('');
+      setRms('');
+      setNotes('');
+    }
+  }, [records, selectedId]);
+
   const curve = useMemo(() => selected ? classifyVESCurve(selected.readings || []) : null, [selected]);
   const preview = useMemo(() => {
     try { return validateVESLayers(layers); } catch { return null; }
