@@ -1,0 +1,27 @@
+name: Prepare source inspection
+on:
+  push:
+    branches:
+      - ndwq-integrated-geophysics-upgrade
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+jobs:
+  package-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract application source
+        run: |
+          mkdir -p source
+          unzip -q NDWQ-Source-Compact.zip -d source
+          test -f source/niger-delta-wq/package.json
+          find source/niger-delta-wq -maxdepth 4 -type f | sort > source-file-list.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ndwq-source-inspection
+          path: |
+            source/niger-delta-wq
+            source-file-list.txt
+          retention-days: 2
