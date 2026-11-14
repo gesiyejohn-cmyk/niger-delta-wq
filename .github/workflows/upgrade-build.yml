@@ -62,7 +62,7 @@ jobs:
           npm run build
           # Use a fresh package ID for this correction build. This avoids Android
           # rejecting an update signed with a different ephemeral CI debug key.
-          node -e "const fs=require('fs'); const p='capacitor.config.json'; const c=JSON.parse(fs.readFileSync(p,'utf8')); c.appId='com.nigerdeltawq.mobile.upgradefix1'; c.appName='Niger Delta WQ Upgrade Fix 1'; fs.writeFileSync(p, JSON.stringify(c,null,2)+'\\n');"
+          node -e "const fs=require('fs'); const p='capacitor.config.json'; const c=JSON.parse(fs.readFileSync(p,'utf8')); c.appId='com.nigerdeltawq.mobile.upgradefix2'; c.appName='Niger Delta WQ Upgrade Fix 2'; fs.writeFileSync(p, JSON.stringify(c,null,2)+'\\n');"
           npx cap add android
           npx cap sync android
       - name: Build debug APK
@@ -72,6 +72,6 @@ jobs:
           ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: ndwq-integrated-android-apk-fix1
+          name: ndwq-integrated-android-apk-fix2
           path: source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
