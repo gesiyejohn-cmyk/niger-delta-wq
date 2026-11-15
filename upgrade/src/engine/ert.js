@@ -1,4 +1,10 @@
-function isFiniteInput(value) {\n  return value != null && typeof value !== 'boolean'\n    && !(typeof value === 'string' && value.trim() === '')\n    && typeof value !== 'object' && Number.isFinite(Number(value));\n}\n\nfunction validateInterpolationInputs(points, x, depth) {
+function isFiniteInput(value) {
+  return value != null && typeof value !== 'boolean'
+    && !(typeof value === 'string' && value.trim() === '')
+    && typeof value !== 'object' && Number.isFinite(Number(value));
+}
+
+function validateInterpolationInputs(points, x, depth) {
   if (!Array.isArray(points) || !points.length) {
     throw new Error('ERT interpolation requires imported model points.');
   }
@@ -10,8 +16,8 @@ function isFiniteInput(value) {\n  return value != null && typeof value !== 'boo
     const px = Number(point?.x);
     const pz = Number(point?.depth);
     const resistivity = Number(point?.resistivity);
-    if (!Number.isFinite(px) || !Number.isFinite(pz) || pz < 0
-      || !Number.isFinite(resistivity) || resistivity <= 0) {
+    if (!isFiniteInput(point?.x) || !isFiniteInput(point?.depth) || pz < 0
+      || !isFiniteInput(point?.resistivity) || resistivity <= 0) {
       throw new Error(`ERT model point ${index + 1} must have finite distance, non-negative depth and positive resistivity.`);
     }
     const key = px + '|' + pz;
