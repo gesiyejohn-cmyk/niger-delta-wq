@@ -41,7 +41,7 @@ jobs:
           retention-days: 14
   android:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     needs: web-and-tests
     steps:
       - uses: actions/checkout@v4
@@ -82,11 +82,21 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: pixel_2
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
           script: |
+            set -e
             adb install source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk
-            adb shell monkey -p com.nigerdeltawq.mobile.upgradefix3 1
-            sleep 10
-            adb shell pidof com.nigerdeltawq.mobile.upgradefix3
+            adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -p com.nigerdeltawq.mobile.upgradefix3
+            for attempt in $(seq 1 30); do
+              if adb shell pidof com.nigerdeltawq.mobile.upgradefix3; then
+                echo "NDWQ Android process is running."
+                exit 0
+              fi
+              sleep 2
+            done
+            echo "NDWQ Android process did not remain running; recent device logs follow."
+            adb logcat -d -t 2000
+            exit 1
       - uses: actions/upload-artifact@v4
         with:
           name: ndwq-integrated-android-apk-fix3
