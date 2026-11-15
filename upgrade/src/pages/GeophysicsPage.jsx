@@ -19,6 +19,7 @@ export default function GeophysicsPage() {
   const [readings, setReadings] = useState([{ ab2: '', mn2: '', resistance: '' }]);
   const [line, setLine] = useState({ lineId: '', spacing: '', electrodes: '', rms: '', software: '', notes: '' });
   const [cells, setCells] = useState([]);
+  const [sourceImport, setSourceImport] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState('info');
@@ -79,7 +80,9 @@ export default function GeophysicsPage() {
 
   async function importERT(file) {
     try {
-      const parsed = Papa.parse(await file.text(), { header: true, skipEmptyLines: true, dynamicTyping: true });
+      const sourceText = await file.text();
+      if (sourceText.length > 10 * 1024 * 1024) throw new Error('ERT CSV is larger than the 10 MB import limit.');
+      const parsed = Papa.parse(sourceText, { header: true, skipEmptyLines: true, dynamicTyping: true });
       if (parsed.errors.length) throw new Error(parsed.errors[0].message);
       const rows = parsed.data.map(row => ({
         x: row.x ?? row.X ?? row.electrode_x ?? row.distance,
@@ -88,6 +91,7 @@ export default function GeophysicsPage() {
       }));
       const clean = validateERT(rows);
       setCells(clean);
+      setSourceImport({ fileName: file.name, content: sourceText, importedAt: new Date().toISOString() });
       setSelectedCell(clean[0] || null);
       notify(clean.length + ' ERT model points loaded. Confirm the metadata and save the imported model.', 'success');
     } catch (error) {
@@ -105,10 +109,12 @@ export default function GeophysicsPage() {
         coordinateDatum: ertCoordinates.datum,
         coordinateCRS: ertCoordinates.crs,
         cells: clean,
+        sourceImport,
         source: 'Imported inverted resistivity model',
         inversionPerformedInApp: false
       });
       setCells([]);
+      setSourceImport(null);
       setSelectedCell(null);
       notify('ERT model saved. The app displays imported inversion results; it does not perform geophysical inversion.', 'success');
       await refresh();
