@@ -170,14 +170,32 @@ export function calculateWeightedArithmeticWQI(measurements) {
     }
 
     let applicableLimit;
-    if (value > ideal) applicableLimit = maxStandard ?? minStandard;
-    else if (value < ideal) applicableLimit = minStandard ?? maxStandard;
-    else applicableLimit = ideal;
-
-    const denominator = Math.abs(applicableLimit - ideal);
-    const qualityRating = denominator === 0
-      ? (value === ideal ? 0 : Number.POSITIVE_INFINITY)
-      : 100 * Math.abs(value - ideal) / denominator;
+    let qualityRating;
+    if (minStandard != null && maxStandard == null) {
+      // A lower-only objective penalizes values below the ideal; values at
+      // or above the ideal are not failures of that one-sided objective.
+      applicableLimit = minStandard;
+      const denominator = Math.abs(ideal - minStandard);
+      qualityRating = value >= ideal ? 0
+        : denominator === 0 ? Number.POSITIVE_INFINITY
+          : 100 * Math.abs(value - ideal) / denominator;
+    } else if (maxStandard != null && minStandard == null) {
+      // An upper-only objective penalizes values above the ideal; values at
+      // or below the ideal are not failures of that one-sided objective.
+      applicableLimit = maxStandard;
+      const denominator = Math.abs(maxStandard - ideal);
+      qualityRating = value <= ideal ? 0
+        : denominator === 0 ? Number.POSITIVE_INFINITY
+          : 100 * Math.abs(value - ideal) / denominator;
+    } else {
+      if (value > ideal) applicableLimit = maxStandard;
+      else if (value < ideal) applicableLimit = minStandard;
+      else applicableLimit = ideal;
+      const denominator = Math.abs(applicableLimit - ideal);
+      qualityRating = denominator === 0
+        ? (value === ideal ? 0 : Number.POSITIVE_INFINITY)
+        : 100 * Math.abs(value - ideal) / denominator;
+    }
     const rawWeight = 1 / weightStandard;
     if (!Number.isFinite(qualityRating) || !Number.isFinite(rawWeight) || rawWeight <= 0) {
       throw new Error((item.label || item.key || 'Parameter') + ': values are outside the numeric range supported by this calculation.');

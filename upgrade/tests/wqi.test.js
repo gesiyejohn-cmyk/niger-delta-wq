@@ -119,3 +119,17 @@ test('two-sided limits reject ideals outside the acceptable interval', () => {
     { value: 7, minStandard: 6.5, maxStandard: 8.5, ideal: 7 }
   ]), /ideal value within those limits/);
 });
+
+
+test('one-sided weighted arithmetic limits penalize only departures toward the stated limit', () => {
+  const result = calculateWeightedArithmeticWQI([
+    { key: 'upper-only-better-side', value: 0.5, maxStandard: 10, ideal: 1, weightStandard: 10 },
+    { key: 'lower-only-better-side', value: 15, minStandard: 5, ideal: 10, weightStandard: 5 },
+    { key: 'upper-only-exceedance', value: 5, maxStandard: 10, ideal: 0, weightStandard: 10 },
+    { key: 'lower-only-shortfall', value: 7, minStandard: 5, ideal: 10, weightStandard: 5 }
+  ]);
+  assert.equal(result.details[0].qualityRating, 0);
+  assert.equal(result.details[1].qualityRating, 0);
+  assert.equal(result.details[2].qualityRating, 50);
+  assert.equal(result.details[3].qualityRating, 60);
+});
