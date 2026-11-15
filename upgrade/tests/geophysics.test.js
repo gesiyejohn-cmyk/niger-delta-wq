@@ -108,3 +108,19 @@ test('VES rejects apparent resistivity overflow and underflow', () => {
   assert.throws(() => calculateVES({ ab2: 1e-200, mn2: 5e-201, resistance: 1e-200 }),
     /geometric factor is outside the supported numeric range|apparent resistivity is outside the supported numeric range/);
 });
+
+test('ERT import rejects duplicate distance/depth cells', () => {
+  assert.throws(() => validateERT([
+    { x: 10, depth: 2, resistivity: 50 },
+    { x: 10, depth: 2, resistivity: 80 }
+  ]), /duplicate distance\/depth cells/);
+});
+
+test('ERT import accepts distinct cells with numeric strings', () => {
+  const result = validateERT([
+    { x: '10', depth: '2', resistivity: '50' },
+    { x: '15', depth: '2', resistivity: '80' }
+  ]);
+  assert.equal(result[0].x, 10);
+  assert.equal(result[1].resistivity, 80);
+});
