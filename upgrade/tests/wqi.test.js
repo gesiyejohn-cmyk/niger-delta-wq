@@ -34,3 +34,25 @@ test('weighted arithmetic WQI rejects inputs that overflow quality ratings or we
     { key: 'b', value: 1, standard: 2, ideal: 0 }
   ]), /numeric range/);
 });
+test('weighted arithmetic WQI gives zero quality rating at the ideal and 100 at the objective limit', () => {
+  const result = calculateWeightedArithmeticWQI([
+    { key: 'a', value: 7, standard: 10, ideal: 7 },
+    { key: 'b', value: 0, standard: 5, ideal: 0 }
+  ]);
+  assert.equal(result.details[0].qualityRating, 0);
+  assert.equal(result.details[1].qualityRating, 0);
+  const atLimit = calculateWeightedArithmeticWQI([
+    { key: 'a', value: 10, standard: 10, ideal: 7 },
+    { key: 'b', value: 5, standard: 5, ideal: 0 }
+  ]);
+  assert.equal(atLimit.details[0].qualityRating, 100);
+  assert.equal(atLimit.details[1].qualityRating, 100);
+});
+test('weighted arithmetic WQI measures departures on either side of a non-zero ideal consistently', () => {
+  const result = calculateWeightedArithmeticWQI([
+    { key: 'pH-low', value: 6, standard: 8, ideal: 7 },
+    { key: 'pH-high', value: 8, standard: 6, ideal: 7 }
+  ]);
+  assert.equal(result.details[0].qualityRating, 100);
+  assert.equal(result.details[1].qualityRating, 100);
+});
