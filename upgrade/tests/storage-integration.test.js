@@ -93,6 +93,22 @@ test('replace restore with an empty store map is a safe no-op', async () => {
   assert.equal((await db.get('settings', 'keep-empty-map-setting')).value, 'keep-me');
 });
 
+test('replace restore refuses a backup whose included stores are all empty', async () => {
+  const db = await getDB();
+  await db.put('samples', { id: 'empty-backup-protected', sampleCode: 'KEEP' });
+
+  await assert.rejects(
+    restoreDatabaseBackup({
+      format: 'niger-delta-wq-backup',
+      version: 1,
+      stores: { samples: [], settings: [] }
+    }, 'replace'),
+    /Cannot replace current data with an empty backup/
+  );
+
+  assert.equal((await db.get('samples', 'empty-backup-protected')).sampleCode, 'KEEP');
+});
+
 test('failed replace restore rolls back the clear and preserves existing records', async () => {
   const db = await getDB();
   await db.put('samples', { id: 'atomic-restore-protected', sampleCode: 'KEEP' });
