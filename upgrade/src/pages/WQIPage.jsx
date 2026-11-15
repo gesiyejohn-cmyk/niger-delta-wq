@@ -12,7 +12,7 @@ const field = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRa
 export default function WQIPage() {
   const [samples, setSamples] = useState([]);
   const [sampleId, setSampleId] = useState('');
-  const [limits, setLimits] = useState(Object.fromEntries(PARAMETERS.map(([key]) => [key, { standard: '', ideal: '' }])));
+  const [limits, setLimits] = useState(Object.fromEntries(PARAMETERS.map(([key]) => [key, { minStandard: '', maxStandard: '', ideal: '', weightStandard: '' }])));
   const [standardSource, setStandardSource] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -26,8 +26,10 @@ export default function WQIPage() {
       const measurements = PARAMETERS.map(([key, label, unit]) => ({
         key, label, unit,
         value: sample?.parameters?.[key]?.canonical,
-        standard: limits[key].standard,
-        ideal: limits[key].ideal
+        minStandard: limits[key].minStandard,
+        maxStandard: limits[key].maxStandard,
+        ideal: limits[key].ideal,
+        weightStandard: limits[key].weightStandard
       }));
       setResult(calculateWeightedArithmeticWQI(measurements));
     } catch (e) { setError(e.message); }
@@ -36,7 +38,7 @@ export default function WQIPage() {
   return <div className="page">
     <p className="eyebrow">WATER QUALITY ASSESSMENT</p>
     <h1>Water Quality Index (WQI)</h1>
-    <p className="muted">Calculate a weighted arithmetic WQI from a saved sample. Enter the applicable standard limit and ideal value for each parameter, using the same units as the sample. Standards are deliberately user-entered so the assessment can state the selected WHO, Nigerian or project-specific reference rather than silently assuming one.</p>
+    <p className="muted">Calculate a weighted arithmetic WQI from a saved sample. Enter lower and/or upper acceptable limits and an ideal value for each parameter, using the same units as the sample. For two-sided ranges such as pH, enter both limits. The weight reference is the permissible value used for Wi = 1 / Si; it defaults to the upper limit, or the only limit entered. Standards are user-entered so the assessment records the selected WHO, Nigerian or project-specific reference.</p>
     {error && <p className="notice error" role="alert">{error}</p>}
     <section className="panel">
       <label>Select saved water sample
@@ -51,15 +53,18 @@ export default function WQIPage() {
       </label>
       <h2>Parameter limits</h2>
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
-          <thead><tr><th align="left">Parameter</th><th align="right">Measured value</th><th align="right">Standard limit</th><th align="right">Ideal value</th><th align="left">Unit</th></tr></thead>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
+          <thead><tr><th align="left">Parameter</th><th align="right">Measured</th><th align="right">Lower limit</th><th align="right">Upper limit</th><th align="right">Ideal</th><th align="right">Weight reference (Si)</th><th align="left">Unit</th></tr></thead>
           <tbody>{PARAMETERS.map(([key, label, unit]) => {
             const raw = sample?.parameters?.[key]?.canonical;
             const measured = raw == null || raw === '' || !Number.isFinite(Number(raw)) ? 'Not recorded' : Number(raw).toString();
+            const update = (name, value) => { setLimits(old => ({ ...old, [key]: { ...old[key], [name]: value } })); setResult(null); };
             return <tr key={key} style={{ borderTop: '1px solid #e2e8f0' }}>
               <td>{label}</td><td align="right">{measured}</td>
-              <td><input style={field} type="number" min="0" step="any" value={limits[key].standard} onChange={e => { setLimits(old => ({ ...old, [key]: { ...old[key], standard: e.target.value } })); setResult(null); }} /></td>
-              <td><input style={field} type="number" step="any" value={limits[key].ideal} onChange={e => { setLimits(old => ({ ...old, [key]: { ...old[key], ideal: e.target.value } })); setResult(null); }} /></td>
+              <td><input aria-label={label + ' lower acceptable limit'} style={field} type="number" min="0" step="any" value={limits[key].minStandard} onChange={e => update('minStandard', e.target.value)} /></td>
+              <td><input aria-label={label + ' upper acceptable limit'} style={field} type="number" min="0" step="any" value={limits[key].maxStandard} onChange={e => update('maxStandard', e.target.value)} /></td>
+              <td><input aria-label={label + ' ideal value'} style={field} type="number" step="any" value={limits[key].ideal} onChange={e => update('ideal', e.target.value)} /></td>
+              <td><input aria-label={label + ' weight reference'} style={field} type="number" min="0" step="any" placeholder="Auto" value={limits[key].weightStandard} onChange={e => update('weightStandard', e.target.value)} /></td>
               <td>{unit}</td>
             </tr>;
           })}</tbody>
@@ -71,8 +76,8 @@ export default function WQIPage() {
         <p>Parameters included: {result.parameterCount}. Incomplete/missing parameters excluded: {result.missingExcluded}.</p>
         <p>Standard reference: {standardSource}. Method: {result.method}. This screen reports the numeric index only; interpret it using the classification scale and regulatory standard selected for your study.</p>
         <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead><tr><th align="left">Parameter</th><th align="right">Qi</th><th align="right">Wi</th><th align="right">Contribution</th></tr></thead>
-          <tbody>{result.details.map(row => <tr key={row.key}><td>{row.label}</td><td align="right">{row.qualityRating.toFixed(3)}</td><td align="right">{row.unitWeight.toFixed(5)}</td><td align="right">{row.contribution.toFixed(3)}</td></tr>)}</tbody>
+          <thead><tr><th align="left">Parameter</th><th align="right">Qi</th><th align="right">Applicable limit</th><th align="right">Wi</th><th align="right">Contribution</th></tr></thead>
+          <tbody>{result.details.map(row => <tr key={row.key}><td>{row.label}</td><td align="right">{row.qualityRating.toFixed(3)}</td><td align="right">{row.applicableLimit}</td><td align="right">{row.unitWeight.toFixed(5)}</td><td align="right">{row.contribution.toFixed(3)}</td></tr>)}</tbody>
         </table></div>
       </div>}
     </section>

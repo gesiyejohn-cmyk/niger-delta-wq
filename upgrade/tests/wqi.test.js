@@ -56,7 +56,6 @@ test('weighted arithmetic WQI measures departures on either side of a non-zero i
   assert.equal(result.details[0].qualityRating, 100);
   assert.equal(result.details[1].qualityRating, 100);
 });
-
 test('weighted arithmetic WQI excludes blank and whitespace-only measurements and limits', () => {
   const result = calculateWeightedArithmeticWQI([
     { key: 'tds', value: ' ', standard: 500, ideal: 0 },
@@ -67,10 +66,34 @@ test('weighted arithmetic WQI excludes blank and whitespace-only measurements an
   assert.equal(result.parameterCount, 2);
   assert.equal(result.missingExcluded, 2);
 });
-
 test('CCME WQI excludes whitespace-only readings instead of treating them as zero', async () => {
   const { computeDualWQI } = await import('../src/engine/wqi.js');
   const result = computeDualWQI({ ph: ' ', tds: 100, nitrate: 10 });
   assert.ok(!result.who.usedParams.includes('ph'));
   assert.ok(!result.son.usedParams.includes('ph'));
+});
+
+test('two-sided weighted arithmetic limits calculate against the relevant side of the ideal', () => {
+  const result = calculateWeightedArithmeticWQI([
+    { key: 'pH-low', value: 6, minStandard: 6.5, maxStandard: 8.5, ideal: 7, weightStandard: 8.5 },
+    { key: 'pH-high', value: 8, minStandard: 6.5, maxStandard: 8.5, ideal: 7, weightStandard: 8.5 }
+  ]);
+  assert.equal(result.details[0].applicableLimit, 6.5);
+  assert.equal(result.details[1].applicableLimit, 8.5);
+  assert.equal(result.details[0].qualityRating, 200);
+  assert.equal(result.details[1].qualityRating, 66.66666666666666);
+});
+test('two-sided limits give zero at ideal and 100 at either boundary', () => {
+  const result = calculateWeightedArithmeticWQI([
+    { key: 'low-bound', value: 6.5, minStandard: 6.5, maxStandard: 8.5, ideal: 7, weightStandard: 8.5 },
+    { key: 'high-bound', value: 8.5, minStandard: 6.5, maxStandard: 8.5, ideal: 7, weightStandard: 8.5 }
+  ]);
+  assert.equal(result.details[0].qualityRating, 100);
+  assert.equal(result.details[1].qualityRating, 100);
+});
+test('two-sided limits reject ideals outside the acceptable interval', () => {
+  assert.throws(() => calculateWeightedArithmeticWQI([
+    { value: 6, minStandard: 6.5, maxStandard: 8.5, ideal: 6 },
+    { value: 7, minStandard: 6.5, maxStandard: 8.5, ideal: 7 }
+  ]), /ideal value within those limits/);
 });

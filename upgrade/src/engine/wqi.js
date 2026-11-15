@@ -109,34 +109,79 @@ export function computeDualWQI(sample, { overrides = {} } = {}) {
 }
 
 /**
- * Configurable weighted-arithmetic WQI. The user supplies the objective limit
- * and ideal value for each measured parameter in consistent canonical units.
- * Absolute deviation from the ideal is used so departures on either side
- * (notably pH and dissolved oxygen) increase the quality rating.
+ * Configurable weighted-arithmetic WQI.
+ *
+ * minStandard and maxStandard define the acceptable interval. Qi is measured
+ * against the applicable boundary in the direction of departure from the
+ * ideal value. weightStandard is the single permissible-value reference used
+ * for Wi = 1 / weightStandard; when omitted, the upper bound (or the only
+ * supplied bound) is used. The legacy "standard" field remains supported as
+ * an upper-bound/weight reference for existing callers.
  */
 export function calculateWeightedArithmeticWQI(measurements) {
   if (!Array.isArray(measurements)) throw new Error('Supply a list of measured water-quality parameters.');
   const hasValue = value => value != null && !(typeof value === 'string' && value.trim() === '');
-  const usable = measurements.filter(item => item && hasValue(item.value) && hasValue(item.standard) && hasValue(item.ideal));
-  if (usable.length < 2) throw new Error('At least two measured parameters with entered standards and ideal values are required.');
+  const usable = measurements.filter(item => item && hasValue(item.value)
+    && hasValue(item.ideal)
+    && (hasValue(item.minStandard) || hasValue(item.maxStandard) || hasValue(item.standard)));
+  if (usable.length < 2) throw new Error('At least two measured parameters with entered limits and ideal values are required.');
+
   const rows = usable.map(item => {
-    const value = Number(item.value), standard = Number(item.standard), ideal = Number(item.ideal);
-    if (![value, standard, ideal].every(Number.isFinite) || standard <= 0 || standard === ideal) {
-      throw new Error((item.label || item.key || 'Parameter') + ': measured value must be numeric; standard must be positive and different from the ideal value.');
+    const value = Number(item.value);
+    const ideal = Number(item.ideal);
+    const minRaw = hasValue(item.minStandard) ? item.minStandard : null;
+    const maxRaw = hasValue(item.maxStandard) ? item.maxStandard : item.standard;
+    const minStandard = minRaw == null ? null : Number(minRaw);
+    const maxStandard = hasValue(maxRaw) ? Number(maxRaw) : null;
+    const weightRaw = hasValue(item.weightStandard)
+      ? item.weightStandard
+      : (maxStandard ?? minStandard);
+    const weightStandard = Number(weightRaw);
+
+    if (![value, ideal, weightStandard].every(Number.isFinite)
+      || weightStandard <= 0
+      || (minStandard != null && (!Number.isFinite(minStandard) || minStandard < 0))
+      || (maxStandard != null && (!Number.isFinite(maxStandard) || maxStandard < 0))
+      || (minStandard == null && maxStandard == null)
+      || (minStandard != null && maxStandard != null && minStandard >= maxStandard)
+      || (minStandard != null && ideal < minStandard)
+      || (maxStandard != null && ideal > maxStandard)) {
+      throw new Error((item.label || item.key || 'Parameter') + ': enter valid lower/upper limits, an ideal value within those limits, and a positive weight reference.');
     }
-    const qualityRating = 100 * Math.abs(value - ideal) / Math.abs(standard - ideal);
-    const rawWeight = 1 / standard;
+
+    let applicableLimit;
+    if (value > ideal) applicableLimit = maxStandard ?? minStandard;
+    else if (value < ideal) applicableLimit = minStandard ?? maxStandard;
+    else applicableLimit = ideal;
+
+    const denominator = Math.abs(applicableLimit - ideal);
+    const qualityRating = denominator === 0
+      ? (value === ideal ? 0 : Number.POSITIVE_INFINITY)
+      : 100 * Math.abs(value - ideal) / denominator;
+    const rawWeight = 1 / weightStandard;
     if (!Number.isFinite(qualityRating) || !Number.isFinite(rawWeight) || rawWeight <= 0) {
       throw new Error((item.label || item.key || 'Parameter') + ': values are outside the numeric range supported by this calculation.');
     }
-    return { ...item, value, standard, ideal, qualityRating, rawWeight };
+    return { ...item, value, ideal, minStandard, maxStandard, weightStandard,
+      applicableLimit, qualityRating, rawWeight };
   });
+
   const weightSum = rows.reduce((sum, row) => sum + row.rawWeight, 0);
   if (!Number.isFinite(weightSum) || weightSum <= 0) {
     throw new Error('The entered standard limits cannot produce valid relative weights.');
   }
-  const details = rows.map(row => ({ ...row, unitWeight: row.rawWeight / weightSum, contribution: row.qualityRating * row.rawWeight / weightSum }));
+  const details = rows.map(row => ({
+    ...row,
+    unitWeight: row.rawWeight / weightSum,
+    contribution: row.qualityRating * row.rawWeight / weightSum
+  }));
   const wqi = details.reduce((sum, row) => sum + row.contribution, 0);
   if (!Number.isFinite(wqi)) throw new Error('The calculated WQI is outside the supported numeric range. Check the measurements and standard limits.');
-  return { wqi, parameterCount: details.length, details, method: 'Weighted arithmetic water quality index', missingExcluded: measurements.length - usable.length };
+  return {
+    wqi,
+    parameterCount: details.length,
+    details,
+    method: 'Weighted arithmetic water quality index',
+    missingExcluded: measurements.length - usable.length
+  };
 }
