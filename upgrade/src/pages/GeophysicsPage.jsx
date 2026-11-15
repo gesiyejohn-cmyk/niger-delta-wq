@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
 import { calculateVES, validateVES, validateERT } from '../engine/geophysics.js';
 import VESInterpretation from './VESInterpretation.jsx';
+import CoordinateFields from './CoordinateFields.jsx';
+import { validateCoordinatePair } from '../engine/coordinates.js';
 import { saveVES, listVES, deleteVES, saveERT, listERT, deleteERT } from '../storage/geophysics.js';
 
 const input = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
@@ -12,6 +14,8 @@ export default function GeophysicsPage() {
   const [ves, setVes] = useState([]);
   const [ert, setErt] = useState([]);
   const [meta, setMeta] = useState({ stationId: '', latitude: '', longitude: '', array: 'Schlumberger', notes: '' });
+  const [vesCoordinates, setVesCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
+  const [ertCoordinates, setErtCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
   const [readings, setReadings] = useState([{ ab2: '', mn2: '', resistance: '' }]);
   const [line, setLine] = useState({ lineId: '', spacing: '', electrodes: '', rms: '', software: '', notes: '' });
   const [cells, setCells] = useState([]);
@@ -136,13 +140,10 @@ export default function GeophysicsPage() {
       {tab === 'VES' ? <>
         <h2>VES station metadata</h2>
         <div className="form-grid">
-          {[
-            ['stationId', 'Station / sounding ID'],
-            ['latitude', 'Latitude'],
-            ['longitude', 'Longitude']
-          ].map(([key, label]) => <label key={key}>{label}
-            <input style={input} value={meta[key]} onChange={event => setMeta(old => ({ ...old, [key]: event.target.value }))} />
-          </label>)}
+          <label>Station / sounding ID
+            <input style={input} value={meta.stationId} onChange={event => setMeta(old => ({ ...old, stationId: event.target.value }))} />
+          </label>
+          <CoordinateFields value={vesCoordinates} onChange={setVesCoordinates} label="VES station coordinates" />
           <label>Array configuration
             <select style={input} value={meta.array} onChange={event => setMeta(old => ({ ...old, array: event.target.value }))}>
               <option>Schlumberger</option>
@@ -196,6 +197,7 @@ export default function GeophysicsPage() {
           <label className="span-two">Notes
             <textarea style={input} value={line.notes} onChange={event => setLine(old => ({ ...old, notes: event.target.value }))} />
           </label>
+          <CoordinateFields value={ertCoordinates} onChange={setErtCoordinates} label="ERT survey location coordinates" />
         </div>
         <p className="muted">Import a CSV exported from inversion software with columns x, depth, resistivity (or electrode_x, depth_m, resistivity_ohm_m). RMS error and software details should come from the actual inversion report.</p>
         <input type="file" accept=".csv,text/csv" onChange={event => event.target.files?.[0] && importERT(event.target.files[0])} />
