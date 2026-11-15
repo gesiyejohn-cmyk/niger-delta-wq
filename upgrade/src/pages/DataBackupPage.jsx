@@ -81,7 +81,7 @@ export default function DataBackupPage() {
       {preview && <div className="notice">
         <strong>Backup verified</strong>
         <p>Exported: {preview.exportedAt || 'Date not recorded'} · {preview.total} records · {formatFileSize(preview.size)}</p>
-        {preview.empty && <p role="status">This backup contains no records. Restoring it will not add or replace any records.</p>}
+        {preview.empty && <p role="alert">This backup contains no records. Restore is disabled because Replace mode could otherwise clear existing records.</p>}
         {Object.entries(preview.counts).map(([name, count]) => <div key={name}>{name}: {count}</div>)}
       </div>}
       <label>Restore mode
@@ -91,7 +91,7 @@ export default function DataBackupPage() {
         </select>
       </label>
       <p className="muted">Merge is the safer default. Replace clears the current contents of the backup stores before importing. Download a fresh backup first.</p>
-      <button style={button} type="button" disabled={busy || !preview || !validatedBackup} onClick={restore}>{busy ? 'Working…' : 'Restore backup'}</button>
+      <button style={button} type="button" disabled={busy || !preview || !validatedBackup || preview.empty} onClick={restore}>{busy ? 'Working…' : 'Restore backup'}</button>
     </section>
   </div>;
 }
