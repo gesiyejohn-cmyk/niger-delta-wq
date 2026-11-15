@@ -96,3 +96,15 @@ test('Pearson correlation uses pairwise complete observations without zero-filli
   assert.equal(pearsonCorrelation([1, null, 3], [2, 4, 6]), null);
   assert.equal(pearsonCorrelation([1, 2, 3], [2, '', 6]), null);
 });
+
+test('VES rejects finite inputs that overflow the geometric factor', () => {
+  assert.throws(() => schlumbergerGeometricFactor(1e308, 1),
+    /geometric factor is outside the supported numeric range/);
+});
+
+test('VES rejects apparent resistivity overflow and underflow', () => {
+  assert.throws(() => calculateVES({ ab2: 10, mn2: 2, resistance: Number.MAX_VALUE }),
+    /apparent resistivity is outside the supported numeric range/);
+  assert.throws(() => calculateVES({ ab2: 1e-200, mn2: 5e-201, resistance: 1e-200 }),
+    /geometric factor is outside the supported numeric range|apparent resistivity is outside the supported numeric range/);
+});
