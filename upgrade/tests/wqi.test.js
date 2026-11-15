@@ -1,0 +1,26 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { calculateWeightedArithmeticWQI } from '../src/engine/wqi.js';
+
+test('weighted arithmetic WQI normalises weights and calculates index', () => {
+  const result = calculateWeightedArithmeticWQI([
+    { key: 'tds', label: 'TDS', value: 100, standard: 500, ideal: 0 },
+    { key: 'nitrate', label: 'Nitrate', value: 10, standard: 50, ideal: 0 }
+  ]);
+  assert.equal(result.parameterCount, 2);
+  assert.ok(Math.abs(result.details.reduce((sum, row) => sum + row.unitWeight, 0) - 1) < 1e-12);
+  assert.ok(result.wqi > 0);
+});
+test('weighted arithmetic WQI excludes missing readings rather than converting them to zero', () => {
+  const result = calculateWeightedArithmeticWQI([
+    { key: 'tds', value: 100, standard: 500, ideal: 0 },
+    { key: 'nitrate', value: null, standard: 50, ideal: 0 },
+    { key: 'iron', value: 0.1, standard: 0.3, ideal: 0 }
+  ]);
+  assert.equal(result.parameterCount, 2);
+  assert.equal(result.missingExcluded, 1);
+});
+test('weighted arithmetic WQI requires two complete parameters and valid limits', () => {
+  assert.throws(() => calculateWeightedArithmeticWQI([{ value: 1, standard: 2, ideal: 0 }]));
+  assert.throws(() => calculateWeightedArithmeticWQI([{ value: 1, standard: 0, ideal: 0 }, { value: 2, standard: 3, ideal: 0 }]));
+});
