@@ -57,7 +57,12 @@ export default function WQIPage() {
           <thead><tr><th align="left">Parameter</th><th align="right">Measured</th><th align="right">Lower limit</th><th align="right">Upper limit</th><th align="right">Ideal</th><th align="right">Weight reference (Si)</th><th align="left">Unit</th></tr></thead>
           <tbody>{PARAMETERS.map(([key, label, unit]) => {
             const raw = sample?.parameters?.[key]?.canonical;
-            const measured = raw == null || raw === '' || !Number.isFinite(Number(raw)) ? 'Not recorded' : Number(raw).toString();
+            const isBlank = raw == null || (typeof raw === 'string' && raw.trim() === '');
+            const isNumeric = (typeof raw === 'number'
+              || (typeof raw === 'string' && raw.trim() !== ''))
+              && Number.isFinite(Number(raw));
+            const measured = isBlank ? 'Not recorded'
+              : !isNumeric ? 'Invalid value' : Number(raw).toString();
             const update = (name, value) => { setLimits(old => ({ ...old, [key]: { ...old[key], [name]: value } })); setResult(null); };
             return <tr key={key} style={{ borderTop: '1px solid #e2e8f0' }}>
               <td>{label}</td><td align="right">{measured}</td>
