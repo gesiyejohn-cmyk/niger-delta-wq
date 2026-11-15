@@ -4,11 +4,17 @@ import path from 'node:path';
 const target = path.resolve('source/niger-delta-wq/src/pages/GeophysicsPage.jsx');
 let source = fs.readFileSync(target, 'utf8');
 
-if (!source.includes("import ERTTomogram from './ERTTomogram.jsx';")) {
-  source = source.replace(
-    "import VESInterpretation from './VESInterpretation.jsx';",
-    "import VESInterpretation from './VESInterpretation.jsx';\nimport ERTTomogram from './ERTTomogram.jsx';"
-  );
+const importLine = "import ERTTomogram from './ERTTomogram.jsx';";
+if (!source.includes(importLine)) {
+  const importAnchor = "import VESInterpretation from './VESInterpretation.jsx';";
+  if (!source.includes(importAnchor)) {
+    throw new Error('ERT import anchor not found; refusing to patch an unexpected page layout.');
+  }
+  source = source.replace(importAnchor, importAnchor + '\n' + importLine);
+}
+
+if (source.split(importLine).length !== 2) {
+  throw new Error('Expected exactly one ERTTomogram import.');
 }
 
 // Keep interpolation scoped to the selected ERT line. Different survey lines can
