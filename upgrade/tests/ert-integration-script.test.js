@@ -61,7 +61,7 @@ test('ERT integration refuses to patch when its component insertion marker is mi
 
 test('ERT integration refuses duplicate tomogram components', () => {
   assert.throws(
-    () => integrateERTTomogramSource(page(selectedLineComponent)),
+    () => integrateERTTomogramSource(page(selectedLineComponent + '\n' + selectedLineComponent)),
     /exactly one ERT tomogram component/
   );
 });
