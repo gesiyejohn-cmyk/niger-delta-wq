@@ -22,7 +22,7 @@ export default function DataBackupPage() {
       anchor.href = url;
       anchor.download = 'niger-delta-wq-backup-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
       document.body.appendChild(anchor); anchor.click(); anchor.remove();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
       const count = Object.values(backup.stores).reduce((sum, records) => sum + records.length, 0);
       setMessage('Backup file created with ' + count + ' records across ' + Object.keys(backup.stores).length + ' data stores.');
     } catch (e) { setError('Backup failed: ' + e.message); }
