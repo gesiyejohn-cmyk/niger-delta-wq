@@ -35,7 +35,7 @@ Use one status for every test: **[ ] Not run  [ ] Pass  [ ] Fail  [ ] Blocked  [
 The following are the verified automated checks for commit `f1f98e213a1f139edd37290cb496314b6beffd20`:
 
 - Web: scientific/geophysics test suite and production build passed.
-- Android: debug APK build, emulator installation and launcher activity start passed; the smoke check confirmed the application process remained present after launch.
+- Android: debug APK build and emulator installation passed. The launcher intent was issued; Android `am start -W` reported `Status: timeout` while waiting for activity startup, but the app process was subsequently detected (PID `1807`) and the CI job completed successfully. This verifies process presence after the launch attempt, **not** first-frame rendering or full UI readiness; physical-device visual acceptance remains mandatory.
 - Windows: NSIS desktop installer build and artifact upload passed.
 - CI run: [Run 43726829637](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43726829637).
 - Artifacts: `ndwq-integrated-web`, `ndwq-integrated-android-apk-fix4`, and `ndwq-integrated-windows-desktop`. CI artifacts are temporary build outputs, not approved production releases.
