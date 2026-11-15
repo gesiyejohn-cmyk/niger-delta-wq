@@ -2,7 +2,9 @@ const finite = value => value !== '' && value != null && Number.isFinite(Number(
 
 function parts(value) {
   if (typeof value === 'number') return [value];
-  const text = String(value).trim().replace(/[°º'′"″,:;]/g, ' ').replace(/[NSEW]/ig, ' ');
+  const raw = String(value).trim();
+  if (/[NSEW]/i.test(raw)) throw new Error('Enter numeric coordinate values only; select the hemisphere separately.');
+  const text = raw.replace(/[°º'′"″,:;]/g, ' ');
   const values = text.split(/\s+/).filter(Boolean).map(Number);
   if (!values.length || values.some(v => !Number.isFinite(v))) throw new Error('Enter a valid coordinate value.');
   return values;
@@ -23,7 +25,9 @@ export function coordinateToDecimal(value, format = 'DD', hemisphere = 'N', axis
     const expected = format === 'DMS' ? 3 : 2;
     if (p.length !== expected) throw new Error(format + ' requires ' + expected + ' values.');
     const [degrees, minutes, seconds = 0] = p;
-    if (degrees < 0 || minutes < 0 || seconds < 0 || minutes >= 60 || seconds >= 60) throw new Error('Degrees must be non-negative and minutes/seconds must be below 60.');
+    if (!Number.isInteger(degrees) || degrees < 0 || minutes < 0 || seconds < 0 || minutes >= 60 || seconds >= 60) {
+      throw new Error('Degrees must be whole, non-negative values; minutes and seconds must be below 60.');
+    }
     magnitude = degrees + minutes / 60 + seconds / 3600;
   } else throw new Error('Unsupported coordinate format.');
   if (magnitude > limit) throw new Error(axis + ' must be between 0 and ' + limit + ' degrees.');
@@ -35,12 +39,22 @@ export function decimalToCoordinate(decimal, format = 'DD') {
   if (!Number.isFinite(value) || Math.abs(value) > 180) throw new Error('Coordinate must be a finite value within ±180 degrees.');
   const absolute = Math.abs(value);
   if (format === 'DD') return absolute.toFixed(6);
-  const degrees = Math.floor(absolute);
-  const minuteFloat = (absolute - degrees) * 60;
-  const minutes = Math.floor(minuteFloat);
-  const seconds = (minuteFloat - minutes) * 60;
-  if (format === 'DDM') return degrees + '° ' + minuteFloat.toFixed(4) + "'";
-  if (format === 'DMS') return degrees + '° ' + minutes + "' " + seconds.toFixed(2) + '"';
+  if (format === 'DDM') {
+    // Round the complete minute count first so 59.99999' carries cleanly.
+    const totalMinuteUnits = Math.round(absolute * 60 * 10000);
+    const degrees = Math.floor(totalMinuteUnits / 600000);
+    const minuteUnits = totalMinuteUnits - degrees * 600000;
+    return degrees + '° ' + (minuteUnits / 10000).toFixed(4) + "'";
+  }
+  if (format === 'DMS') {
+    // Work in hundredths of a second to carry rounded 60.00" into minutes/degrees.
+    const totalSecondUnits = Math.round(absolute * 3600 * 100);
+    const degrees = Math.floor(totalSecondUnits / 360000);
+    const remainder = totalSecondUnits - degrees * 360000;
+    const minutes = Math.floor(remainder / 6000);
+    const seconds = (remainder - minutes * 6000) / 100;
+    return degrees + '° ' + minutes + "' " + seconds.toFixed(2) + '"';
+  }
   throw new Error('Unsupported coordinate format.');
 }
 

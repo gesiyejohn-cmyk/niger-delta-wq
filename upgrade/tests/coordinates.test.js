@@ -17,6 +17,17 @@ test('decimal degrees format back to DMS and DDM', () => {
   assert.equal(decimalToCoordinate(4.92, 'DMS'), '4° 55\' 12.00"');
   assert.equal(decimalToCoordinate(4.92, 'DDM'), "4° 55.2000'");
 });
+test('DMS and DDM formatting carry rounded minutes and seconds', () => {
+  assert.equal(decimalToCoordinate(4.999999999, 'DMS'), '5° 0\' 0.00"');
+  assert.equal(decimalToCoordinate(4.999999999, 'DDM'), "5° 0.0000'");
+});
+test('DMS and DDM require whole-degree components', () => {
+  assert.throws(() => coordinateToDecimal('4.5 12 0', 'DMS', 'N', 'latitude'));
+  assert.throws(() => coordinateToDecimal('4.5 12', 'DDM', 'N', 'latitude'));
+});
+test('coordinate parser rejects embedded hemisphere letters instead of silently discarding them', () => {
+  assert.throws(() => coordinateToDecimal('4 55 12 N', 'DMS', 'S', 'latitude'));
+});
 test('coordinate pair preserves original entry and canonical decimal degrees', () => {
   const result = validateCoordinatePair({ latitude: '4 55 12', longitude: '6 15 36', format: 'DMS', latitudeHemisphere: 'N', longitudeHemisphere: 'E' });
   assert.equal(result.latitude, 4.92);
