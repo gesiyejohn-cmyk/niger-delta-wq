@@ -26,3 +26,20 @@ test('coordinate pair preserves original entry and canonical decimal degrees', (
 test('coordinate pair rejects a single missing coordinate', () => {
   assert.throws(() => validateCoordinatePair({ latitude: '4.9', longitude: '' }));
 });
+
+import { decimalToUTM, utmToDecimal } from '../src/engine/coordinates.js';
+
+test('WGS84 forward and inverse UTM conversion round-trip Niger Delta coordinates', () => {
+  const utm = decimalToUTM(4.92, 6.26, 32);
+  assert.equal(utm.zone, 32);
+  assert.equal(utm.hemisphere, 'N');
+  assert.equal(utm.epsg, 32632);
+  const geographic = utmToDecimal(utm.easting, utm.northing, 32, 'N');
+  assert.ok(Math.abs(geographic.latitude - 4.92) < 0.00001);
+  assert.ok(Math.abs(geographic.longitude - 6.26) < 0.00001);
+});
+test('UTM conversion rejects invalid zones and latitude outside UTM limits', () => {
+  assert.throws(() => decimalToUTM(4.92, 6.26, 61));
+  assert.throws(() => decimalToUTM(85, 6.26, 32));
+  assert.throws(() => utmToDecimal(500000, 500000, 0, 'N'));
+});
