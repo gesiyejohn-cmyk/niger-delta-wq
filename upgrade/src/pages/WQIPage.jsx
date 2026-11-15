@@ -13,6 +13,7 @@ export default function WQIPage() {
   const [samples, setSamples] = useState([]);
   const [sampleId, setSampleId] = useState('');
   const [limits, setLimits] = useState(Object.fromEntries(PARAMETERS.map(([key]) => [key, { standard: '', ideal: '' }])));
+  const [standardSource, setStandardSource] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   useEffect(() => { listSamples().then(setSamples).catch(e => setError('Could not load samples: ' + e.message)); }, []);
@@ -21,6 +22,7 @@ export default function WQIPage() {
   function calculate() {
     setError(''); setResult(null);
     try {
+      if (!standardSource.trim()) throw new Error('Enter the standard source or reference used for the limits.');
       const measurements = PARAMETERS.map(([key, label, unit]) => ({
         key, label, unit,
         value: sample?.parameters?.[key]?.canonical,
@@ -44,6 +46,9 @@ export default function WQIPage() {
       </label>
       {!samples.length && <p className="notice">No saved samples are available. Record or import a water-quality sample first.</p>}
       {sample && <p className="muted">Sample: {sample.sampleCode || sample.stationName || sample.id}. Only measured numeric values are included; missing measurements are excluded, not treated as zero.</p>}
+      <label>Standard / guideline reference
+        <input style={field} value={standardSource} onChange={e => { setStandardSource(e.target.value); setResult(null); }} placeholder="e.g. WHO drinking-water guideline edition or NIS 554" />
+      </label>
       <h2>Parameter limits</h2>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
@@ -64,7 +69,7 @@ export default function WQIPage() {
       {result && <div className="notice" style={{ marginTop: 14 }}>
         <h2>Weighted arithmetic WQI: {result.wqi.toFixed(2)}</h2>
         <p>Parameters included: {result.parameterCount}. Incomplete/missing parameters excluded: {result.missingExcluded}.</p>
-        <p>Method: {result.method}. This screen reports the numeric index only; interpret it using the classification scale and regulatory standard selected for your study.</p>
+        <p>Standard reference: {standardSource}. Method: {result.method}. This screen reports the numeric index only; interpret it using the classification scale and regulatory standard selected for your study.</p>
         <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr><th align="left">Parameter</th><th align="right">Qi</th><th align="right">Wi</th><th align="right">Contribution</th></tr></thead>
           <tbody>{result.details.map(row => <tr key={row.key}><td>{row.label}</td><td align="right">{row.qualityRating.toFixed(3)}</td><td align="right">{row.unitWeight.toFixed(5)}</td><td align="right">{row.contribution.toFixed(3)}</td></tr>)}</tbody>
