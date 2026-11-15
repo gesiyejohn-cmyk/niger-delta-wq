@@ -225,3 +225,123 @@ export function calculateWeightedArithmeticWQI(measurements) {
     missingExcluded: measurements.length - usable.length
   };
 }
+
+/**
+ * Dataset-level CCME WQI for repeated samples from a monitoring programme.
+ * F1 is based on variables failing at least once; F2 is based on all valid
+ * parameter observations (tests). Missing observations are excluded.
+ */
+function calculateDatasetForStandard(samples, standard, overrides) {
+  const usedParams = new Set();
+  const failedVariables = new Set();
+  const failures = [];
+  let tests = 0;
+  let failedTests = 0;
+  let sumExcursions = 0;
+
+  for (let sampleIndex = 0; sampleIndex < samples.length; sampleIndex += 1) {
+    const sample = samples[sampleIndex];
+    if (!sample || typeof sample !== 'object' || Array.isArray(sample)) {
+      throw new Error(`Sample ${sampleIndex + 1} must be an object.`);
+    }
+    const sampleLabel = sample.sampleCode || sample.id || `sample ${sampleIndex + 1}`;
+
+    for (const [id, definition] of Object.entries(PARAMETER_REGISTRY)) {
+      const rawValue = sample?.[id];
+      if (rawValue == null || (typeof rawValue === 'string' && rawValue.trim() === '')) continue;
+      const value = Number(rawValue);
+      if (!Number.isFinite(value)) {
+        throw new Error(`${sampleLabel} — ${definition.name}: measurement must be a finite number.`);
+      }
+
+      const base = definition[standard];
+      const override = overrides?.[id]?.[standard];
+      const objective = base || override ? { ...(base || {}) } : null;
+      if (override && objective) {
+        if (typeof override !== 'object' || Array.isArray(override)) {
+          throw new Error(`${definition.name}: custom standard limits must be an object.`);
+        }
+        for (const bound of ['min', 'max']) {
+          const raw = override[bound];
+          if (raw == null || (typeof raw === 'string' && raw.trim() === '')) continue;
+          const parsed = Number(raw);
+          if (!Number.isFinite(parsed) || parsed < 0) {
+            throw new Error(`${definition.name}: custom ${bound} objective must be a finite, non-negative number.`);
+          }
+          objective[bound] = parsed;
+        }
+      }
+      if (!objective || (objective.min == null && objective.max == null)) continue;
+      for (const bound of ['min', 'max']) {
+        if (objective[bound] != null
+          && (!Number.isFinite(Number(objective[bound])) || Number(objective[bound]) < 0)) {
+          throw new Error(`${definition.name}: configured ${bound} objective is invalid.`);
+        }
+      }
+      if (objective.min != null && objective.max != null
+        && Number(objective.min) >= Number(objective.max)) {
+        throw new Error(`${definition.name}: lower objective must be below the upper objective.`);
+      }
+
+      tests += 1;
+      usedParams.add(id);
+      let excursion = 0;
+      if (objective.min != null && value < objective.min) {
+        excursion = value <= 0 ? Number.POSITIVE_INFINITY : objective.min / value - 1;
+      }
+      if (objective.max != null && value > objective.max) {
+        excursion = Math.max(excursion, objective.max <= 0
+          ? Number.POSITIVE_INFINITY
+          : value / objective.max - 1);
+      }
+      if (excursion > 0) {
+        failedTests += 1;
+        failedVariables.add(id);
+        sumExcursions += excursion;
+        failures.push({ id, name: definition.name, value, objective, excursion, sampleIndex, sampleLabel });
+      }
+    }
+  }
+
+  if (!tests) {
+    return { wqi: null, status: 'No data', F1: null, F2: null, F3: null,
+      samples: samples.length, tests: 0, testedVariables: 0, failedTests: 0,
+      usedParams: [], failures };
+  }
+
+  const F1 = failedVariables.size / usedParams.size * 100;
+  const F2 = failedTests / tests * 100;
+  const normalizedSum = sumExcursions / tests;
+  const F3 = normalizedSum === 0
+    ? 0
+    : Number.isFinite(normalizedSum)
+      ? normalizedSum / (0.01 * normalizedSum + 0.01)
+      : 100;
+  const rawWqi = 100 - Math.sqrt(F1 ** 2 + F2 ** 2 + F3 ** 2) / Math.sqrt(3);
+  const wqi = round(Math.max(0, Math.min(100, rawWqi)), 1);
+
+  return {
+    wqi, status: classifyWQI(wqi), F1: round(F1, 1), F2: round(F2, 1),
+    F3: round(F3, 1), samples: samples.length, tests,
+    testedVariables: usedParams.size, failedTests, usedParams: [...usedParams], failures
+  };
+}
+
+/** Calculate CCME WQI over repeated samples rather than a single snapshot. */
+export function computeDualWQIDataset(samples, { overrides = {} } = {}) {
+  if (!Array.isArray(samples)) throw new Error('Supply a list of water-quality samples.');
+  const who = calculateDatasetForStandard(samples, 'who', overrides);
+  const son = calculateDatasetForStandard(samples, 'son', overrides);
+  return {
+    method: 'CCME WQI (multi-sample dataset)',
+    who,
+    son,
+    comparison: {
+      bothStandardsHaveData: who.wqi != null && son.wqi != null,
+      whoScoreMinusSonScore: who.wqi != null && son.wqi != null
+        ? round(who.wqi - son.wqi, 1)
+        : null,
+    },
+    disclaimer: 'Dataset-level screening index. F1 measures the proportion of tested variables that failed at least once; F2 measures the proportion of individual tests that failed. Missing measurements are excluded. Use representative samples from the same monitoring objective, location or defined assessment area and period, with consistent methods and units. A WQI score does not establish potability or regulatory compliance; verify each parameter against the applicable current standard and review microbiological and other required tests.'
+  };
+}
