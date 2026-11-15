@@ -4,12 +4,59 @@ const makeId = () => globalThis.crypto?.randomUUID?.() || `geo_${Date.now()}_${M
 
 export async function saveVES(record) {
   const db = await getDB();
-  const saved = { ...record, id: record.id || makeId(), createdAt: record.createdAt || new Date().toISOString() };
-  await db.put('ves', saved);
+  const { interpretation, ...rawRecord } = record;
+  const saved = { ...rawRecord, id: record.id || makeId(), createdAt: record.createdAt || new Date().toISOString() };
+  const tx = db.transaction(['ves', 'vesInterpretations'], 'readwrite');
+  await tx.objectStore('ves').put(saved);
+  if (interpretation) await tx.objectStore('vesInterpretations').put({ ...interpretation, id: saved.id, vesId: saved.id });
+  await tx.done;
   return saved;
 }
-export async function listVES() { return (await getDB()).getAll('ves'); }
-export async function deleteVES(id) { return (await getDB()).delete('ves', id); }
+
+export async function listVES() {
+  const db = await getDB();
+  const tx = db.transaction(['ves', 'vesInterpretations'], 'readwrite');
+  const rawRecords = await tx.objectStore('ves').getAll();
+  const interpretations = tx.objectStore('vesInterpretations');
+  // One-time, non-destructive migration of earlier records that stored the
+  // interpretation object inside the raw VES record.
+  for (const record of rawRecords) {
+    if (record.interpretation) {
+      await interpretations.put({ ...record.interpretation, id: record.id, vesId: record.id });
+      delete record.interpretation;
+      await tx.objectStore('ves').put(record);
+    }
+  }
+  const savedInterpretations = await interpretations.getAll();
+  await tx.done;
+  const byVesId = new Map(savedInterpretations.map(item => [item.vesId || item.id, item]));
+  return rawRecords.map(record => ({ ...record, interpretation: byVesId.get(record.id) || null }));
+}
+
+export async function deleteVES(id) {
+  const db = await getDB();
+  const tx = db.transaction(['ves', 'vesInterpretations'], 'readwrite');
+  await tx.objectStore('ves').delete(id);
+  await tx.objectStore('vesInterpretations').delete(id);
+  await tx.done;
+}
+
+export async function saveVESInterpretation(vesId, interpretation) {
+  const db = await getDB();
+  const tx = db.transaction(['ves', 'vesInterpretations'], 'readwrite');
+  const raw = await tx.objectStore('ves').get(vesId);
+  if (!raw) {
+    tx.abort();
+    throw new Error('The selected raw VES sounding no longer exists.');
+  }
+  await tx.objectStore('vesInterpretations').put({
+    ...interpretation,
+    id: vesId,
+    vesId
+  });
+  await tx.done;
+  return interpretation;
+}
 
 export async function saveERT(record) {
   const db = await getDB();
