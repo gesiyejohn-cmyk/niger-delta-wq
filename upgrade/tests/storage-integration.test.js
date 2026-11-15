@@ -92,3 +92,27 @@ test('replace restore with an empty store map is a safe no-op', async () => {
   assert.deepEqual(result, { restored: 0, skipped: 0, mode: 'replace' });
   assert.equal((await db.get('settings', 'keep-empty-map-setting')).value, 'keep-me');
 });
+
+test('failed replace restore rolls back the clear and preserves existing records', async () => {
+  const db = await getDB();
+  await db.put('samples', { id: 'atomic-restore-protected', sampleCode: 'KEEP' });
+
+  const invalidBackup = {
+    format: 'niger-delta-wq-backup',
+    version: 1,
+    stores: {
+      samples: [
+        { id: 'valid-before-failure', sampleCode: 'NEW' },
+        { id: 'not-cloneable', sampleCode: 'BAD', invalidValue() {} }
+      ]
+    }
+  };
+
+  await assert.rejects(
+    restoreDatabaseBackup(invalidBackup, 'replace'),
+    /Restore was not completed/
+  );
+
+  assert.equal((await db.get('samples', 'atomic-restore-protected')).sampleCode, 'KEEP');
+  assert.equal(await db.get('samples', 'valid-before-failure'), undefined);
+});
