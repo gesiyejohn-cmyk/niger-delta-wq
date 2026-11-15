@@ -160,3 +160,12 @@ test('CCME WQI rejects nonblank measurements that are not finite numbers', async
   assert.throws(() => computeDualWQI({ ph: 'NaN', tds: 100 }),
     /pH: measurement must be a finite number/);
 });
+
+test('single-sample CCME WQI explicitly discloses that F1 and F2 have identical coverage', async () => {
+  const { computeDualWQI } = await import('../src/engine/wqi.js');
+  const result = computeDualWQI({ ph: 7, tds: 100, nitrate: 10 });
+  assert.equal(result.who.F1, result.who.F2);
+  assert.equal(result.son.F1, result.son.F2);
+  assert.match(result.disclaimer, /one observation per parameter/);
+  assert.match(result.disclaimer, /multi-sample dataset/);
+});
