@@ -48,10 +48,10 @@ test('weighted arithmetic WQI gives zero quality rating at the ideal and 100 at 
   assert.equal(atLimit.details[0].qualityRating, 100);
   assert.equal(atLimit.details[1].qualityRating, 100);
 });
-test('weighted arithmetic WQI measures departures on either side of a non-zero ideal consistently', () => {
+test('weighted arithmetic WQI measures departures against the appropriate two-sided boundary', () => {
   const result = calculateWeightedArithmeticWQI([
-    { key: 'pH-low', value: 6, standard: 8, ideal: 7 },
-    { key: 'pH-high', value: 8, standard: 6, ideal: 7 }
+    { key: 'pH-low', value: 6, minStandard: 6, maxStandard: 8, ideal: 7 },
+    { key: 'pH-high', value: 8, minStandard: 6, maxStandard: 8, ideal: 7 }
   ]);
   assert.equal(result.details[0].qualityRating, 100);
   assert.equal(result.details[1].qualityRating, 100);
@@ -81,7 +81,7 @@ test('two-sided weighted arithmetic limits calculate against the relevant side o
   assert.equal(result.details[0].applicableLimit, 6.5);
   assert.equal(result.details[1].applicableLimit, 8.5);
   assert.equal(result.details[0].qualityRating, 200);
-  assert.equal(result.details[1].qualityRating, 66.66666666666666);
+  assert.ok(Math.abs(result.details[1].qualityRating - (200 / 3)) < 1e-12);
 });
 test('two-sided limits give zero at ideal and 100 at either boundary', () => {
   const result = calculateWeightedArithmeticWQI([
