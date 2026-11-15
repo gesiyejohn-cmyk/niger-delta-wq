@@ -224,3 +224,17 @@ test('WQI calculations reject booleans and object-valued measurements and limits
   assert.throws(() => computeDualWQIDataset([{ ph: {}, tds: 100 }]),
     /pH: measurement must be a finite number/);
 });
+
+
+test('weighted arithmetic WQI rejects malformed nonblank readings even before limits are configured', () => {
+  assert.throws(() => calculateWeightedArithmeticWQI([
+    { key: 'lead', label: 'Lead', value: 'not recorded?' },
+    { key: 'tds', value: 100, standard: 500, ideal: 0 },
+    { key: 'nitrate', value: 10, standard: 50, ideal: 0 }
+  ]), /Lead: measurement must be a finite number/);
+  assert.throws(() => calculateWeightedArithmeticWQI([
+    { key: 'lead', value: true },
+    { key: 'tds', value: 100, standard: 500, ideal: 0 },
+    { key: 'nitrate', value: 10, standard: 50, ideal: 0 }
+  ]), /Lead: measurement must be a finite number/);
+});
