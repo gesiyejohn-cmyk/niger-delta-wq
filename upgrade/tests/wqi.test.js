@@ -56,3 +56,21 @@ test('weighted arithmetic WQI measures departures on either side of a non-zero i
   assert.equal(result.details[0].qualityRating, 100);
   assert.equal(result.details[1].qualityRating, 100);
 });
+
+test('weighted arithmetic WQI excludes blank and whitespace-only measurements and limits', () => {
+  const result = calculateWeightedArithmeticWQI([
+    { key: 'tds', value: ' ', standard: 500, ideal: 0 },
+    { key: 'nitrate', value: 10, standard: '  ', ideal: 0 },
+    { key: 'iron', value: 0.1, standard: 0.3, ideal: 0 },
+    { key: 'manganese', value: 0.2, standard: 0.5, ideal: 0 }
+  ]);
+  assert.equal(result.parameterCount, 2);
+  assert.equal(result.missingExcluded, 2);
+});
+
+test('CCME WQI excludes whitespace-only readings instead of treating them as zero', async () => {
+  const { computeDualWQI } = await import('../src/engine/wqi.js');
+  const result = computeDualWQI({ ph: ' ', tds: 100, nitrate: 10 });
+  assert.ok(!result.who.usedParams.includes('ph'));
+  assert.ok(!result.son.usedParams.includes('ph'));
+});

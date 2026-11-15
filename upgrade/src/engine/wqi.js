@@ -28,7 +28,7 @@ function calculateForStandard(sample, standard, overrides) {
 
   for (const [id, definition] of Object.entries(PARAMETER_REGISTRY)) {
     const rawValue = sample?.[id];
-    if (rawValue == null || rawValue === '') continue;
+    if (rawValue == null || (typeof rawValue === 'string' && rawValue.trim() === '')) continue;
     const value = Number(rawValue);
     if (!Number.isFinite(value)) continue;
 
@@ -116,7 +116,8 @@ export function computeDualWQI(sample, { overrides = {} } = {}) {
  */
 export function calculateWeightedArithmeticWQI(measurements) {
   if (!Array.isArray(measurements)) throw new Error('Supply a list of measured water-quality parameters.');
-  const usable = measurements.filter(item => item && item.value !== '' && item.value != null && item.standard !== '' && item.standard != null && item.ideal !== '' && item.ideal != null);
+  const hasValue = value => value != null && !(typeof value === 'string' && value.trim() === '');
+  const usable = measurements.filter(item => item && hasValue(item.value) && hasValue(item.standard) && hasValue(item.ideal));
   if (usable.length < 2) throw new Error('At least two measured parameters with entered standards and ideal values are required.');
   const rows = usable.map(item => {
     const value = Number(item.value), standard = Number(item.standard), ideal = Number(item.ideal);
