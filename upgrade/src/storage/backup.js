@@ -55,6 +55,9 @@ export async function restoreDatabaseBackup(input, mode = 'merge') {
   );
   const result = { restored: 0, skipped: 0, mode };
   if (!names.length) return result;
+  if (mode === 'replace' && names.every(name => backup.stores[name].length === 0)) {
+    throw new Error('Cannot replace current data with an empty backup. Select a backup that contains records.');
+  }
   const tx = db.transaction(names, 'readwrite');
   // Attach a rejection handler immediately: an IndexedDB request failure also
   // rejects idb's transaction-done promise, even when the request is caught below.
