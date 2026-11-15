@@ -59,3 +59,36 @@ test('IndexedDB separates raw VES readings and interpretations, preserves origin
   assert.equal((await listVES())[0].interpretation.layers[0].resistivity, 125);
   assert.equal((await getERTSource('ert-model-1')).fileName, 'field-export.csv');
 });
+
+test('replace restore leaves local stores untouched when a partial backup omits them', async () => {
+  const db = await getDB();
+  const tx = db.transaction(['samples', 'settings'], 'readwrite');
+  await tx.objectStore('samples').put({ id: 'partial-old-sample', sampleCode: 'OLD' });
+  await tx.objectStore('settings').put({ key: 'local-setting', value: 'keep-me' });
+  await tx.done;
+
+  const partialBackup = {
+    format: 'niger-delta-wq-backup',
+    version: 1,
+    stores: { samples: [{ id: 'partial-new-sample', sampleCode: 'NEW' }] }
+  };
+  const result = await restoreDatabaseBackup(partialBackup, 'replace');
+
+  assert.equal(result.restored, 1);
+  assert.equal(result.skipped, 0);
+  assert.equal(await db.get('samples', 'partial-old-sample'), undefined);
+  assert.equal((await db.get('samples', 'partial-new-sample')).sampleCode, 'NEW');
+  assert.equal((await db.get('settings', 'local-setting')).value, 'keep-me');
+});
+
+test('replace restore with an empty store map is a safe no-op', async () => {
+  const db = await getDB();
+  await db.put('settings', { key: 'keep-empty-map-setting', value: 'keep-me' });
+  const result = await restoreDatabaseBackup({
+    format: 'niger-delta-wq-backup',
+    version: 1,
+    stores: {}
+  }, 'replace');
+  assert.deepEqual(result, { restored: 0, skipped: 0, mode: 'replace' });
+  assert.equal((await db.get('settings', 'keep-empty-map-setting')).value, 'keep-me');
+});

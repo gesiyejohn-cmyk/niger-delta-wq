@@ -6,9 +6,17 @@ const STORE_NAMES = ['samples', 'settings', 'syncQueue', 'ves', 'vesInterpretati
 
 export async function createDatabaseBackup() {
   const db = await getDB();
+  const names = STORE_NAMES.filter(name => db.objectStoreNames.contains(name));
+  const tx = db.transaction(names, 'readonly');
   const stores = {};
-  for (const name of STORE_NAMES) {
-    if (db.objectStoreNames.contains(name)) stores[name] = await db.getAll(name);
+  try {
+    await Promise.all(names.map(async name => {
+      stores[name] = await tx.objectStore(name).getAll();
+    }));
+    await tx.done;
+  } catch (error) {
+    try { tx.abort(); } catch { /* transaction may already be closed */ }
+    throw new Error('Backup could not be completed: ' + error.message);
   }
   return {
     format: BACKUP_FORMAT,
@@ -23,8 +31,9 @@ export function validateDatabaseBackup(backup) {
   if (!backup || backup.format !== BACKUP_FORMAT) throw new Error('This file is not a Niger Delta WQ backup.');
   if (backup.version !== BACKUP_VERSION) throw new Error('Unsupported backup version: ' + backup.version);
   if (!backup.stores || typeof backup.stores !== 'object' || Array.isArray(backup.stores)) throw new Error('Backup data section is missing or invalid.');
-  for (const name of STORE_NAMES) {
-    if (backup.stores[name] != null && !Array.isArray(backup.stores[name])) throw new Error('Backup store ' + name + ' is not a valid record list.');
+  for (const name of Object.keys(backup.stores)) {
+    if (!STORE_NAMES.includes(name)) throw new Error('Backup contains an unsupported data store: ' + name);
+    if (!Array.isArray(backup.stores[name])) throw new Error('Backup store ' + name + ' is not a valid record list.');
   }
   for (const name of STORE_NAMES) {
     for (const record of backup.stores[name] || []) {
@@ -40,9 +49,13 @@ export async function restoreDatabaseBackup(input, mode = 'merge') {
   const backup = validateDatabaseBackup(input);
   if (!['merge', 'replace'].includes(mode)) throw new Error('Choose merge or replace restore mode.');
   const db = await getDB();
-  const names = STORE_NAMES.filter(name => db.objectStoreNames.contains(name));
-  const tx = db.transaction(names, 'readwrite');
+  // A partial backup must never clear stores it does not contain.
+  const names = STORE_NAMES.filter(name =>
+    db.objectStoreNames.contains(name) && Object.hasOwn(backup.stores, name)
+  );
   const result = { restored: 0, skipped: 0, mode };
+  if (!names.length) return result;
+  const tx = db.transaction(names, 'readwrite');
   try {
     for (const name of names) {
       const store = tx.objectStore(name);

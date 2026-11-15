@@ -29,3 +29,8 @@ test('backup validator accepts separately stored VES interpretations and origina
   };
   assert.equal(validateDatabaseBackup(backup), backup);
 });
+
+test('backup validator rejects null and unknown store entries', () => {
+  assert.throws(() => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { samples: null } }));
+  assert.throws(() => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { unexpected: [] } }));
+});
