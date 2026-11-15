@@ -82,3 +82,17 @@ test('VES layer validation rejects missing or non-positive thickness', () => {
     { resistivity: 35, thickness: '' }
   ]));
 });
+
+test('descriptive statistics exclude null, undefined, blank and non-numeric values', () => {
+  const stats = descriptiveStats([1, null, undefined, '', ' ', '2', 'not-a-number', 3]);
+  assert.equal(stats.n, 3);
+  assert.equal(stats.mean, 2);
+  assert.equal(stats.min, 1);
+  assert.equal(stats.max, 3);
+  assert.equal(descriptiveStats([null, undefined, '']), null);
+});
+test('Pearson correlation uses pairwise complete observations without zero-filling', () => {
+  assert.equal(pearsonCorrelation([1, null, 3, 4, ''], [2, 100, 6, 8, 10]), 1);
+  assert.equal(pearsonCorrelation([1, null, 3], [2, 4, 6]), null);
+  assert.equal(pearsonCorrelation([1, 2, 3], [2, '', 6]), null);
+});
