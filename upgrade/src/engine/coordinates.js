@@ -25,9 +25,7 @@ export function coordinateToDecimal(value, format = 'DD', hemisphere = 'N', axis
     const [degrees, minutes, seconds = 0] = p;
     if (degrees < 0 || minutes < 0 || seconds < 0 || minutes >= 60 || seconds >= 60) throw new Error('Degrees must be non-negative and minutes/seconds must be below 60.');
     magnitude = degrees + minutes / 60 + seconds / 3600;
-  } else {
-    throw new Error('Unsupported coordinate format.');
-  }
+  } else throw new Error('Unsupported coordinate format.');
   if (magnitude > limit) throw new Error(axis + ' must be between 0 and ' + limit + ' degrees.');
   return Number((['S', 'W'].includes(hemi) ? -magnitude : magnitude).toFixed(8));
 }
@@ -41,9 +39,60 @@ export function decimalToCoordinate(decimal, format = 'DD') {
   const minuteFloat = (absolute - degrees) * 60;
   const minutes = Math.floor(minuteFloat);
   const seconds = (minuteFloat - minutes) * 60;
-  if (format === 'DDM') return degrees + '° ' + (minuteFloat).toFixed(4) + "'";
+  if (format === 'DDM') return degrees + '° ' + minuteFloat.toFixed(4) + "'";
   if (format === 'DMS') return degrees + '° ' + minutes + "' " + seconds.toFixed(2) + '"';
   throw new Error('Unsupported coordinate format.');
+}
+
+const WGS84_A = 6378137;
+const WGS84_E2 = 0.0066943799901413165;
+const UTM_K0 = 0.9996;
+
+export function decimalToUTM(latitude, longitude, requestedZone) {
+  const lat = Number(latitude), lon = Number(longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -80 || lat > 84 || lon < -180 || lon > 180) {
+    throw new Error('WGS84 coordinates are outside the supported UTM latitude/longitude range.');
+  }
+  const zone = requestedZone == null ? Math.min(60, Math.max(1, Math.floor((lon + 180) / 6) + 1)) : Number(requestedZone);
+  if (!Number.isInteger(zone) || zone < 1 || zone > 60) throw new Error('UTM zone must be an integer from 1 to 60.');
+  const phi = lat * Math.PI / 180, lambda = lon * Math.PI / 180;
+  const lambda0 = ((zone - 1) * 6 - 180 + 3) * Math.PI / 180;
+  const e2p = WGS84_E2 / (1 - WGS84_E2);
+  const sin = Math.sin(phi), cos = Math.cos(phi), tan = Math.tan(phi);
+  const N = WGS84_A / Math.sqrt(1 - WGS84_E2 * sin * sin);
+  const T = tan * tan, C = e2p * cos * cos, A = cos * (lambda - lambda0);
+  const M = WGS84_A * ((1 - WGS84_E2 / 4 - 3 * WGS84_E2 ** 2 / 64 - 5 * WGS84_E2 ** 3 / 256) * phi
+    - (3 * WGS84_E2 / 8 + 3 * WGS84_E2 ** 2 / 32 + 45 * WGS84_E2 ** 3 / 1024) * Math.sin(2 * phi)
+    + (15 * WGS84_E2 ** 2 / 256 + 45 * WGS84_E2 ** 3 / 1024) * Math.sin(4 * phi)
+    - (35 * WGS84_E2 ** 3 / 3072) * Math.sin(6 * phi));
+  let easting = UTM_K0 * N * (A + (1 - T + C) * A ** 3 / 6 + (5 - 18 * T + T ** 2 + 72 * C - 58 * e2p) * A ** 5 / 120) + 500000;
+  let northing = UTM_K0 * (M + N * tan * (A ** 2 / 2 + (5 - T + 9 * C + 4 * C ** 2) * A ** 4 / 24 + (61 - 58 * T + T ** 2 + 600 * C - 330 * e2p) * A ** 6 / 720));
+  if (lat < 0) northing += 10000000;
+  return { easting: Number(easting.toFixed(3)), northing: Number(northing.toFixed(3)), zone, hemisphere: lat < 0 ? 'S' : 'N', epsg: (lat < 0 ? 32700 : 32600) + zone, datum: 'WGS84' };
+}
+
+export function utmToDecimal(easting, northing, zone, hemisphere = 'N') {
+  const x = Number(easting) - 500000, y0 = Number(northing);
+  const z = Number(zone), hemi = String(hemisphere).toUpperCase();
+  if (!Number.isFinite(x) || !Number.isFinite(y0) || y0 < 0 || y0 > 10000000 || !Number.isInteger(z) || z < 1 || z > 60 || !['N', 'S'].includes(hemi)) {
+    throw new Error('Enter valid UTM easting, northing, zone and hemisphere.');
+  }
+  const y = y0 - (hemi === 'S' ? 10000000 : 0);
+  const e1 = (1 - Math.sqrt(1 - WGS84_E2)) / (1 + Math.sqrt(1 - WGS84_E2));
+  const M = y / UTM_K0;
+  const mu = M / (WGS84_A * (1 - WGS84_E2 / 4 - 3 * WGS84_E2 ** 2 / 64 - 5 * WGS84_E2 ** 3 / 256));
+  const phi1 = mu + (3 * e1 / 2 - 27 * e1 ** 3 / 32) * Math.sin(2 * mu)
+    + (21 * e1 ** 2 / 16 - 55 * e1 ** 4 / 32) * Math.sin(4 * mu)
+    + (151 * e1 ** 3 / 96) * Math.sin(6 * mu) + (1097 * e1 ** 4 / 512) * Math.sin(8 * mu);
+  const e2p = WGS84_E2 / (1 - WGS84_E2);
+  const sin = Math.sin(phi1), cos = Math.cos(phi1), tan = Math.tan(phi1);
+  const N1 = WGS84_A / Math.sqrt(1 - WGS84_E2 * sin * sin);
+  const R1 = WGS84_A * (1 - WGS84_E2) / (1 - WGS84_E2 * sin * sin) ** 1.5;
+  const T1 = tan * tan, C1 = e2p * cos * cos, D = x / (N1 * UTM_K0);
+  const lat = phi1 - (N1 * tan / R1) * (D ** 2 / 2 - (5 + 3 * T1 + 10 * C1 - 4 * C1 ** 2 - 9 * e2p) * D ** 4 / 24 + (61 + 90 * T1 + 298 * C1 + 45 * T1 ** 2 - 252 * e2p - 3 * C1 ** 2) * D ** 6 / 720);
+  const lon0 = ((z - 1) * 6 - 180 + 3) * Math.PI / 180;
+  const lon = lon0 + (D - (1 + 2 * T1 + C1) * D ** 3 / 6 + (5 - 2 * C1 + 28 * T1 - 3 * C1 ** 2 + 8 * e2p + 24 * T1 ** 2) * D ** 5 / 120) / cos;
+  return { latitude: Number((lat * 180 / Math.PI).toFixed(8)), longitude: Number((lon * 180 / Math.PI).toFixed(8)), zone: z, hemisphere: hemi, datum: 'WGS84' };
 }
 
 export function validateCoordinatePair({ latitude, longitude, format = 'DD', latitudeHemisphere = 'N', longitudeHemisphere = 'E' }) {
