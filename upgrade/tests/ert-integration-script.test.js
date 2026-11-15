@@ -47,7 +47,7 @@ test('ERT integration refuses to patch when its import anchor is missing', () =>
 
 test('ERT integration refuses duplicate imports', () => {
   assert.throws(
-    () => integrateERTTomogramSource(page().replace(importAnchor, importAnchor + '\n' + "import ERTTomogram from './ERTTomogram.jsx';")),
+    () => integrateERTTomogramSource(page().replace(importAnchor, importAnchor + '\n' + "import ERTTomogram from './ERTTomogram.jsx';\nimport ERTTomogram from './ERTTomogram.jsx';")),
     /exactly one ERTTomogram import/
   );
 });
