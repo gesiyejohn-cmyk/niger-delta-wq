@@ -24,3 +24,13 @@ test('weighted arithmetic WQI requires two complete parameters and valid limits'
   assert.throws(() => calculateWeightedArithmeticWQI([{ value: 1, standard: 2, ideal: 0 }]));
   assert.throws(() => calculateWeightedArithmeticWQI([{ value: 1, standard: 0, ideal: 0 }, { value: 2, standard: 3, ideal: 0 }]));
 });
+test('weighted arithmetic WQI rejects inputs that overflow quality ratings or weights', () => {
+  assert.throws(() => calculateWeightedArithmeticWQI([
+    { key: 'a', value: Number.MAX_VALUE, standard: 1, ideal: 0 },
+    { key: 'b', value: 1, standard: 2, ideal: 0 }
+  ]), /numeric range/);
+  assert.throws(() => calculateWeightedArithmeticWQI([
+    { key: 'a', value: 1, standard: Number.MIN_VALUE, ideal: 0 },
+    { key: 'b', value: 1, standard: 2, ideal: 0 }
+  ]), /numeric range/);
+});
