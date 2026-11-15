@@ -36,10 +36,13 @@ export function validateDatabaseBackup(backup) {
     if (!Array.isArray(backup.stores[name])) throw new Error('Backup store ' + name + ' is not a valid record list.');
   }
   for (const name of STORE_NAMES) {
+    const keys = new Set();
     for (const record of backup.stores[name] || []) {
       if (!record || typeof record !== 'object' || Array.isArray(record)) throw new Error('Backup contains an invalid record in ' + name + '.');
       const key = name === 'settings' ? record.key : record.id;
       if (key == null) throw new Error('A record in ' + name + ' is missing its primary key.');
+      if (keys.has(key)) throw new Error('Backup contains duplicate primary keys in ' + name + '.');
+      keys.add(key);
     }
   }
   return backup;
