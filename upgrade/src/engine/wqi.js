@@ -123,10 +123,19 @@ export function calculateWeightedArithmeticWQI(measurements) {
     if (![value, standard, ideal].every(Number.isFinite) || standard <= 0 || standard === ideal) {
       throw new Error((item.label || item.key || 'Parameter') + ': measured value must be numeric; standard must be positive and different from the ideal value.');
     }
-    return { ...item, value, standard, ideal, qualityRating: 100 * Math.abs(value - ideal) / Math.abs(standard - ideal), rawWeight: 1 / standard };
+    const qualityRating = 100 * Math.abs(value - ideal) / Math.abs(standard - ideal);
+    const rawWeight = 1 / standard;
+    if (!Number.isFinite(qualityRating) || !Number.isFinite(rawWeight) || rawWeight <= 0) {
+      throw new Error((item.label || item.key || 'Parameter') + ': values are outside the numeric range supported by this calculation.');
+    }
+    return { ...item, value, standard, ideal, qualityRating, rawWeight };
   });
   const weightSum = rows.reduce((sum, row) => sum + row.rawWeight, 0);
+  if (!Number.isFinite(weightSum) || weightSum <= 0) {
+    throw new Error('The entered standard limits cannot produce valid relative weights.');
+  }
   const details = rows.map(row => ({ ...row, unitWeight: row.rawWeight / weightSum, contribution: row.qualityRating * row.rawWeight / weightSum }));
   const wqi = details.reduce((sum, row) => sum + row.contribution, 0);
+  if (!Number.isFinite(wqi)) throw new Error('The calculated WQI is outside the supported numeric range. Check the measurements and standard limits.');
   return { wqi, parameterCount: details.length, details, method: 'Weighted arithmetic water quality index', missingExcluded: measurements.length - usable.length };
 }
