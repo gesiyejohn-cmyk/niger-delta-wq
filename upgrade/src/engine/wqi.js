@@ -30,7 +30,9 @@ function calculateForStandard(sample, standard, overrides) {
     const rawValue = sample?.[id];
     if (rawValue == null || (typeof rawValue === 'string' && rawValue.trim() === '')) continue;
     const value = Number(rawValue);
-    if (!Number.isFinite(value)) continue;
+    if (!Number.isFinite(value)) {
+      throw new Error(`${definition.name}: measurement must be a finite number. Correct the value or leave it blank only when it was not measured.`);
+    }
 
     const base = definition[standard];
     const override = overrides?.[id]?.[standard];
