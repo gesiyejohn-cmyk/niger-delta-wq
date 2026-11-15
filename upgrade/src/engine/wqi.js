@@ -126,7 +126,7 @@ export function computeDualWQI(sample, { overrides = {} } = {}) {
         ? round(who.wqi - son.wqi, 1)
         : null,
     },
-    disclaimer: 'Screening index only. Results depend on the configured objectives and measured parameters. A WQI score does not establish potability or regulatory compliance. Verify each parameter against the applicable, current standard and review microbiological and other required tests.',
+    disclaimer: 'Screening index only. Results depend on the configured objectives and measured parameters. With one observation per parameter, F1 and F2 necessarily have the same tested-variable and failed-test counts; use a representative multi-sample dataset for temporal water-quality assessment. A WQI score does not establish potability or regulatory compliance. Verify each parameter against the applicable, current standard and review microbiological and other required tests.',
   };
 }
 
