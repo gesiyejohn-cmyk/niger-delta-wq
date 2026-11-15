@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { integrateERTTomogramSource } from '../scripts/integrate-ert-tomogram.mjs';
+import { integrateERTTomogramSource } from '../src/engine/ertIntegration.js';
 
 const importAnchor = "import VESInterpretation from './VESInterpretation.jsx';";
 const marker = '          <h3>Imported model data table</h3>';
