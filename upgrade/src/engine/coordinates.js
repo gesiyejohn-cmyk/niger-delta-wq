@@ -72,10 +72,15 @@ export function decimalToUTM(latitude, longitude, requestedZone) {
 }
 
 export function utmToDecimal(easting, northing, zone, hemisphere = 'N') {
-  const x = Number(easting) - 500000, y0 = Number(northing);
+  const e = Number(easting), y0 = Number(northing);
+  const x = e - 500000;
   const z = Number(zone), hemi = String(hemisphere).toUpperCase();
-  if (!Number.isFinite(x) || !Number.isFinite(y0) || y0 < 0 || y0 > 10000000 || !Number.isInteger(z) || z < 1 || z > 60 || !['N', 'S'].includes(hemi)) {
-    throw new Error('Enter valid UTM easting, northing, zone and hemisphere.');
+  // Standard UTM coordinates use an easting between 100,000 and 900,000 m.
+  // Reject out-of-grid values rather than returning plausible-looking but invalid locations.
+  if (!Number.isFinite(e) || e < 100000 || e > 900000
+    || !Number.isFinite(y0) || y0 < 0 || y0 > 10000000
+    || !Number.isInteger(z) || z < 1 || z > 60 || !['N', 'S'].includes(hemi)) {
+    throw new Error('Enter valid UTM easting (100,000–900,000 m), northing, zone and hemisphere.');
   }
   const y = y0 - (hemi === 'S' ? 10000000 : 0);
   const e1 = (1 - Math.sqrt(1 - WGS84_E2)) / (1 + Math.sqrt(1 - WGS84_E2));
@@ -92,7 +97,12 @@ export function utmToDecimal(easting, northing, zone, hemisphere = 'N') {
   const lat = phi1 - (N1 * tan / R1) * (D ** 2 / 2 - (5 + 3 * T1 + 10 * C1 - 4 * C1 ** 2 - 9 * e2p) * D ** 4 / 24 + (61 + 90 * T1 + 298 * C1 + 45 * T1 ** 2 - 252 * e2p - 3 * C1 ** 2) * D ** 6 / 720);
   const lon0 = ((z - 1) * 6 - 180 + 3) * Math.PI / 180;
   const lon = lon0 + (D - (1 + 2 * T1 + C1) * D ** 3 / 6 + (5 - 2 * C1 + 28 * T1 - 3 * C1 ** 2 + 8 * e2p + 24 * T1 ** 2) * D ** 5 / 120) / cos;
-  return { latitude: Number((lat * 180 / Math.PI).toFixed(8)), longitude: Number((lon * 180 / Math.PI).toFixed(8)), zone: z, hemisphere: hemi, datum: 'WGS84' };
+  const latitude = lat * 180 / Math.PI;
+  const longitude = lon * 180 / Math.PI;
+  if (latitude < -80 || latitude > 84 || longitude < -180 || longitude > 180) {
+    throw new Error('UTM coordinates resolve outside the supported WGS84 UTM area.');
+  }
+  return { latitude: Number(latitude.toFixed(8)), longitude: Number(longitude.toFixed(8)), zone: z, hemisphere: hemi, datum: 'WGS84' };
 }
 
 export function validateCoordinatePair({ latitude, longitude, format = 'DD', latitudeHemisphere = 'N', longitudeHemisphere = 'E' }) {
