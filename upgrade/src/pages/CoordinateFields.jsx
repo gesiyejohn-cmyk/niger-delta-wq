@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { coordinateToDecimal, decimalToCoordinate, decimalToUTM } from '../engine/coordinates.js';
 
 const field = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
 
 export default function CoordinateFields({ value, onChange, label = 'Location coordinates' }) {
+  const [gpsMessage, setGpsMessage] = useState('');
+  const [gpsBusy, setGpsBusy] = useState(false);
   let converted = null;
   try {
     if (value.latitude !== '' && value.longitude !== '') {
@@ -35,6 +38,20 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
         <option value="DDM">Degrees-Decimal Minutes (DDM)</option>
       </select>
     </label>
+    <button type="button" style={{ ...field, marginTop: 8, cursor: 'pointer' }} disabled={gpsBusy} onClick={() => {
+      if (!navigator.geolocation) { setGpsMessage('GPS location is not available in this browser.'); return; }
+      setGpsBusy(true); setGpsMessage('Requesting device location…');
+      navigator.geolocation.getCurrentPosition(position => {
+        const lat = position.coords.latitude, lon = position.coords.longitude;
+        onChange(old => ({ ...old, latitude: decimalToCoordinate(lat, old.format), longitude: decimalToCoordinate(lon, old.format), latitudeHemisphere: lat < 0 ? 'S' : 'N', longitudeHemisphere: lon < 0 ? 'W' : 'E' }));
+        setGpsMessage('Location captured. Estimated accuracy: ' + Math.round(position.coords.accuracy) + ' m. Check the coordinates before saving.');
+        setGpsBusy(false);
+      }, error => {
+        setGpsMessage(error.code === 1 ? 'Location permission was denied.' : error.code === 2 ? 'Device location is unavailable.' : 'Location request timed out. Try again.');
+        setGpsBusy(false);
+      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+    }}>{gpsBusy ? 'Getting GPS location…' : 'Use device GPS location'}</button>
+    {gpsMessage && <p className="muted" role="status">{gpsMessage}</p>}
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 90px', gap: 8, marginTop: 8 }}>
       <label>Latitude ({value.format})
         <input style={field} value={value.latitude} placeholder={value.format === 'DD' ? 'e.g. 4.920000' : value.format === 'DMS' ? 'e.g. 4 55 12' : 'e.g. 4 55.2000'} onChange={event => set('latitude', event.target.value)} />
