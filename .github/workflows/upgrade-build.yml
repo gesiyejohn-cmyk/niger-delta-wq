@@ -25,7 +25,9 @@ jobs:
           test -f source/niger-delta-wq/src/pages/GeophysicsPage.jsx
       - name: Install dependencies
         working-directory: source/niger-delta-wq
-        run: npm install
+        run: |
+          npm install
+          npm install --no-save fake-indexeddb
       - name: Run scientific and geophysics tests
         working-directory: source/niger-delta-wq
         run: npm test
