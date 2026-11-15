@@ -73,6 +73,28 @@ test('CCME WQI excludes whitespace-only readings instead of treating them as zer
   assert.ok(!result.son.usedParams.includes('ph'));
 });
 
+test('CCME WQI treats blank custom objectives as omitted, not as zero', async () => {
+  const { computeDualWQI } = await import('../src/engine/wqi.js');
+  const baseline = computeDualWQI({ ph: 7 });
+  const withBlankOverride = computeDualWQI({ ph: 7 }, {
+    overrides: { ph: { who: { min: ' ' } } }
+  });
+  assert.equal(withBlankOverride.who.wqi, baseline.who.wqi);
+});
+
+test('CCME WQI rejects non-numeric, negative and contradictory custom objectives', async () => {
+  const { computeDualWQI } = await import('../src/engine/wqi.js');
+  assert.throws(() => computeDualWQI({ ph: 7 }, {
+    overrides: { ph: { who: { max: 'not-a-number' } } }
+  }), /finite, non-negative number/);
+  assert.throws(() => computeDualWQI({ ph: 7 }, {
+    overrides: { ph: { who: { min: -1 } } }
+  }), /finite, non-negative number/);
+  assert.throws(() => computeDualWQI({ ph: 7 }, {
+    overrides: { ph: { who: { min: 9, max: 8 } } }
+  }), /lower objective must be below/);
+});
+
 test('two-sided weighted arithmetic limits calculate against the relevant side of the ideal', () => {
   const result = calculateWeightedArithmeticWQI([
     { key: 'pH-low', value: 6, minStandard: 6.5, maxStandard: 8.5, ideal: 7, weightStandard: 8.5 },

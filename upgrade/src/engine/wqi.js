@@ -36,11 +36,31 @@ function calculateForStandard(sample, standard, overrides) {
     const override = overrides?.[id]?.[standard];
     const objective = base || override ? { ...(base || {}) } : null;
     if (override && objective) {
+      if (typeof override !== 'object' || Array.isArray(override)) {
+        throw new Error(`${definition.name}: custom standard limits must be an object.`);
+      }
       for (const bound of ['min', 'max']) {
-        if (override[bound] != null) objective[bound] = Number(override[bound]);
+        const raw = override[bound];
+        // Empty form fields mean "use the configured objective", not zero.
+        if (raw == null || (typeof raw === 'string' && raw.trim() === '')) continue;
+        const parsed = Number(raw);
+        if (!Number.isFinite(parsed) || parsed < 0) {
+          throw new Error(`${definition.name}: custom ${bound} objective must be a finite, non-negative number.`);
+        }
+        objective[bound] = parsed;
       }
     }
     if (!objective || (objective.min == null && objective.max == null)) continue;
+    for (const bound of ['min', 'max']) {
+      if (objective[bound] != null
+        && (!Number.isFinite(Number(objective[bound])) || Number(objective[bound]) < 0)) {
+        throw new Error(`${definition.name}: configured ${bound} objective is invalid.`);
+      }
+    }
+    if (objective.min != null && objective.max != null
+      && Number(objective.min) >= Number(objective.max)) {
+      throw new Error(`${definition.name}: lower objective must be below the upper objective.`);
+    }
 
     usedParams.push(id);
     let excursion = 0;
