@@ -1,0 +1,27 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { buildERTGrid, interpolateERTResistivity } from '../src/engine/ert.js';
+
+const gridPoints = [];
+for (const depth of [1, 2, 3]) for (const x of [0, 5, 10]) {
+  gridPoints.push({ x, depth, resistivity: 100 + x * 2 + depth });
+}
+
+test('ERT interpolation returns the exact source value at a model cell', () => {
+  assert.equal(interpolateERTResistivity(gridPoints, 5, 2), 112);
+});
+test('ERT interpolation between source cells is finite and positive', () => {
+  const value = interpolateERTResistivity(gridPoints, 2.5, 1.5);
+  assert.ok(Number.isFinite(value) && value > 0);
+});
+test('ERT grid builder creates a 2D grid from sufficiently covered data', () => {
+  const result = buildERTGrid(gridPoints);
+  assert.ok(result);
+  assert.equal(result.method, 'log-resistivity inverse-distance weighting');
+  assert.equal(result.inversionPerformed, false);
+  assert.ok(result.values.length > 0);
+});
+test('ERT grid builder refuses sparse or one-dimensional point sets', () => {
+  assert.equal(buildERTGrid(gridPoints.slice(0, 4)), null);
+  assert.equal(buildERTGrid([{ x: 0, depth: 1, resistivity: 10 }, { x: 5, depth: 1, resistivity: 20 }, { x: 10, depth: 1, resistivity: 30 }]), null);
+});
