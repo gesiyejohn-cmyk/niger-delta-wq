@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { createDatabaseBackup, restoreDatabaseBackup, validateDatabaseBackup } from '../storage/backup.js';
 
 const panel = { background: '#fff', border: '1px solid #dbe3ea', borderRadius: 12, padding: 16, marginBottom: 16 };
@@ -13,6 +13,7 @@ function formatFileSize(bytes) {
 
 export default function DataBackupPage() {
   const [file, setFile] = useState(null);
+  const selectionRef = useRef(0);
   const [preview, setPreview] = useState(null);
   const [validatedBackup, setValidatedBackup] = useState(null);
   const [mode, setMode] = useState('merge');
@@ -38,17 +39,23 @@ export default function DataBackupPage() {
   }
 
   async function selectBackup(nextFile) {
+    const selectionId = ++selectionRef.current;
     setFile(nextFile); setPreview(null); setValidatedBackup(null); setError(''); setMessage('');
     if (!nextFile) return;
     if (nextFile.size === 0) { setError('Cannot use this backup: the selected file is empty.'); return; }
     try {
-      const parsed = JSON.parse(await nextFile.text());
+      const fileText = await nextFile.text();
+      if (selectionId !== selectionRef.current) return;
+      const parsed = JSON.parse(fileText);
       validateDatabaseBackup(parsed);
       const counts = Object.fromEntries(Object.entries(parsed.stores).map(([name, records]) => [name, records.length]));
       const total = Object.values(counts).reduce((a, b) => a + b, 0);
+      if (selectionId !== selectionRef.current) return;
       setValidatedBackup(parsed);
       setPreview({ exportedAt: parsed.exportedAt, counts, total, size: nextFile.size, empty: total === 0 });
-    } catch (e) { setError('Cannot use this backup: ' + (e?.message || 'The file could not be read.')); }
+    } catch (e) {
+      if (selectionId === selectionRef.current) setError('Cannot use this backup: ' + (e?.message || 'The file could not be read.'));
+    }
   }
 
   async function restore() {
