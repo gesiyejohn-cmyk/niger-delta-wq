@@ -84,36 +84,7 @@ jobs:
           profile: pixel_2
           emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
           script: |
-            set -e
-            APK=source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk
-            AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort | tail -n 1)"
-            if [ -z "$AAPT" ]; then
-              echo "Android aapt tool was not found."
-              exit 1
-            fi
-            BADGING="$("$AAPT" dump badging "$APK")"
-            APP_ID="$(echo "$BADGING" | grep "^package: name=" | head -n 1 | cut -d "'" -f 2)"
-            LAUNCHER_ACTIVITY="$(echo "$BADGING" | grep "^launchable-activity: name=" | head -n 1 | cut -d "'" -f 2)"
-            if [ -z "$APP_ID" ] || [ -z "$LAUNCHER_ACTIVITY" ]; then
-              echo "APK package ID or launcher activity is missing from the manifest."
-              echo "$BADGING"
-              exit 1
-            fi
-            echo "APK application ID: $APP_ID"
-            echo "APK launcher activity: $LAUNCHER_ACTIVITY"
-            adb install "$APK"
-            adb shell am start -W -n "$APP_ID/$LAUNCHER_ACTIVITY"
-            for attempt in $(seq 1 30); do
-              if adb shell pidof "$APP_ID"; then
-                echo "NDWQ Android process is running."
-                exit 0
-              fi
-              sleep 2
-            done
-            echo "NDWQ Android process did not remain running; package diagnostics follow."
-            adb shell dumpsys package "$APP_ID" | tail -n 250
-            adb logcat -d -t 2000
-            exit 1
+            APK=source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk; AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort | tail -n 1)"; BADGING="$("$AAPT" dump badging "$APK")"; APP_ID="$(echo "$BADGING" | grep "^package: name=" | head -n 1 | cut -d "'" -f 2)"; LAUNCHER_ACTIVITY="$(echo "$BADGING" | grep "^launchable-activity: name=" | head -n 1 | cut -d "'" -f 2)"; echo "$BADGING"; test -n "$APP_ID" && test -n "$LAUNCHER_ACTIVITY" && echo "APK application ID: $APP_ID" && echo "APK launcher activity: $LAUNCHER_ACTIVITY" && adb install "$APK" && adb shell am start -W -n "$APP_ID/$LAUNCHER_ACTIVITY" && sleep 10 && adb shell pidof "$APP_ID"
       - uses: actions/upload-artifact@v4
         with:
           name: ndwq-integrated-android-apk-fix4
