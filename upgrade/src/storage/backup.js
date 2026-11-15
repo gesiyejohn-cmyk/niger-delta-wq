@@ -2,7 +2,7 @@ import { getDB } from './db.js';
 
 export const BACKUP_FORMAT = 'niger-delta-wq-backup';
 export const BACKUP_VERSION = 1;
-const STORE_NAMES = ['samples', 'settings', 'syncQueue', 'ves', 'ert', 'vulnerability'];
+const STORE_NAMES = ['samples', 'settings', 'syncQueue', 'ves', 'ert', 'ertSource', 'vulnerability'];
 
 export async function createDatabaseBackup() {
   const db = await getDB();
