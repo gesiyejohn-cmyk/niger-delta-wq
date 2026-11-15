@@ -150,3 +150,13 @@ test('one-sided weighted arithmetic limits score the boundary at 100 and scale b
   ]);
   assert.deepEqual(lower.details.map(row => row.qualityRating), [0, 100, 150]);
 });
+
+test('CCME WQI rejects nonblank measurements that are not finite numbers', async () => {
+  const { computeDualWQI } = await import('../src/engine/wqi.js');
+  assert.throws(() => computeDualWQI({ ph: 'not-a-number', tds: 100 }),
+    /pH: measurement must be a finite number/);
+  assert.throws(() => computeDualWQI({ ph: Infinity, tds: 100 }),
+    /pH: measurement must be a finite number/);
+  assert.throws(() => computeDualWQI({ ph: 'NaN', tds: 100 }),
+    /pH: measurement must be a finite number/);
+});
