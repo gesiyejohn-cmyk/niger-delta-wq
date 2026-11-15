@@ -1,7 +1,7 @@
 name: Validate integrated geophysics upgrade
 on:
   push:
-    branches: [ndwq-integrated-geophysics-upgrade, ndwq-desktop-build-integration]
+    branches: [ndwq-integrated-geophysics-upgrade, ndwq-desktop-build-integration, ndwq-coordinate-system-upgrade]
   workflow_dispatch:
 permissions:
   contents: read
