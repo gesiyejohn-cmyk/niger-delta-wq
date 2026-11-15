@@ -207,3 +207,20 @@ test('dataset-level CCME WQI handles an empty dataset without inventing a score'
   assert.equal(result.son.wqi, null);
   assert.equal(result.who.status, 'No data');
 });
+
+
+test('WQI calculations reject booleans and object-valued measurements and limits', async () => {
+  const { computeDualWQI, computeDualWQIDataset } = await import('../src/engine/wqi.js');
+  assert.throws(() => calculateWeightedArithmeticWQI([
+    { key: 'a', value: true, standard: 10, ideal: 0 },
+    { key: 'b', value: 2, standard: 10, ideal: 0 }
+  ]), /valid lower\/upper limits/);
+  assert.throws(() => calculateWeightedArithmeticWQI([
+    { key: 'a', value: 1, standard: {}, ideal: 0 },
+    { key: 'b', value: 2, standard: 10, ideal: 0 }
+  ]), /valid lower\/upper limits/);
+  assert.throws(() => computeDualWQI({ ph: true, tds: 100 }),
+    /pH: measurement must be a finite number/);
+  assert.throws(() => computeDualWQIDataset([{ ph: {}, tds: 100 }]),
+    /pH: measurement must be a finite number/);
+});
