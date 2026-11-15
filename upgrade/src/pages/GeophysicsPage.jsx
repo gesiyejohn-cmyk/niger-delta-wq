@@ -21,13 +21,16 @@ export default function GeophysicsPage() {
   const [cells, setCells] = useState([]);
   const [sourceImport, setSourceImport] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
+  const [selectedErtModelId, setSelectedErtModelId] = useState('');
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState('info');
 
   async function refresh() {
     try {
       setVes(await listVES());
-      setErt(await listERT());
+      const savedERT = await listERT();
+      setErt(savedERT);
+      setSelectedErtModelId(current => current || savedERT[0]?.id || '');
     } catch (error) {
       setMsg('Could not load saved geophysical records: ' + error.message);
       setMsgType('error');
@@ -124,13 +127,15 @@ export default function GeophysicsPage() {
   }
 
   const allCells = useMemo(() => ert.flatMap(model =>
-    model.cells.map((cell, index) => ({ ...cell, lineId: model.lineId || 'Unlabelled line', key: model.id + '-' + index }))
+    model.cells.map((cell, index) => ({ ...cell, modelId: model.id, lineId: model.lineId || 'Unlabelled line', key: model.id + '-' + index }))
   ), [ert]);
-  const minX = allCells.length ? Math.min(...allCells.map(cell => cell.x)) : 0;
-  const maxX = allCells.length ? Math.max(...allCells.map(cell => cell.x)) : 1;
-  const maxDepth = allCells.length ? Math.max(1, ...allCells.map(cell => cell.depth)) : 1;
-  const minR = allCells.length ? Math.min(...allCells.map(cell => cell.resistivity)) : 1;
-  const maxR = allCells.length ? Math.max(...allCells.map(cell => cell.resistivity)) : 1;
+  const activeERTModel = ert.find(model => model.id === selectedErtModelId) || ert[0] || null;
+  const displayCells = activeERTModel ? allCells.filter(cell => cell.modelId === activeERTModel.id) : [];
+  const minX = displayCells.length ? Math.min(...displayCells.map(cell => cell.x)) : 0;
+  const maxX = displayCells.length ? Math.max(...displayCells.map(cell => cell.x)) : 1;
+  const maxDepth = displayCells.length ? Math.max(1, ...displayCells.map(cell => cell.depth)) : 1;
+  const minR = displayCells.length ? Math.min(...displayCells.map(cell => cell.resistivity)) : 1;
+  const maxR = displayCells.length ? Math.max(...displayCells.map(cell => cell.resistivity)) : 1;
 
   function colourFor(value) {
     const ratio = (Math.log10(value) - Math.log10(minR)) /
@@ -194,7 +199,7 @@ export default function GeophysicsPage() {
           <strong>{record.stationId || 'Unlabelled sounding'}</strong> · {record.readings.length} readings · {record.createdAt.slice(0, 10)}
           <button onClick={async () => { await deleteVES(record.id); await refresh(); }}>Delete</button>
         </div>)}
-        {ves.length > 0 && <VESPlot rows={ves.flatMap(record => record.readings)} />}
+        {ves.map(record => <VESPlot key={record.id} record={record} />)}
         <VESInterpretation records={ves} onSaved={refresh} notify={notify} />
       </> : <>
         <h2>ERT line metadata</h2>
@@ -224,6 +229,12 @@ export default function GeophysicsPage() {
         </div>)}
         {allCells.length > 0 && <>
           <h2>ERT resistivity point section</h2>
+          <label>Survey line to display
+            <select style={input} value={activeERTModel?.id || ''} onChange={event => { setSelectedErtModelId(event.target.value); setSelectedCell(null); }}>
+              {ert.map((model, index) => <option key={model.id} value={model.id}>{model.lineId || 'Unlabelled line'} — {model.cells.length} points (model {index + 1})</option>)}
+            </select>
+          </label>
+          <p className="muted">Showing {activeERTModel?.lineId || 'Unlabelled line'} only. Other survey lines are kept separate because their distance coordinates may have different origins.</p>
           <p className="muted">This is a plot of imported model points, not a continuous interpolated tomogram. Select a point to inspect its measured/imported value. A dense, gridded inversion export is needed for a continuous colour section.</p>
           <svg viewBox="0 0 760 390" role="img" aria-label="ERT resistivity point plot with distance and depth axes" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
             <path d="M65 25V330H730" fill="none" stroke="#475569" strokeWidth="1.5" />
@@ -233,7 +244,7 @@ export default function GeophysicsPage() {
             <text x="20" y="45" fontSize="11" fill="#64748b">{maxDepth}</text>
             <text x="65" y="348" fontSize="11" fill="#64748b">{minX}</text>
             <text x="700" y="348" fontSize="11" fill="#64748b">{maxX}</text>
-            {allCells.map(cell => {
+            {displayCells.map(cell => {
               const x = 65 + ((cell.x - minX) / (maxX - minX || 1)) * 650;
               const y = 30 + (cell.depth / maxDepth) * 295;
               return <circle key={cell.key} cx={x} cy={y} r={selectedCell?.key === cell.key ? 11 : 8}
@@ -257,7 +268,7 @@ export default function GeophysicsPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr><th align="left">Line</th><th align="right">Distance (m)</th><th align="right">Depth (m)</th><th align="right">Resistivity (Ωm)</th></tr></thead>
-              <tbody>{allCells.map(cell => <tr key={cell.key} onClick={() => setSelectedCell(cell)}>
+              <tbody>{displayCells.map(cell => <tr key={cell.key} onClick={() => setSelectedCell(cell)}>
                 <td>{cell.lineId}</td><td align="right">{cell.x}</td><td align="right">{cell.depth}</td><td align="right">{cell.resistivity}</td>
               </tr>)}</tbody>
             </table>
@@ -268,12 +279,12 @@ export default function GeophysicsPage() {
   </div>;
 }
 
-function VESPlot({ rows }) {
-  const points = rows.filter(row => row.ab2 > 0 && row.apparentResistivity > 0);
+function VESPlot({ record }) {
+  const points = record.readings.filter(row => row.ab2 > 0 && row.apparentResistivity > 0);
   const maxX = Math.max(1, ...points.map(point => point.ab2));
   const maxY = Math.max(1, ...points.map(point => point.apparentResistivity));
   return <section>
-    <h2>VES sounding curve</h2>
+    <h2>VES sounding curve — {record.stationId || 'Unlabelled sounding'}</h2>
     <svg viewBox="0 0 720 300" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
       <path d="M55 15V255H700" fill="none" stroke="#64748b" />
       {points.map((point, index) => <g key={index}>
