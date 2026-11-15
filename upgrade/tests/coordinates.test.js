@@ -43,3 +43,9 @@ test('UTM conversion rejects invalid zones and latitude outside UTM limits', () 
   assert.throws(() => decimalToUTM(85, 6.26, 32));
   assert.throws(() => utmToDecimal(500000, 500000, 0, 'N'));
 });
+
+test('UTM inverse rejects out-of-grid eastings and coordinates beyond UTM latitude limits', () => {
+  assert.throws(() => utmToDecimal(99999, 550000, 32, 'N'));
+  assert.throws(() => utmToDecimal(900001, 550000, 32, 'N'));
+  assert.throws(() => utmToDecimal(500000, 10000000, 32, 'N'));
+});
