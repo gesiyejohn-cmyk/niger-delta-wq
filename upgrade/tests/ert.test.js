@@ -52,3 +52,14 @@ test('ERT grid builder validates malformed sparse input instead of silently decl
     { x: 1, depth: 1, resistivity: 10 }
   ]), /positive resistivity/);
 });
+
+test('ERT interpolation rejects blank, boolean and object-valued coordinates', () => {
+  assert.throws(() => interpolateERTResistivity(gridPoints, '', 1), /coordinates must be finite/);
+  assert.throws(() => interpolateERTResistivity(gridPoints, false, 1), /coordinates must be finite/);
+  assert.throws(() => interpolateERTResistivity([
+    { x: false, depth: 1, resistivity: 10 }
+  ], 1, 1), /finite distance/);
+  assert.throws(() => interpolateERTResistivity([
+    { x: 0, depth: 1, resistivity: ' ' }
+  ], 1, 1), /positive resistivity/);
+});
