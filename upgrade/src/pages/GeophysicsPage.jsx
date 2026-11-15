@@ -56,8 +56,12 @@ export default function GeophysicsPage() {
       );
       const clean = validateVES(completeRows);
       const partial = clean.length < 2;
+      const coordinates = validateCoordinatePair(vesCoordinates);
       await saveVES({
         ...meta,
+        ...(coordinates || {}),
+        coordinateDatum: vesCoordinates.datum,
+        coordinateCRS: vesCoordinates.crs,
         readings: clean,
         method: meta.array,
         interpretationStatus: partial ? 'Partial sounding - additional readings required' : 'Uninterpreted',
@@ -94,8 +98,12 @@ export default function GeophysicsPage() {
   async function saveModel() {
     try {
       const clean = validateERT(cells);
+      const coordinates = validateCoordinatePair(ertCoordinates);
       await saveERT({
         ...line,
+        ...(coordinates || {}),
+        coordinateDatum: ertCoordinates.datum,
+        coordinateCRS: ertCoordinates.crs,
         cells: clean,
         source: 'Imported inverted resistivity model',
         inversionPerformedInApp: false
