@@ -16,7 +16,7 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
   } catch { /* Validation is reported when the record is saved. */ }
   let utm = null;
   if (converted && value.crs.startsWith('UTM Zone')) {
-    try { utm = decimalToUTM(converted.latitude, converted.longitude, Number(value.crs.match(/Zone (\\d+)/)?.[1])); }
+    try { utm = decimalToUTM(converted.latitude, converted.longitude, Number(value.crs.match(/Zone (\d+)/)?.[1])); }
     catch { utm = null; }
   }
   const set = (key, next) => onChange(old => ({ ...old, [key]: next }));
