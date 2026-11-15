@@ -236,5 +236,5 @@ test('weighted arithmetic WQI rejects malformed nonblank readings even before li
     { key: 'lead', value: true },
     { key: 'tds', value: 100, standard: 500, ideal: 0 },
     { key: 'nitrate', value: 10, standard: 50, ideal: 0 }
-  ]), /Lead: measurement must be a finite number/);
+  ]), /lead: measurement must be a finite number/);
 });
