@@ -133,3 +133,20 @@ test('one-sided weighted arithmetic limits penalize only departures toward the s
   assert.equal(result.details[2].qualityRating, 50);
   assert.equal(result.details[3].qualityRating, 60);
 });
+
+
+test('one-sided weighted arithmetic limits score the boundary at 100 and scale beyond it', () => {
+  const upper = calculateWeightedArithmeticWQI([
+    { key: 'upper-at-ideal', value: 0, maxStandard: 10, ideal: 0 },
+    { key: 'upper-at-limit', value: 10, maxStandard: 10, ideal: 0 },
+    { key: 'upper-beyond-limit', value: 15, maxStandard: 10, ideal: 0 }
+  ]);
+  assert.deepEqual(upper.details.map(row => row.qualityRating), [0, 100, 150]);
+
+  const lower = calculateWeightedArithmeticWQI([
+    { key: 'lower-at-ideal', value: 10, minStandard: 5, ideal: 10 },
+    { key: 'lower-at-limit', value: 5, minStandard: 5, ideal: 10 },
+    { key: 'lower-beyond-limit', value: 2.5, minStandard: 5, ideal: 10 }
+  ]);
+  assert.deepEqual(lower.details.map(row => row.qualityRating), [0, 100, 150]);
+});
