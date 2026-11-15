@@ -4,9 +4,17 @@ import { createDatabaseBackup, restoreDatabaseBackup, validateDatabaseBackup } f
 const panel = { background: '#fff', border: '1px solid #dbe3ea', borderRadius: 12, padding: 16, marginBottom: 16 };
 const button = { padding: '10px 14px', borderRadius: 7, border: '1px solid #cbd5e1', cursor: 'pointer' };
 
+function formatFileSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes < 0) return 'Unknown size';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
 export default function DataBackupPage() {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [validatedBackup, setValidatedBackup] = useState(null);
   const [mode, setMode] = useState('merge');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -30,23 +38,25 @@ export default function DataBackupPage() {
   }
 
   async function selectBackup(nextFile) {
-    setFile(nextFile); setPreview(null); setError(''); setMessage('');
+    setFile(nextFile); setPreview(null); setValidatedBackup(null); setError(''); setMessage('');
     if (!nextFile) return;
+    if (nextFile.size === 0) { setError('Cannot use this backup: the selected file is empty.'); return; }
     try {
       const parsed = JSON.parse(await nextFile.text());
       validateDatabaseBackup(parsed);
       const counts = Object.fromEntries(Object.entries(parsed.stores).map(([name, records]) => [name, records.length]));
-      setPreview({ exportedAt: parsed.exportedAt, counts, total: Object.values(counts).reduce((a, b) => a + b, 0) });
-    } catch (e) { setError('Cannot use this backup: ' + e.message); }
+      const total = Object.values(counts).reduce((a, b) => a + b, 0);
+      setValidatedBackup(parsed);
+      setPreview({ exportedAt: parsed.exportedAt, counts, total, size: nextFile.size, empty: total === 0 });
+    } catch (e) { setError('Cannot use this backup: ' + (e?.message || 'The file could not be read.')); }
   }
 
   async function restore() {
-    if (!file || !preview) return;
+    if (!file || !preview || !validatedBackup) return;
     if (mode === 'replace' && !window.confirm('Replace mode clears current records in the backup stores before restoring. This can overwrite your current app data. Continue only if you have downloaded a fresh backup of this device.')) return;
     setBusy(true); setError(''); setMessage('');
     try {
-      const parsed = JSON.parse(await file.text());
-      const result = await restoreDatabaseBackup(parsed, mode);
+      const result = await restoreDatabaseBackup(validatedBackup, mode);
       setMessage('Restore completed: ' + result.restored + ' records restored; ' + result.skipped + ' existing records skipped (' + result.mode + ' mode).');
     } catch (e) { setError(e.message); }
     finally { setBusy(false); }
@@ -66,11 +76,12 @@ export default function DataBackupPage() {
     <section style={panel}>
       <h2>Restore from backup</h2>
       <label>Select a Niger Delta WQ backup file
-        <input type="file" accept=".json,application/json" onChange={event => selectBackup(event.target.files?.[0] || null)} />
+        <input type="file" accept=".json,application/json" disabled={busy} onChange={event => selectBackup(event.target.files?.[0] || null)} />
       </label>
       {preview && <div className="notice">
         <strong>Backup verified</strong>
-        <p>Exported: {preview.exportedAt || 'Date not recorded'} · {preview.total} records</p>
+        <p>Exported: {preview.exportedAt || 'Date not recorded'} · {preview.total} records · {formatFileSize(preview.size)}</p>
+        {preview.empty && <p role="status">This backup contains no records. Restoring it will not add or replace any records.</p>}
         {Object.entries(preview.counts).map(([name, count]) => <div key={name}>{name}: {count}</div>)}
       </div>}
       <label>Restore mode
@@ -80,7 +91,7 @@ export default function DataBackupPage() {
         </select>
       </label>
       <p className="muted">Merge is the safer default. Replace clears the current contents of the backup stores before importing. Download a fresh backup first.</p>
-      <button style={button} type="button" disabled={busy || !preview} onClick={restore}>{busy ? 'Working…' : 'Restore backup'}</button>
+      <button style={button} type="button" disabled={busy || !preview || !validatedBackup} onClick={restore}>{busy ? 'Working…' : 'Restore backup'}</button>
     </section>
   </div>;
 }
