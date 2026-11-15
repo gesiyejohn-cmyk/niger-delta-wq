@@ -32,15 +32,20 @@ Use one status for every test: **[ ] Not run  [ ] Pass  [ ] Fail  [ ] Blocked  [
 
 ## 2. Known build and release boundaries
 
-The following are the verified automated checks for commit `f1f98e213a1f139edd37290cb496314b6beffd20`:
+The following automated checks were verified for commit `0394a42d01ad9a7dee2ac046dc409935264d3bf9`:
 
-- Web: scientific/geophysics test suite and production build passed.
-- Android: debug APK build and emulator installation passed. The launcher intent was issued; Android `am start -W` reported `Status: timeout` while waiting for activity startup, but the app process was subsequently detected (PID `1807`) and the CI job completed successfully. This verifies process presence after the launch attempt, **not** first-frame rendering or full UI readiness; physical-device visual acceptance remains mandatory.
-- Windows: NSIS desktop installer build and artifact upload passed.
-- CI run: [Run 43726829637](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43726829637).
-- Artifacts: `ndwq-integrated-web`, `ndwq-integrated-android-apk-fix4`, and `ndwq-integrated-windows-desktop`. CI artifacts are temporary build outputs, not approved production releases.
+- Web: the scientific/geophysics test suite, production build and web artifact upload all passed.
+- Android: debug APK build, emulator install/launch smoke-test step and APK artifact upload passed. The step is an automated emulator check only; it does not establish first-frame rendering, visual correctness or full workflow readiness on a physical phone.
+- Windows: desktop installer build and artifact upload passed. This does not establish installation or runtime behavior on a physical Windows computer.
+- CI run: [Run 43728764881](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43728764881). All three jobs (`web-and-tests`, `android`, `windows-desktop`) completed with conclusion `success` on the same commit.
+- Artifacts verified through the run's artifact listing (sizes are the uploaded artifact sizes, not installed application sizes):
+  - `ndwq-integrated-web`: 298,771 bytes (about 291.8 KiB).
+  - `ndwq-integrated-android-apk-fix4`: 4,037,044 bytes (about 3.85 MiB).
+  - `ndwq-integrated-windows-desktop`: 95,584,919 bytes (about 91.2 MiB).
+  - All three were unexpired when checked on 15 November 2026; GitHub reported expiry on 29 November 2026. Download and preserve any needed evidence before expiry.
+- Earlier run [43725792931](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43725792931) failed during the Android launcher-check correction; it was superseded by later successful runs. The current evidence is the successful run above, not the earlier failure.
 
-**Do not interpret these checks as proof of full app functionality on a physical device.**
+**Do not interpret these checks as proof of full app functionality on physical devices or as approval to distribute/install the artifacts as a production release.**
 
 Release restrictions and product limitations to retain during testing:
 
