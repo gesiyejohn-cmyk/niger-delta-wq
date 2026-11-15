@@ -53,7 +53,7 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
         </select>
       </label>
     </div>
-    {converted && <p className="muted">Canonical WGS84 decimal degrees: {converted.latitude.toFixed(8)}°, {converted.longitude.toFixed(8)}°</p>{utm && <p className="muted">Derived {utm.zone}N UTM (EPSG:{utm.epsg}): Easting {utm.easting.toFixed(3)} m · Northing {utm.northing.toFixed(3)} m</p>}}
+    {converted && <><p className="muted">Canonical WGS84 decimal degrees: {converted.latitude.toFixed(8)}°, {converted.longitude.toFixed(8)}°</p>{utm && <p className="muted">Derived {utm.zone}{utm.hemisphere} UTM (EPSG:{utm.epsg}): Easting {utm.easting.toFixed(3)} m · Northing {utm.northing.toFixed(3)} m</p>}</>}
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
       <label>Datum
         <select style={field} value={value.datum} onChange={event => set('datum', event.target.value)}>
