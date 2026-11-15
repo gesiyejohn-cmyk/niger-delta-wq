@@ -87,8 +87,13 @@ jobs:
           script: |
             set -euo pipefail
             APK=source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk
-            AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort | tail -n 1)"
-            BADGING="$("$AAPT" dump badging "$APK")"
+            AAPT2="$(find "$ANDROID_HOME/build-tools" -type f -name aapt2 -perm -u+x | sort -V | tail -n 1)"
+            if [ -z "$AAPT2" ]; then
+              echo "Android build-tools aapt2 executable was not found."
+              find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name 'aapt*' -print
+              exit 1
+            fi
+            BADGING="$("$AAPT2" dump badging "$APK")"
             APP_ID="$(echo "$BADGING" | grep "^package: name=" | head -n 1 | cut -d "'" -f 2)"
             LAUNCHER_ACTIVITY="$(echo "$BADGING" | grep "^launchable-activity: name=" | head -n 1 | cut -d "'" -f 2)"
             echo "$BADGING"
