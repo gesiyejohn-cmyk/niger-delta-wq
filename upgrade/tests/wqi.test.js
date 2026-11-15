@@ -169,3 +169,41 @@ test('single-sample CCME WQI explicitly discloses that F1 and F2 have identical 
   assert.match(result.disclaimer, /one observation per parameter/);
   assert.match(result.disclaimer, /multi-sample dataset/);
 });
+
+test('dataset-level CCME WQI distinguishes failed variables from failed individual tests', async () => {
+  const { computeDualWQIDataset } = await import('../src/engine/wqi.js');
+  const result = computeDualWQIDataset([
+    { sampleCode: 'A', ph: 7, tds: 100 },
+    { sampleCode: 'B', ph: 10, tds: 100 }
+  ]);
+  assert.equal(result.method, 'CCME WQI (multi-sample dataset)');
+  assert.equal(result.who.samples, 2);
+  assert.equal(result.who.tests, 4);
+  assert.equal(result.who.testedVariables, 2);
+  assert.equal(result.who.F1, 50);
+  assert.equal(result.who.F2, 25);
+  assert.notEqual(result.who.F1, result.who.F2);
+  assert.equal(result.son.F1, 50);
+  assert.equal(result.son.F2, 25);
+});
+
+test('dataset-level CCME WQI excludes missing observations and rejects invalid nonblank values', async () => {
+  const { computeDualWQIDataset } = await import('../src/engine/wqi.js');
+  const result = computeDualWQIDataset([
+    { sampleCode: 'A', ph: 7, tds: 100 },
+    { sampleCode: 'B', ph: ' ', tds: 100 }
+  ]);
+  assert.equal(result.who.tests, 3);
+  assert.equal(result.who.testedVariables, 2);
+  assert.throws(() => computeDualWQIDataset([
+    { sampleCode: 'A', ph: 'invalid', tds: 100 }
+  ]), /A — pH: measurement must be a finite number/);
+});
+
+test('dataset-level CCME WQI handles an empty dataset without inventing a score', async () => {
+  const { computeDualWQIDataset } = await import('../src/engine/wqi.js');
+  const result = computeDualWQIDataset([]);
+  assert.equal(result.who.wqi, null);
+  assert.equal(result.son.wqi, null);
+  assert.equal(result.who.status, 'No data');
+});
