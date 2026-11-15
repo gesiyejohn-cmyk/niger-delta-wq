@@ -1,8 +1,8 @@
-function validateInterpolationInputs(points, x, depth) {
+function isFiniteInput(value) {\n  return value != null && typeof value !== 'boolean'\n    && !(typeof value === 'string' && value.trim() === '')\n    && typeof value !== 'object' && Number.isFinite(Number(value));\n}\n\nfunction validateInterpolationInputs(points, x, depth) {
   if (!Array.isArray(points) || !points.length) {
     throw new Error('ERT interpolation requires imported model points.');
   }
-  if (!Number.isFinite(Number(x)) || !Number.isFinite(Number(depth))) {
+  if (!isFiniteInput(x) || !isFiniteInput(depth)) {
     throw new Error('ERT interpolation coordinates must be finite numbers.');
   }
   const seen = new Set();
