@@ -225,7 +225,7 @@ export default function GeophysicsPage() {
         <h2>Saved ERT lines</h2>
         {ert.map(record => <div key={record.id} style={{ padding: 8, borderTop: '1px solid #e2e8f0' }}>
           <strong>{record.lineId || 'Unlabelled line'}</strong> · {record.cells.length} points · RMS {record.rms || 'not recorded'}%
-          <button onClick={async () => { await deleteERT(record.id); await refresh(); }}>Delete</button>
+          <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); } await refresh(); }}>Delete</button>
         </div>)}
         {allCells.length > 0 && <>
           <h2>ERT resistivity point section</h2>
