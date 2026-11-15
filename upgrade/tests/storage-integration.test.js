@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getDB } from '../src/storage/db.js';
 import { saveVES, listVES, saveVESInterpretation, saveERT, getERTSource } from '../src/storage/geophysics.js';
-import { createDatabaseBackup, restoreDatabaseBackup } from '../src/storage/backup.js';
+import { createDatabaseBackup, restoreDatabaseBackup, validateDatabaseBackup } from '../src/storage/backup.js';
 
 test('IndexedDB separates raw VES readings and interpretations, preserves original ERT CSV, and round-trips full backup', async () => {
   const db = await getDB();
@@ -131,4 +131,39 @@ test('failed replace restore rolls back the clear and preserves existing records
 
   assert.equal((await db.get('samples', 'atomic-restore-protected')).sampleCode, 'KEEP');
   assert.equal(await db.get('samples', 'valid-before-failure'), undefined);
+});
+
+
+test('backup validation rejects duplicate primary keys before restore', () => {
+  const duplicateIdBackup = {
+    format: 'niger-delta-wq-backup',
+    version: 1,
+    stores: {
+      samples: [
+        { id: 'duplicate-sample', sampleCode: 'FIRST' },
+        { id: 'duplicate-sample', sampleCode: 'SECOND' }
+      ]
+    }
+  };
+
+  assert.throws(
+    () => validateDatabaseBackup(duplicateIdBackup),
+    /duplicate primary keys in samples/
+  );
+
+  const duplicateSettingBackup = {
+    format: 'niger-delta-wq-backup',
+    version: 1,
+    stores: {
+      settings: [
+        { key: 'duplicate-setting', value: 'FIRST' },
+        { key: 'duplicate-setting', value: 'SECOND' }
+      ]
+    }
+  };
+
+  assert.throws(
+    () => validateDatabaseBackup(duplicateSettingBackup),
+    /duplicate primary keys in settings/
+  );
 });
