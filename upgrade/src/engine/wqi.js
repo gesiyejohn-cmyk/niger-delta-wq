@@ -1,5 +1,11 @@
 import { PARAMETER_REGISTRY } from './parameters.js';
 
+function isNumericInput(value) {
+  return (typeof value === 'number'
+    || (typeof value === 'string' && value.trim() !== ''))
+    && Number.isFinite(Number(value));
+}
+
 const round = (value, places = 2) => {
   const factor = 10 ** places;
   return Math.round(value * factor) / factor;
@@ -29,10 +35,10 @@ function calculateForStandard(sample, standard, overrides) {
   for (const [id, definition] of Object.entries(PARAMETER_REGISTRY)) {
     const rawValue = sample?.[id];
     if (rawValue == null || (typeof rawValue === 'string' && rawValue.trim() === '')) continue;
-    const value = Number(rawValue);
-    if (!Number.isFinite(value)) {
+    if (!isNumericInput(rawValue)) {
       throw new Error(`${definition.name}: measurement must be a finite number. Correct the value or leave it blank only when it was not measured.`);
     }
+    const value = Number(rawValue);
 
     const base = definition[standard];
     const override = overrides?.[id]?.[standard];
@@ -45,7 +51,7 @@ function calculateForStandard(sample, standard, overrides) {
         const raw = override[bound];
         // Empty form fields mean "use the configured objective", not zero.
         if (raw == null || (typeof raw === 'string' && raw.trim() === '')) continue;
-        const parsed = Number(raw);
+        const parsed = isNumericInput(raw) ? Number(raw) : Number.NaN;
         if (!Number.isFinite(parsed) || parsed < 0) {
           throw new Error(`${definition.name}: custom ${bound} objective must be a finite, non-negative number.`);
         }
@@ -55,7 +61,7 @@ function calculateForStandard(sample, standard, overrides) {
     if (!objective || (objective.min == null && objective.max == null)) continue;
     for (const bound of ['min', 'max']) {
       if (objective[bound] != null
-        && (!Number.isFinite(Number(objective[bound])) || Number(objective[bound]) < 0)) {
+        && (!isNumericInput(objective[bound]) || Number(objective[bound]) < 0)) {
         throw new Error(`${definition.name}: configured ${bound} objective is invalid.`);
       }
     }
@@ -149,16 +155,16 @@ export function calculateWeightedArithmeticWQI(measurements) {
   if (usable.length < 2) throw new Error('At least two measured parameters with entered limits and ideal values are required.');
 
   const rows = usable.map(item => {
-    const value = Number(item.value);
-    const ideal = Number(item.ideal);
+    const value = isNumericInput(item.value) ? Number(item.value) : Number.NaN;
+    const ideal = isNumericInput(item.ideal) ? Number(item.ideal) : Number.NaN;
     const minRaw = hasValue(item.minStandard) ? item.minStandard : null;
     const maxRaw = hasValue(item.maxStandard) ? item.maxStandard : item.standard;
-    const minStandard = minRaw == null ? null : Number(minRaw);
-    const maxStandard = hasValue(maxRaw) ? Number(maxRaw) : null;
+    const minStandard = minRaw == null ? null : (isNumericInput(minRaw) ? Number(minRaw) : Number.NaN);
+    const maxStandard = hasValue(maxRaw) ? (isNumericInput(maxRaw) ? Number(maxRaw) : Number.NaN) : null;
     const weightRaw = hasValue(item.weightStandard)
       ? item.weightStandard
       : (maxStandard ?? minStandard);
-    const weightStandard = Number(weightRaw);
+    const weightStandard = isNumericInput(weightRaw) ? Number(weightRaw) : Number.NaN;
 
     if (![value, ideal, weightStandard].every(Number.isFinite)
       || weightStandard <= 0
@@ -249,10 +255,10 @@ function calculateDatasetForStandard(samples, standard, overrides) {
     for (const [id, definition] of Object.entries(PARAMETER_REGISTRY)) {
       const rawValue = sample?.[id];
       if (rawValue == null || (typeof rawValue === 'string' && rawValue.trim() === '')) continue;
-      const value = Number(rawValue);
-      if (!Number.isFinite(value)) {
+      if (!isNumericInput(rawValue)) {
         throw new Error(`${sampleLabel} — ${definition.name}: measurement must be a finite number.`);
       }
+      const value = Number(rawValue);
 
       const base = definition[standard];
       const override = overrides?.[id]?.[standard];
@@ -264,7 +270,7 @@ function calculateDatasetForStandard(samples, standard, overrides) {
         for (const bound of ['min', 'max']) {
           const raw = override[bound];
           if (raw == null || (typeof raw === 'string' && raw.trim() === '')) continue;
-          const parsed = Number(raw);
+          const parsed = isNumericInput(raw) ? Number(raw) : Number.NaN;
           if (!Number.isFinite(parsed) || parsed < 0) {
             throw new Error(`${definition.name}: custom ${bound} objective must be a finite, non-negative number.`);
           }
@@ -274,7 +280,7 @@ function calculateDatasetForStandard(samples, standard, overrides) {
       if (!objective || (objective.min == null && objective.max == null)) continue;
       for (const bound of ['min', 'max']) {
         if (objective[bound] != null
-          && (!Number.isFinite(Number(objective[bound])) || Number(objective[bound]) < 0)) {
+          && (!isNumericInput(objective[bound]) || Number(objective[bound]) < 0)) {
           throw new Error(`${definition.name}: configured ${bound} objective is invalid.`);
         }
       }
