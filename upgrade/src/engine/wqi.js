@@ -149,6 +149,14 @@ export function computeDualWQI(sample, { overrides = {} } = {}) {
 export function calculateWeightedArithmeticWQI(measurements) {
   if (!Array.isArray(measurements)) throw new Error('Supply a list of measured water-quality parameters.');
   const hasValue = value => value != null && !(typeof value === 'string' && value.trim() === '');
+  // A nonblank malformed measurement is a data-quality error, even when its
+  // limits have not yet been configured. Never silently count it as missing.
+  for (const item of measurements) {
+    if (!item || !hasValue(item.value)) continue;
+    if (!isNumericInput(item.value)) {
+      throw new Error((item.label || item.key || 'Parameter') + ': measurement must be a finite number or left blank only when it was not measured.');
+    }
+  }
   const usable = measurements.filter(item => item && hasValue(item.value)
     && hasValue(item.ideal)
     && (hasValue(item.minStandard) || hasValue(item.maxStandard) || hasValue(item.standard)));
