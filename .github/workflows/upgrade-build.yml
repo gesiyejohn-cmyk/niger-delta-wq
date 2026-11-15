@@ -19,6 +19,10 @@ jobs:
       - name: Extract and apply upgrade overlay
         run: |
           unzip -q NDWQ-Source-Compact.zip -d source
+          echo "=== ORIGINAL WQI ENGINE ==="
+          sed -n '1,260p' source/niger-delta-wq/src/engine/wqi.js
+          echo "=== ORIGINAL SCIENCE TESTS ==="
+          sed -n '1,300p' source/niger-delta-wq/tests/science.test.js
           cp -R upgrade/src/. source/niger-delta-wq/src/
           cp -R upgrade/tests/. source/niger-delta-wq/tests/
           node upgrade/scripts/integrate-ert-tomogram.mjs
