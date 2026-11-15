@@ -1,4 +1,4 @@
-import { coordinateToDecimal, decimalToCoordinate } from '../engine/coordinates.js';
+import { coordinateToDecimal, decimalToCoordinate, decimalToUTM } from '../engine/coordinates.js';
 
 const field = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
 
@@ -11,6 +11,11 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
       converted = { latitude, longitude };
     }
   } catch { /* Validation is reported when the record is saved. */ }
+  let utm = null;
+  if (converted && value.crs.startsWith('UTM Zone')) {
+    try { utm = decimalToUTM(converted.latitude, converted.longitude, Number(value.crs.match(/Zone (\\d+)/)?.[1])); }
+    catch { utm = null; }
+  }
   const set = (key, next) => onChange(old => ({ ...old, [key]: next }));
   return <div className="span-two" style={{ border: '1px solid #dbe3ea', borderRadius: 9, padding: 12, margin: '8px 0' }}>
     <h3>{label}</h3>
@@ -48,7 +53,7 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
         </select>
       </label>
     </div>
-    {converted && <p className="muted">Converted to decimal degrees (WGS84 values): {converted.latitude.toFixed(8)}°, {converted.longitude.toFixed(8)}°</p>}
+    {converted && <p className="muted">Canonical WGS84 decimal degrees: {converted.latitude.toFixed(8)}°, {converted.longitude.toFixed(8)}°</p>{utm && <p className="muted">Derived {utm.zone}N UTM (EPSG:{utm.epsg}): Easting {utm.easting.toFixed(3)} m · Northing {utm.northing.toFixed(3)} m</p>}}
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
       <label>Datum
         <select style={field} value={value.datum} onChange={event => set('datum', event.target.value)}>
@@ -63,6 +68,6 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
         </select>
       </label>
     </div>
-    <p className="muted">Coordinates are validated and stored in decimal degrees, with the original entry retained. UTM choices currently record the declared CRS only; automatic UTM reprojection is not yet available.</p>
+    <p className="muted">Enter coordinates in the selected DD, DMS or DDM geographic format. Values are stored in WGS84 decimal degrees and the original entry is retained. When a UTM zone is selected, WGS84 UTM coordinates are calculated for display; the geographic decimal-degree values remain the canonical stored coordinates.</p>
   </div>;
 }
