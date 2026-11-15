@@ -56,6 +56,10 @@ export async function restoreDatabaseBackup(input, mode = 'merge') {
   const result = { restored: 0, skipped: 0, mode };
   if (!names.length) return result;
   const tx = db.transaction(names, 'readwrite');
+  // Attach a rejection handler immediately: an IndexedDB request failure also
+  // rejects idb's transaction-done promise, even when the request is caught below.
+  const transactionDone = tx.done;
+  transactionDone.catch(() => {});
   try {
     for (const name of names) {
       const store = tx.objectStore(name);
@@ -70,10 +74,11 @@ export async function restoreDatabaseBackup(input, mode = 'merge') {
         result.restored++;
       }
     }
-    await tx.done;
+    await transactionDone;
     return result;
   } catch (error) {
     try { tx.abort(); } catch { /* transaction may already be closed */ }
+    await transactionDone.catch(() => {});
     throw new Error('Restore was not completed: ' + error.message);
   }
 }
