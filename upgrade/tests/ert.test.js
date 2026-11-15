@@ -45,3 +45,10 @@ test('ERT interpolation remains finite for large but representable survey coordi
   const value = interpolateERTResistivity(points, 1.05e150, 1e150);
   assert.ok(Number.isFinite(value) && value > 0);
 });
+
+test('ERT grid builder validates malformed sparse input instead of silently declining it', () => {
+  assert.throws(() => buildERTGrid([
+    { x: 0, depth: 1, resistivity: 0 },
+    { x: 1, depth: 1, resistivity: 10 }
+  ]), /positive resistivity/);
+});
