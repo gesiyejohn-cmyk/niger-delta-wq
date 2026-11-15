@@ -85,6 +85,6 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
         </select>
       </label>
     </div>
-    <p className="muted">Enter coordinates in the selected DD, DMS or DDM geographic format. Values are stored in WGS84 decimal degrees and the original entry is retained. When a UTM zone is selected, WGS84 UTM coordinates are calculated for display; the geographic decimal-degree values remain the canonical stored coordinates.</p>
+    <p className="muted">Enter coordinates in the selected DD, DMS or DDM geographic format. For DMS and DDM, enter whole degrees followed by minutes (and seconds for DMS); choose N/S/E/W with the separate hemisphere selectors rather than typing hemisphere letters into the coordinate fields. Values are stored in WGS84 decimal degrees and the original entry is retained. When a UTM zone is selected, WGS84 UTM coordinates are calculated for display; the geographic decimal-degree values remain the canonical stored coordinates.</p>
   </div>;
 }
