@@ -23,27 +23,23 @@ function validateInterpolationInputs(points, x, depth) {
   });
 }
 
-export function interpolateERTResistivity(points, x, depth) {
-  const validPoints = validateInterpolationInputs(points, x, depth);
-  const targetX = Number(x);
-  const targetDepth = Number(depth);
-  const distances = validPoints.map(point => Math.hypot(point.x - targetX, point.depth - targetDepth));
+function interpolateValidatedPoints(points, targetX, targetDepth) {
+  const distances = points.map(point => Math.hypot(point.x - targetX, point.depth - targetDepth));
   if (distances.some(distance => !Number.isFinite(distance))) {
     throw new Error('ERT interpolation distance is outside the supported numeric range.');
   }
   const exactIndex = distances.findIndex(distance => distance === 0);
-  if (exactIndex >= 0) return validPoints[exactIndex].resistivity;
+  if (exactIndex >= 0) return points[exactIndex].resistivity;
 
   // Scale inverse-square weights by the nearest distance. This is algebraically
-  // equivalent to 1/d² weighting but avoids overflow for large coordinates and
-  // underflow of every weight for widely separated model points.
-  const nearest = Math.min(...distances);
+  // equivalent to 1/d² weighting but avoids overflow and universal weight underflow.
+  const nearest = distances.reduce((minimum, distance) => Math.min(minimum, distance), Number.POSITIVE_INFINITY);
   let weightedLog = 0;
   let weights = 0;
-  for (let index = 0; index < validPoints.length; index += 1) {
+  for (let index = 0; index < points.length; index += 1) {
     const ratio = nearest / distances[index];
     const weight = ratio * ratio;
-    weightedLog += Math.log10(validPoints[index].resistivity) * weight;
+    weightedLog += Math.log10(points[index].resistivity) * weight;
     weights += weight;
   }
   const result = 10 ** (weightedLog / weights);
@@ -53,17 +49,24 @@ export function interpolateERTResistivity(points, x, depth) {
   return result;
 }
 
+export function interpolateERTResistivity(points, x, depth) {
+  const validPoints = validateInterpolationInputs(points, x, depth);
+  return interpolateValidatedPoints(validPoints, Number(x), Number(depth));
+}
+
 export function buildERTGrid(points) {
-  if (!Array.isArray(points) || points.length < 6) return null;
-  // Validate even when a sparse grid will be declined: bad source values must
-  // not be silently rendered as an empty or misleading section.
+  if (!Array.isArray(points) || !points.length) return null;
+  // Validate source data before deciding whether coverage is sufficient.
   const validPoints = validateInterpolationInputs(points, 0, 0);
+  if (validPoints.length < 6) return null;
   const xs = [...new Set(validPoints.map(point => point.x))];
   const depths = [...new Set(validPoints.map(point => point.depth))];
   const pairs = new Set(validPoints.map(point => point.x + '|' + point.depth));
   if (xs.length < 3 || depths.length < 2 || pairs.size / (xs.length * depths.length) < 0.35) return null;
-  const x0 = Math.min(...xs), x1 = Math.max(...xs);
-  const z0 = Math.min(...depths), z1 = Math.max(...depths);
+  const x0 = xs.reduce((minimum, value) => Math.min(minimum, value), Number.POSITIVE_INFINITY);
+  const x1 = xs.reduce((maximum, value) => Math.max(maximum, value), Number.NEGATIVE_INFINITY);
+  const z0 = depths.reduce((minimum, value) => Math.min(minimum, value), Number.POSITIVE_INFINITY);
+  const z1 = depths.reduce((maximum, value) => Math.max(maximum, value), Number.NEGATIVE_INFINITY);
   if (x0 === x1 || z0 === z1) return null;
   const cols = Math.min(60, Math.max(24, xs.length * 3));
   const rows = Math.min(36, Math.max(12, depths.length * 3));
@@ -72,7 +75,7 @@ export function buildERTGrid(points) {
     for (let col = 0; col < cols; col++) {
       const x = x0 + (col + 0.5) / cols * (x1 - x0);
       const depth = z0 + (row + 0.5) / rows * (z1 - z0);
-      values.push({ c: col, r: row, value: interpolateERTResistivity(validPoints, x, depth) });
+      values.push({ c: col, r: row, value: interpolateValidatedPoints(validPoints, x, depth) });
     }
   }
   return { cols, rows, values, x0, x1, z0, z1, method: 'log-resistivity inverse-distance weighting', inversionPerformed: false };
