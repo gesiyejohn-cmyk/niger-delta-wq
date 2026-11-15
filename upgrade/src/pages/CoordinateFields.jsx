@@ -15,7 +15,16 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
   return <div className="span-two" style={{ border: '1px solid #dbe3ea', borderRadius: 9, padding: 12, margin: '8px 0' }}>
     <h3>{label}</h3>
     <label>Coordinate input format
-      <select style={field} value={value.format} onChange={event => set('format', event.target.value)}>
+      <select style={field} value={value.format} onChange={event => {
+        const nextFormat = event.target.value;
+        try {
+          if (value.latitude !== '' && value.longitude !== '') {
+            const lat = coordinateToDecimal(value.latitude, value.format, value.latitudeHemisphere, 'latitude');
+            const lon = coordinateToDecimal(value.longitude, value.format, value.longitudeHemisphere, 'longitude');
+            onChange(old => ({ ...old, format: nextFormat, latitude: decimalToCoordinate(lat, nextFormat), longitude: decimalToCoordinate(lon, nextFormat) }));
+          } else onChange(old => ({ ...old, format: nextFormat }));
+        } catch { onChange(old => ({ ...old, format: nextFormat })); }
+      }}>
         <option value="DD">Decimal Degrees (DD)</option>
         <option value="DMS">Degrees-Minutes-Seconds (DMS)</option>
         <option value="DDM">Degrees-Decimal Minutes (DDM)</option>
