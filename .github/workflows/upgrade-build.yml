@@ -85,21 +85,38 @@ jobs:
           emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
           script: |
             set -e
-            adb install source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk
-            adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -p com.nigerdeltawq.mobile.upgradefix3
+            APK=source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk
+            AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort | tail -n 1)"
+            if [ -z "$AAPT" ]; then
+              echo "Android aapt tool was not found."
+              exit 1
+            fi
+            BADGING="$("$AAPT" dump badging "$APK")"
+            APP_ID="$(printf '%s\\n' "$BADGING" | sed -n "s/^package: name='\\([^']*\\)'.*/\\1/p" | head -n 1)"
+            LAUNCHER_ACTIVITY="$(printf '%s\\n' "$BADGING" | sed -n "s/^launchable-activity: name='\\([^']*\\)'.*/\\1/p" | head -n 1)"
+            if [ -z "$APP_ID" ] || [ -z "$LAUNCHER_ACTIVITY" ]; then
+              echo "APK package ID or launcher activity is missing from the manifest."
+              printf '%s\\n' "$BADGING"
+              exit 1
+            fi
+            echo "APK application ID: $APP_ID"
+            echo "APK launcher activity: $LAUNCHER_ACTIVITY"
+            adb install "$APK"
+            adb shell am start -W -n "$APP_ID/$LAUNCHER_ACTIVITY"
             for attempt in $(seq 1 30); do
-              if adb shell pidof com.nigerdeltawq.mobile.upgradefix3; then
+              if adb shell pidof "$APP_ID"; then
                 echo "NDWQ Android process is running."
                 exit 0
               fi
               sleep 2
             done
-            echo "NDWQ Android process did not remain running; recent device logs follow."
+            echo "NDWQ Android process did not remain running; package diagnostics follow."
+            adb shell dumpsys package "$APP_ID" | tail -n 250
             adb logcat -d -t 2000
             exit 1
       - uses: actions/upload-artifact@v4
         with:
-          name: ndwq-integrated-android-apk-fix3
+          name: ndwq-integrated-android-apk-fix4
           path: source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
   windows-desktop:
