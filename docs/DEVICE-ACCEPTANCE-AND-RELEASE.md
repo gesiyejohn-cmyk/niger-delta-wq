@@ -32,17 +32,17 @@ Use one status for every test: **[ ] Not run  [ ] Pass  [ ] Fail  [ ] Blocked  [
 
 ## 2. Known build and release boundaries
 
-The latest verified CI run is [Run 43822354931](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43822354931), on commit `4aa5f4e194d60405b832c87ceba65e67f22ff81c` (16 November 2026). GitHub reports all three jobs (`web-and-tests`, `windows-desktop`, and `android`) completed with conclusion `success`.
+The latest verified CI run is [Run 43823156619](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43823156619), on commit `97961f95dd3073228d8346772c35e12e1568835b` (16 November 2026). GitHub reports all three jobs (`web-and-tests`, `windows-desktop`, and `android`) completed with conclusion `success`.
 
-- Web: all 114 automated scientific/geophysics tests passed (114 passed, 0 failed, 0 cancelled, 0 skipped); the production web build and artifact upload passed.
+- Web: all 114 automated scientific/geophysics tests passed (114 passed, 0 failed); the production web build and artifact upload passed on this commit.
 - Android: debug APK build passed; API 35 emulator boot completed, APK installation returned `Success`, launcher activity returned `Status: ok`, and the app process plus resumed activity were detected. APK artifact upload passed. This is automated emulator evidence only. It does not establish physical-device acceptance, first-frame rendering on a real phone, or compatibility with an existing installation.
 - Windows: desktop installer generation and artifact upload passed. This does not establish installation or runtime behavior on a physical Windows computer.
 - Artifacts verified through this run's artifact listing (sizes are uploaded ZIP artifact sizes, not installed application sizes):
-  - `ndwq-integrated-web`: 300,899 bytes (about 294.0 KiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43822354931/artifacts/14204493164); SHA-256 `86daad88f348083c470049f9021e8edd97d063283ac6c9b172de3b586c9d25a2`.
-  - `ndwq-integrated-android-apk-fix4`: 4,038,848 bytes (about 3.85 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43822354931/artifacts/14205013189); SHA-256 `e24e02186d12d82fd007a49d73812d3ca86ec53699c46a2898359bde3f0cebe2`.
-  - `ndwq-integrated-windows-desktop`: 95,586,800 bytes (about 91.2 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43822354931/artifacts/14204712925); SHA-256 `87b776da974247cd92fefa11cc5f057d2160f4d6b82ab17a8020767c69e959df`.
-  - GitHub listed all three artifacts as unexpired when checked on 16 November 2026; their individual expiry timestamps are 30 November 2026 (web: 07:14:40 UTC; Windows: 07:16:34 UTC; Android: 07:17:31 UTC). Preserve required evidence before expiry.
-- The successful workflow confirms the configured automated build and smoke-test steps passed for this commit. The completed Android log records Gradle `BUILD SUCCESSFUL`, ADB install `Success`, launcher activity `Status: ok`, and a detected resumed activity. The web test log records 114 tests passed and 0 failed. It is not a substitute for the physical-device and scientific acceptance checks below.
+  - `ndwq-integrated-web`: 300,899 bytes (about 294.0 KiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43823156619/artifacts/14205486540); SHA-256 `62db3348cf49d9110b5f032b7546e0ae024b30f0c365b80fb7c56d2bf7a357fa`.
+  - `ndwq-integrated-android-apk-fix4`: 4,038,846 bytes (about 3.85 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43823156619/artifacts/14204813837); SHA-256 `aebd669defe1b51515cff2145aa7531dd4c7560877eae411c4a99b354b226b91`.
+  - `ndwq-integrated-windows-desktop`: 95,586,677 bytes (about 91.2 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43823156619/artifacts/14205104101); SHA-256 `a6ce6e8e72af54454854dcb901d14b9317cfb66a0100d9d470f449708cb99b44`.
+  - GitHub listed all three artifacts as unexpired when checked on 16 November 2026; their individual expiry timestamps are 30 November 2026 (web: 07:20:54 UTC; Windows: 07:22:41 UTC; Android: 07:23:59 UTC). Preserve required evidence before expiry.
+- The successful workflow confirms all three configured jobs passed on this exact commit. The web test log records 114 tests passed and 0 failed. The Windows job built the NSIS installer with Electron Builder publishing explicitly disabled. The Android log records Gradle `BUILD SUCCESSFUL`, API 35 emulator boot readiness, ADB install `Success`, launcher activity `Status: ok`, and a detected resumed activity; its APK artifact uploaded successfully. These checks are not substitutes for physical-device and scientific acceptance below.
 
 **Do not interpret these checks as proof of full app functionality on physical devices or as approval to distribute/install the artifacts as a production release.**
 
