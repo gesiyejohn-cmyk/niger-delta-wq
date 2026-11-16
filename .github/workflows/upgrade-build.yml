@@ -57,6 +57,18 @@ jobs:
           cmdline-tools-version: 15859902
           accept-android-sdk-licenses: true
           packages: platform-tools
+      - name: Install Android emulator and API 35 system image
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            echo "Android SDK manager is missing: $SDKMANAGER"
+            exit 1
+          fi
+          "$SDKMANAGER" --install "platform-tools" "emulator" "system-images;android-35;default;x86_64"
+          test -x "$ANDROID_HOME/platform-tools/adb"
+          test -x "$ANDROID_HOME/emulator/emulator"
+          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager"
+          echo "Android emulator, platform tools, AVD manager and API 35 image are installed."
       - name: Extract and apply upgrade overlay
         run: |
           unzip -q NDWQ-Source-Compact.zip -d source

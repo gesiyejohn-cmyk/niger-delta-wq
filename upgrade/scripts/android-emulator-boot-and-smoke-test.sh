@@ -7,21 +7,21 @@ if [ -z "$SDK_ROOT" ]; then
   exit 1
 fi
 
-SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
 AVDMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/avdmanager"
 EMULATOR="$SDK_ROOT/emulator/emulator"
 SERIAL="emulator-5554"
 AVD_NAME="ndwq-ci-api35"
 
-for tool in "$SDKMANAGER" "$AVDMANAGER" "$EMULATOR"; do
+# The workflow installs SDK packages before invoking this script. Fail with a
+# precise diagnostic if a runner image or SDK setup changes unexpectedly.
+for tool in "$AVDMANAGER" "$EMULATOR" "$SDK_ROOT/platform-tools/adb"; do
   if [ ! -x "$tool" ]; then
-    echo "Required Android SDK tool is unavailable: $tool"
+    echo "Required Android SDK component was not installed: $tool"
+    echo "Check the 'Install Android emulator and API 35 system image' workflow step."
     exit 1
   fi
 done
 
-yes | "$SDKMANAGER" --licenses >/dev/null
-"$SDKMANAGER" --install emulator "system-images;android-35;default;x86_64" >/dev/null
 printf 'no\n' | "$AVDMANAGER" create avd --force --name "$AVD_NAME" \
   --package "system-images;android-35;default;x86_64" --device pixel_2
 
