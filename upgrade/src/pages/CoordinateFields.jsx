@@ -7,13 +7,28 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
   const [gpsMessage, setGpsMessage] = useState('');
   const [gpsBusy, setGpsBusy] = useState(false);
   let converted = null;
-  try {
-    if (value.latitude !== '' && value.longitude !== '') {
-      const latitude = coordinateToDecimal(value.latitude, value.format, value.latitudeHemisphere, 'latitude');
-      const longitude = coordinateToDecimal(value.longitude, value.format, value.longitudeHemisphere, 'longitude');
-      converted = { latitude, longitude };
+  let latitudeError = '';
+  let longitudeError = '';
+  if (value.latitude !== '') {
+    try {
+      coordinateToDecimal(value.latitude, value.format, value.latitudeHemisphere, 'latitude');
+    } catch (error) {
+      latitudeError = error instanceof Error ? error.message : 'Enter a valid latitude.';
     }
-  } catch { /* Validation is reported when the record is saved. */ }
+  }
+  if (value.longitude !== '') {
+    try {
+      coordinateToDecimal(value.longitude, value.format, value.longitudeHemisphere, 'longitude');
+    } catch (error) {
+      longitudeError = error instanceof Error ? error.message : 'Enter a valid longitude.';
+    }
+  }
+  if (value.latitude !== '' && value.longitude !== '' && !latitudeError && !longitudeError) {
+    converted = {
+      latitude: coordinateToDecimal(value.latitude, value.format, value.latitudeHemisphere, 'latitude'),
+      longitude: coordinateToDecimal(value.longitude, value.format, value.longitudeHemisphere, 'longitude')
+    };
+  }
   let utm = null;
   let standardZone = null;
   let selectedZone = null;
@@ -90,7 +105,8 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
     {gpsMessage && <p className="muted" role="status">{gpsMessage}</p>}
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 90px', gap: 8, marginTop: 8 }}>
       <label>Latitude ({value.format})
-        <input style={field} value={value.latitude} placeholder={value.format === 'DD' ? 'e.g. 4.920000' : value.format === 'DMS' ? 'e.g. 4 55 12' : 'e.g. 4 55.2000'} onChange={event => set('latitude', event.target.value)} />
+        <input style={field} value={value.latitude} aria-invalid={Boolean(latitudeError)} aria-describedby={latitudeError ? 'coordinate-latitude-error' : undefined} placeholder={value.format === 'DD' ? 'e.g. 4.920000' : value.format === 'DMS' ? 'e.g. 4 55 12' : 'e.g. 4 55.2000'} onChange={event => set('latitude', event.target.value)} />
+        {latitudeError && <p id="coordinate-latitude-error" className="error" role="alert">{latitudeError}</p>}
       </label>
       <label>Hemisphere
         <select style={field} value={value.latitudeHemisphere} onChange={event => set('latitudeHemisphere', event.target.value)}>
@@ -98,7 +114,8 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
         </select>
       </label>
       <label>Longitude ({value.format})
-        <input style={field} value={value.longitude} placeholder={value.format === 'DD' ? 'e.g. 6.260000' : value.format === 'DMS' ? 'e.g. 6 15 36' : 'e.g. 6 15.6000'} onChange={event => set('longitude', event.target.value)} />
+        <input style={field} value={value.longitude} aria-invalid={Boolean(longitudeError)} aria-describedby={longitudeError ? 'coordinate-longitude-error' : undefined} placeholder={value.format === 'DD' ? 'e.g. 6.260000' : value.format === 'DMS' ? 'e.g. 6 15 36' : 'e.g. 6 15.6000'} onChange={event => set('longitude', event.target.value)} />
+        {longitudeError && <p id="coordinate-longitude-error" className="error" role="alert">{longitudeError}</p>}
       </label>
       <label>Hemisphere
         <select style={field} value={value.longitudeHemisphere} onChange={event => set('longitudeHemisphere', event.target.value)}>

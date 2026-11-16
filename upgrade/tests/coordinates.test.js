@@ -6,6 +6,9 @@ test('DD coordinates respect hemisphere and axis limits', () => {
   assert.equal(coordinateToDecimal('4.92', 'DD', 'N', 'latitude'), 4.92);
   assert.equal(coordinateToDecimal('6.26', 'DD', 'W', 'longitude'), -6.26);
   assert.throws(() => coordinateToDecimal('91', 'DD', 'N', 'latitude'));
+  assert.throws(() => coordinateToDecimal('-91', 'DD', 'S', 'latitude'));
+  assert.throws(() => coordinateToDecimal('181', 'DD', 'E', 'longitude'));
+  assert.throws(() => coordinateToDecimal('-181', 'DD', 'W', 'longitude'));
 });
 test('DMS converts to decimal degrees', () => {
   assert.equal(coordinateToDecimal('4 55 12', 'DMS', 'N', 'latitude'), 4.92);
