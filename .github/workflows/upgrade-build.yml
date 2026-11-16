@@ -164,7 +164,7 @@ jobs:
               raise SystemExit("Expected exactly one defaultConfig block; refusing unsafe Gradle edit.")
           if "applicationIdSuffix" in source:
               raise SystemExit("An applicationIdSuffix already exists; refusing to stack package suffixes.")
-          gradle.write_text(source.replace(marker, marker + '\\n        applicationIdSuffix ".preview"', 1))
+          gradle.write_text(source.replace(marker, marker + '\n        applicationIdSuffix ".preview"', 1))
           PY
           chmod +x "$ANDROID_DIR/gradlew"
           (cd "$ANDROID_DIR" && ./gradlew clean assembleDebug)
