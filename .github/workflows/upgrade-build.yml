@@ -108,8 +108,9 @@ jobs:
         run: |
           npm install
           npm run build
-          node -e 'const fs=require("node:fs"); const c=JSON.parse(fs.readFileSync("capacitor.config.json","utf8")); const p=JSON.parse(fs.readFileSync("package.json","utf8")); const id=c.appId || p.capacitor?.appId || null; const name=c.appName || p.capacitor?.appName || null; console.log("::notice::Original source Capacitor config keys: "+Object.keys(c).sort().join(", ")); console.log("::notice::Original source application ID: "+(id || "(not declared in these config files)")); console.log("::notice::Original source application name: "+(name || "(not declared in these config files)"));'
-          node -e "const fs=require('fs'); const p='capacitor.config.json'; const c=JSON.parse(fs.readFileSync(p,'utf8')); c.appId='com.nigerdeltawq.mobile.upgradefix3'; c.appName='Niger Delta WQ Upgrade Fix 3'; fs.writeFileSync(p, JSON.stringify(c,null,2)+'\\n');"
+          node -e 'const fs=require("node:fs"); const c=JSON.parse(fs.readFileSync("capacitor.config.json","utf8")); const p=JSON.parse(fs.readFileSync("package.json","utf8")); const id=c.appId || p.capacitor?.appId || null; const name=c.appName || p.capacitor?.appName || null; if(id!=="com.nigerdeltawq.mobile") throw new Error("Unexpected source Android application ID: "+id); if(name!=="Niger Delta WQ") throw new Error("Unexpected source Android application name: "+name); console.log("::notice::Verified source Android application ID: "+id); console.log("::notice::Verified source Android application name: "+name);'
+          # Build and smoke-test the source package identity on a clean CI emulator.
+          # This remains a debug-signed test APK, not an approved update for user devices.
           npx cap add android
           npx cap sync android
       - name: Build debug APK
