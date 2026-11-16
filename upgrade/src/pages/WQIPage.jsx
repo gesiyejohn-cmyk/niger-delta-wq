@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { listSamples } from '../storage/samples.js';
 import { calculateWeightedArithmeticWQI } from '../engine/wqi.js';
+import { saveWQIAssessment, listWQIAssessments, deleteWQIAssessment } from '../storage/wqi.js';
 
 const PARAMETERS = [
   ['ph', 'pH', 'pH units'], ['ec', 'Electrical conductivity', 'µS/cm'],
@@ -16,7 +17,17 @@ export default function WQIPage() {
   const [standardSource, setStandardSource] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
-  useEffect(() => { listSamples().then(setSamples).catch(e => setError('Could not load samples: ' + e.message)); }, []);
+  const [history, setHistory] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [historyMessage, setHistoryMessage] = useState('');
+  useEffect(() => {
+    Promise.all([listSamples(), listWQIAssessments()])
+      .then(([savedSamples, savedAssessments]) => {
+        setSamples(savedSamples);
+        setHistory(savedAssessments);
+      })
+      .catch(e => setError('Could not load WQI data: ' + e.message));
+  }, []);
   const sample = samples.find(item => String(item.id) === String(sampleId)) || samples[0] || null;
 
   function calculate() {
@@ -31,7 +42,26 @@ export default function WQIPage() {
         ideal: limits[key].ideal,
         weightStandard: limits[key].weightStandard
       }));
-      setResult(calculateWeightedArithmeticWQI(measurements));
+      const calculation = calculateWeightedArithmeticWQI(measurements);
+      const snapshot = {
+        sample: {
+          id: sample.id,
+          sampleCode: sample.sampleCode || null,
+          stationName: sample.stationName || null,
+          collectionDate: sample.collectionDate || null
+        },
+        standardSource: standardSource.trim(),
+        method: calculation.method,
+        measurements: measurements.map(item => ({
+          key: item.key, label: item.label, unit: item.unit,
+          measuredValue: item.value ?? null,
+          minStandard: item.minStandard, maxStandard: item.maxStandard,
+          ideal: item.ideal, weightStandard: item.weightStandard
+        })),
+        result: calculation
+      };
+      setHistoryMessage('');
+      setResult({ calculation, snapshot });
     } catch (e) { setError(e.message); }
   }
 
@@ -77,14 +107,45 @@ export default function WQIPage() {
       </div>
       <button type="button" className="primary" disabled={!sample} onClick={calculate}>Calculate WQI</button>
       {result && <div className="notice" style={{ marginTop: 14 }}>
-        <h2>Weighted arithmetic WQI: {result.wqi.toFixed(2)}</h2>
-        <p>Parameters included: {result.parameterCount}. Incomplete/missing parameters excluded: {result.missingExcluded}.</p>
-        <p>Standard reference: {standardSource}. Method: {result.method}. This screen reports the numeric index only; interpret it using the classification scale and regulatory standard selected for your study.</p>
+        <h2>Weighted arithmetic WQI: {result.calculation.wqi.toFixed(2)}</h2>
+        <p>Parameters included: {result.calculation.parameterCount}. Incomplete/missing parameters excluded: {result.calculation.missingExcluded}.</p>
+        <p>Standard reference: {standardSource}. Method: {result.calculation.method}. This screen reports the numeric index only; interpret it using the classification scale and regulatory standard selected for your study.</p>
         <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr><th align="left">Parameter</th><th align="right">Qi</th><th align="right">Applicable limit</th><th align="right">Wi</th><th align="right">Contribution</th></tr></thead>
-          <tbody>{result.details.map(row => <tr key={row.key}><td>{row.label}</td><td align="right">{row.qualityRating.toFixed(3)}</td><td align="right">{row.applicableLimit}</td><td align="right">{row.unitWeight.toFixed(5)}</td><td align="right">{row.contribution.toFixed(3)}</td></tr>)}</tbody>
+          <tbody>{result.calculation.details.map(row => <tr key={row.key}><td>{row.label}</td><td align="right">{row.qualityRating.toFixed(3)}</td><td align="right">{row.applicableLimit}</td><td align="right">{row.unitWeight.toFixed(5)}</td><td align="right">{row.contribution.toFixed(3)}</td></tr>)}</tbody>
         </table></div>
       </div>}
+      {result && <button type="button" className="primary" disabled={saving} onClick={async () => {
+        setSaving(true); setError(''); setHistoryMessage('');
+        try {
+          const saved = await saveWQIAssessment(result.snapshot);
+          setHistory(items => [saved, ...items]);
+          setHistoryMessage('Assessment saved to this device as a historical snapshot.');
+        } catch (e) { setError('Could not save assessment: ' + e.message); }
+        finally { setSaving(false); }
+      }}>{saving ? 'Saving…' : 'Save assessment to history'}</button>}
+      {historyMessage && <p className="notice" role="status">{historyMessage}</p>}
+    </section>
+    <section className="panel">
+      <h2>Saved assessment history</h2>
+      <p className="muted">Each saved assessment preserves the source sample identity, measured values, entered limits, ideal values, weight references, standard source, method and calculated result as they were at assessment time. Later edits to a sample or calculation inputs do not rewrite saved history.</p>
+      {!history.length && <p className="muted">No WQI assessments have been saved on this device yet.</p>}
+      {history.map(item => <article key={item.id} style={{ borderTop: '1px solid #e2e8f0', padding: '12px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div>
+            <strong>{item.sample?.sampleCode || item.sample?.stationName || item.sample?.id || 'Unknown sample'} — WQI {Number(item.result?.wqi).toFixed(2)}</strong>
+            <div className="muted">{item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Date not recorded'} · {item.method || item.result?.method || 'Method not recorded'}</div>
+            <div className="muted">Reference: {item.standardSource || 'Not recorded'} · {item.result?.parameterCount ?? 0} parameters included</div>
+          </div>
+          <button type="button" onClick={async () => {
+            if (!window.confirm('Delete this saved WQI assessment? This does not delete its source sample.')) return;
+            try {
+              await deleteWQIAssessment(item.id);
+              setHistory(items => items.filter(entry => entry.id !== item.id));
+            } catch (e) { setError('Could not delete assessment: ' + e.message); }
+          }}>Delete</button>
+        </div>
+      </article>)}
     </section>
     <p className="muted">Use a consistent standard source and sampling context. This calculator does not decide potability or health risk, and it does not replace parameter-by-parameter compliance assessment.</p>
   </div>;

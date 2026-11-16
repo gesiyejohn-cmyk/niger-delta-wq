@@ -72,7 +72,7 @@ export default function DataBackupPage() {
   return <div className="page">
     <p className="eyebrow">DATA SAFETY</p>
     <h1>Backup &amp; restore</h1>
-    <p className="muted">Create a portable copy of water-quality samples, settings, sync queue, raw VES readings, separate VES interpretations, ERT models, original ERT CSV imports and vulnerability assessments. Keep a copy outside this device before updating or changing devices.</p>
+    <p className="muted">Create a portable copy of water-quality samples, settings, sync queue, raw VES readings, separate VES interpretations, ERT models, original ERT CSV imports, vulnerability assessments and saved WQI assessment history. Keep a copy outside this device before updating or changing devices.</p>
     {message && <p className="notice" role="status">{message}</p>}
     {error && <p className="notice error" role="alert">{error}</p>}
     <section style={panel}>

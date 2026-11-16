@@ -32,16 +32,16 @@ Use one status for every test: **[ ] Not run  [ ] Pass  [ ] Fail  [ ] Blocked  [
 
 ## 2. Known build and release boundaries
 
-The latest verified CI run is [Run 43760965940](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43760965940), on commit `529263fbf2b1f87a44c3df8c07f0c37e0d7e6a21` (15 November 2026). GitHub reports all three jobs (`web-and-tests`, `android`, `windows-desktop`) completed with conclusion `success`.
+The latest verified CI run is [Run 43808009462](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43808009462), on commit `f491a8286b79ef00cffc8af83a4f2935166144f7` (16 November 2026). GitHub reports all three jobs (`web-and-tests`, `android`, `windows-desktop`) completed with conclusion `success`.
 
 - Web: all 104 automated scientific/geophysics tests passed (104 passed, 0 failed); the production web build and artifact upload passed.
-- Android: debug APK build, emulator boot, APK installation and launcher activity start command completed. However, `adb shell am start -W` reported `Status: timeout` and `LaunchState: UNKNOWN (-1)`; a subsequent `pidof` returned an application process ID. Therefore this run does **not** establish a clean, timely activity launch or successful first-frame rendering. The workflow's smoke-test currently fails to treat that timeout as a failure and must be tightened before counting Android launch validation as passed.
+- Android: debug APK build passed; the API 35 emulator booted and core services became ready; APK installation returned `Success`; `adb shell am start -W` returned `Status: ok` and `LaunchState: COLD`; the launcher activity was reported as resumed and the app process remained alive. The Android APK artifact uploaded successfully. This verifies automated emulator installation and activity launch for this CI build, but does not establish physical-device acceptance or first-frame rendering on a real phone.
 - Windows: desktop installer generation and artifact upload passed. This does not establish installation or runtime behavior on a physical Windows computer.
 - Artifacts verified through the run's artifact listing (sizes are uploaded artifact sizes, not installed application sizes):
   - `ndwq-integrated-web`: 299,493 bytes (about 292.5 KiB).
-  - `ndwq-integrated-android-apk-fix4`: 4,037,735 bytes (about 3.85 MiB).
+  - `ndwq-integrated-android-apk-fix4`: 4,037,734 bytes (about 3.85 MiB).
   - `ndwq-integrated-windows-desktop`: 95,585,576 bytes (about 91.2 MiB).
-  - Download links: [web](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43760965940/artifacts/14180506122), [Android APK](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43760965940/artifacts/14180033494), [Windows installer](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43760965940/artifacts/14180685935).
+  - Download links: [web](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43760965940/artifacts/14180506122), [Android APK](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43808009462/artifacts/14199645503), [Windows installer](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43760965940/artifacts/14180685935).
   - GitHub listed all three artifacts as unexpired when checked on 15 November 2026. Artifact retention is temporary; preserve required evidence before expiry.
 - The successful workflow status must be read together with the Android timeout detail above. A green job does not override a contradictory smoke-test result.
 
@@ -164,7 +164,7 @@ Use a known test location and retain the source/reference coordinates.
 ### H. Backup, restore and offline use
 
 - [ ] Create a full database backup and record its file name, size and date.
-- [ ] Confirm the backup contains the expected samples, settings, sync queue, VES readings and interpretations, ERT models/source files and vulnerability records.
+- [ ] Confirm the backup contains the expected samples, settings, sync queue, VES readings and interpretations, ERT models/source files, vulnerability records and saved WQI assessment snapshots (including measured inputs, limits, ideal values, weight references, standard source and result).
 - [ ] Copy the backup to a safe location outside the device.
 - [ ] Restore the backup to a separate test installation or isolated test database where possible.
 - [ ] Compare record counts and selected record values before and after restore.

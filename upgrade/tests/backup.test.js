@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { BACKUP_FORMAT, validateDatabaseBackup } from '../src/storage/backup.js';
 
 test('backup validator accepts an empty versioned database backup', () => {
-  const backup = { format: BACKUP_FORMAT, version: 1, stores: { samples: [], settings: [], syncQueue: [], ves: [], vesInterpretations: [], ert: [], ertSource: [], vulnerability: [] } };
+  const backup = { format: BACKUP_FORMAT, version: 1, stores: { samples: [], settings: [], syncQueue: [], ves: [], vesInterpretations: [], ert: [], ertSource: [], vulnerability: [], wqiAssessments: [] } };
   assert.equal(validateDatabaseBackup(backup), backup);
 });
 test('backup validator rejects unknown format and unsupported version', () => {
