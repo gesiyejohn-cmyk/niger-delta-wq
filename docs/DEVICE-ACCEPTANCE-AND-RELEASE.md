@@ -32,18 +32,17 @@ Use one status for every test: **[ ] Not run  [ ] Pass  [ ] Fail  [ ] Blocked  [
 
 ## 2. Known build and release boundaries
 
-The latest verified CI run is [Run 43808009462](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43808009462), on commit `f491a8286b79ef00cffc8af83a4f2935166144f7` (16 November 2026). GitHub reports all three jobs (`web-and-tests`, `android`, `windows-desktop`) completed with conclusion `success`.
+The latest verified CI run is [Run 43820499070](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43820499070), on commit `79ada48d573d4794db5a85209c0c52f646a28ac0` (16 November 2026). GitHub reports all three jobs (`web-and-tests`, `windows-desktop`, and `android`) completed with conclusion `success`.
 
-- Web: all 104 automated scientific/geophysics tests passed (104 passed, 0 failed); the production web build and artifact upload passed.
-- Android: debug APK build passed; the API 35 emulator booted and core services became ready; APK installation returned `Success`; `adb shell am start -W` returned `Status: ok` and `LaunchState: COLD`; the launcher activity was reported as resumed and the app process remained alive. The Android APK artifact uploaded successfully. This verifies automated emulator installation and activity launch for this CI build, but does not establish physical-device acceptance or first-frame rendering on a real phone.
+- Web: all 114 automated scientific/geophysics tests passed (114 passed, 0 failed, 0 cancelled, 0 skipped); the production web build and artifact upload passed.
+- Android: debug APK build passed; the API 35 emulator boot-and-launch smoke-test step completed successfully; the APK artifact uploaded successfully. This is automated emulator evidence only. It does not establish physical-device acceptance, first-frame rendering on a real phone, or compatibility with an existing installation.
 - Windows: desktop installer generation and artifact upload passed. This does not establish installation or runtime behavior on a physical Windows computer.
-- Artifacts verified through the run's artifact listing (sizes are uploaded artifact sizes, not installed application sizes):
-  - `ndwq-integrated-web`: 299,493 bytes (about 292.5 KiB).
-  - `ndwq-integrated-android-apk-fix4`: 4,037,734 bytes (about 3.85 MiB).
-  - `ndwq-integrated-windows-desktop`: 95,585,576 bytes (about 91.2 MiB).
-  - Download links: [web](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43760965940/artifacts/14180506122), [Android APK](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43808009462/artifacts/14199645503), [Windows installer](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43760965940/artifacts/14180685935).
-  - GitHub listed all three artifacts as unexpired when checked on 15 November 2026. Artifact retention is temporary; preserve required evidence before expiry.
-- The successful workflow status must be read together with the Android timeout detail above. A green job does not override a contradictory smoke-test result.
+- Artifacts verified through this run's artifact listing (sizes are uploaded ZIP artifact sizes, not installed application sizes):
+  - `ndwq-integrated-web`: 300,899 bytes (about 294.0 KiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43820499070/artifacts/14204076727); SHA-256 `17048c6b91fcb6787858b4d8c48bc47103c31b482eae77eb19f9c0331810a79e`.
+  - `ndwq-integrated-android-apk-fix4`: 4,038,844 bytes (about 3.85 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43820499070/artifacts/14203988533); SHA-256 `dd5f36435c092be6d7906cc3a4824ca3add18d64d832271f2ebc946d18d3eba2`.
+  - `ndwq-integrated-windows-desktop`: 95,586,678 bytes (about 91.2 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43820499070/artifacts/14204745919); SHA-256 `2eec393a9d874674b609c414a07da36817fd7bedfafea9cb9712bbb5b0be3d5c`.
+  - GitHub listed all three artifacts as unexpired when checked on 16 November 2026; their listed expiry dates are 30 November 2026. Preserve required evidence before expiry.
+- The successful workflow confirms the configured automated build and smoke-test steps passed for this commit. It is not a substitute for the physical-device and scientific acceptance checks below.
 
 **Do not interpret these checks as proof of full app functionality on physical devices or as approval to distribute/install the artifacts as a production release.**
 
