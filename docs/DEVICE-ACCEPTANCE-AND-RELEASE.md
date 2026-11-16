@@ -32,15 +32,15 @@ Use one status for every test: **[ ] Not run  [ ] Pass  [ ] Fail  [ ] Blocked  [
 
 ## 2. Known build and release boundaries
 
-The latest verified CI run is [Run 43820499070](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43820499070), on commit `79ada48d573d4794db5a85209c0c52f646a28ac0` (16 November 2026). GitHub reports all three jobs (`web-and-tests`, `windows-desktop`, and `android`) completed with conclusion `success`.
+The latest verified CI run is [Run 43821635638](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43821635638), on commit `59068027c5470d1e0f65de5cbfdafeadb8014857` (16 November 2026). GitHub reports all three jobs (`web-and-tests`, `windows-desktop`, and `android`) completed with conclusion `success`.
 
 - Web: all 114 automated scientific/geophysics tests passed (114 passed, 0 failed, 0 cancelled, 0 skipped); the production web build and artifact upload passed.
-- Android: debug APK build passed; the API 35 emulator boot-and-launch smoke-test step completed successfully; the APK artifact uploaded successfully. This is automated emulator evidence only. It does not establish physical-device acceptance, first-frame rendering on a real phone, or compatibility with an existing installation.
+- Android: debug APK build passed; API 35 emulator boot completed, APK installation returned `Success`, launcher activity returned `Status: ok`, and the app process plus resumed activity were detected. APK artifact upload passed. This is automated emulator evidence only. It does not establish physical-device acceptance, first-frame rendering on a real phone, or compatibility with an existing installation.
 - Windows: desktop installer generation and artifact upload passed. This does not establish installation or runtime behavior on a physical Windows computer.
 - Artifacts verified through this run's artifact listing (sizes are uploaded ZIP artifact sizes, not installed application sizes):
-  - `ndwq-integrated-web`: 300,899 bytes (about 294.0 KiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43820499070/artifacts/14204076727); SHA-256 `17048c6b91fcb6787858b4d8c48bc47103c31b482eae77eb19f9c0331810a79e`.
-  - `ndwq-integrated-android-apk-fix4`: 4,038,844 bytes (about 3.85 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43820499070/artifacts/14203988533); SHA-256 `dd5f36435c092be6d7906cc3a4824ca3add18d64d832271f2ebc946d18d3eba2`.
-  - `ndwq-integrated-windows-desktop`: 95,586,678 bytes (about 91.2 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43820499070/artifacts/14204745919); SHA-256 `2eec393a9d874674b609c414a07da36817fd7bedfafea9cb9712bbb5b0be3d5c`.
+  - `ndwq-integrated-web`: 300,899 bytes (about 294.0 KiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43821635638/artifacts/14205160664); SHA-256 `38134ee84cca515afceffe65b3ebfc5949d6e084e6f2337d58f8698de43b5b96`.
+  - `ndwq-integrated-android-apk-fix4`: 4,038,847 bytes (about 3.85 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43821635638/artifacts/14205155773); SHA-256 `e6d7c9c5b3afd5418620a58d129800cba18aeaa0d204f97e48654feed98ffc71`.
+  - `ndwq-integrated-windows-desktop`: 95,586,784 bytes (about 91.2 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43821635638/artifacts/14205266312); SHA-256 `edbcc8a4ae8b0ae004e1fea72dddf9500296a04d8cdb1ec0948fe7f1b0419f1b`.
   - GitHub listed all three artifacts as unexpired when checked on 16 November 2026; their listed expiry dates are 30 November 2026. Preserve required evidence before expiry.
 - The successful workflow confirms the configured automated build and smoke-test steps passed for this commit. It is not a substitute for the physical-device and scientific acceptance checks below.
 
@@ -48,7 +48,7 @@ The latest verified CI run is [Run 43820499070](https://github.com/gesiyejohn-cm
 
 Release restrictions and product limitations to retain during testing:
 
-1. The Android CI build uses the test application ID `com.nigerdeltawq.mobile.upgradefix3` and a debug APK. It is not evidence that this APK can update an existing installed NDWQ application.
+1. The Android CI build uses the test application ID `com.nigerdeltawq.mobile.upgradefix3`, the temporary app label `Niger Delta WQ Upgrade Fix 3`, and a debug APK. It is not evidence that this APK can update an existing installed NDWQ application.
 2. Android signing identity, production package identity and safe in-place update/data migration compatibility must be verified before any upgrade of an existing installation. Do not uninstall the existing app, clear its data or install this test APK over it as an acceptance shortcut.
 3. The Windows CI result proves installer generation, not successful installation, launch, signing/publisher trust, upgrade or uninstall on a real Windows computer.
 4. A web production build was generated, but deployment to a user-accessible production URL is a separate release gate.
