@@ -56,21 +56,40 @@ if [ ! -s "$AVD_HOME/$AVD_NAME.ini" ] || [ ! -s "$AVD_PATH/config.ini" ] \
 fi
 echo "Verified Android AVD '$AVD_NAME' in $ANDROID_AVD_HOME."
 
-"$EMULATOR" -avd "$AVD_NAME" -no-window -no-audio -no-boot-anim \
+# Run the emulator in its own session so cleanup can terminate the
+# emulator and its qemu child as one process group.
+if ! command -v setsid >/dev/null 2>&1; then
+  echo "The setsid utility is required for bounded Android emulator cleanup."
+  exit 1
+fi
+setsid "$EMULATOR" -avd "$AVD_NAME" -no-window -no-audio -no-boot-anim \
   -gpu swiftshader_indirect -no-snapshot -no-snapshot-save -no-metrics \
   >"$EMULATOR_LOG" 2>&1 &
 EMULATOR_PID=$!
 
 cleanup() {
-  timeout --foreground 10s "$ADB" -s "$SERIAL" emu kill >/dev/null 2>&1 || true
+  # Ask Android to shut down cleanly, but never let adb or process reaping
+  # hold the workflow open indefinitely after a successful smoke test.
+  timeout --foreground 5s "$ADB" -s "$SERIAL" emu kill >/dev/null 2>&1 || true
+
   if kill -0 "$EMULATOR_PID" >/dev/null 2>&1; then
-    kill "$EMULATOR_PID" >/dev/null 2>&1 || true
+    kill -TERM -- "-$EMULATOR_PID" >/dev/null 2>&1 || kill -TERM "$EMULATOR_PID" >/dev/null 2>&1 || true
+    for attempt in $(seq 1 25); do
+      if ! kill -0 -- "-$EMULATOR_PID" >/dev/null 2>&1; then
+        break
+      fi
+      sleep 0.2
+    done
+    # A stuck emulator or qemu child must not block artifact upload.
+    kill -KILL -- "-$EMULATOR_PID" >/dev/null 2>&1 || true
+    kill -KILL "$EMULATOR_PID" >/dev/null 2>&1 || true
     wait "$EMULATOR_PID" 2>/dev/null || true
   fi
 }
 trap cleanup EXIT
 
-"$ADB" start-server
+# ADB server startup is also bounded; a wedged daemon cannot consume the job timeout.
+timeout --foreground 15s "$ADB" start-server
 
 # First wait for the emulator to register with ADB. If it never appears, fail
 # quickly with the emulator log instead of spending 15 minutes on shell calls
