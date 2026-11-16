@@ -32,17 +32,17 @@ Use one status for every test: **[ ] Not run  [ ] Pass  [ ] Fail  [ ] Blocked  [
 
 ## 2. Known build and release boundaries
 
-The latest verified CI run is [Run 43821635638](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43821635638), on commit `59068027c5470d1e0f65de5cbfdafeadb8014857` (16 November 2026). GitHub reports all three jobs (`web-and-tests`, `windows-desktop`, and `android`) completed with conclusion `success`.
+The latest verified CI run is [Run 43822354931](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43822354931), on commit `4aa5f4e194d60405b832c87ceba65e67f22ff81c` (16 November 2026). GitHub reports all three jobs (`web-and-tests`, `windows-desktop`, and `android`) completed with conclusion `success`.
 
 - Web: all 114 automated scientific/geophysics tests passed (114 passed, 0 failed, 0 cancelled, 0 skipped); the production web build and artifact upload passed.
 - Android: debug APK build passed; API 35 emulator boot completed, APK installation returned `Success`, launcher activity returned `Status: ok`, and the app process plus resumed activity were detected. APK artifact upload passed. This is automated emulator evidence only. It does not establish physical-device acceptance, first-frame rendering on a real phone, or compatibility with an existing installation.
 - Windows: desktop installer generation and artifact upload passed. This does not establish installation or runtime behavior on a physical Windows computer.
 - Artifacts verified through this run's artifact listing (sizes are uploaded ZIP artifact sizes, not installed application sizes):
-  - `ndwq-integrated-web`: 300,899 bytes (about 294.0 KiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43821635638/artifacts/14205160664); SHA-256 `38134ee84cca515afceffe65b3ebfc5949d6e084e6f2337d58f8698de43b5b96`.
-  - `ndwq-integrated-android-apk-fix4`: 4,038,847 bytes (about 3.85 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43821635638/artifacts/14205155773); SHA-256 `e6d7c9c5b3afd5418620a58d129800cba18aeaa0d204f97e48654feed98ffc71`.
-  - `ndwq-integrated-windows-desktop`: 95,586,784 bytes (about 91.2 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43821635638/artifacts/14205266312); SHA-256 `edbcc8a4ae8b0ae004e1fea72dddf9500296a04d8cdb1ec0948fe7f1b0419f1b`.
-  - GitHub listed all three artifacts as unexpired when checked on 16 November 2026; their listed expiry dates are 30 November 2026. Preserve required evidence before expiry.
-- The successful workflow confirms the configured automated build and smoke-test steps passed for this commit. It is not a substitute for the physical-device and scientific acceptance checks below.
+  - `ndwq-integrated-web`: 300,899 bytes (about 294.0 KiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43822354931/artifacts/14204493164); SHA-256 `86daad88f348083c470049f9021e8edd97d063283ac6c9b172de3b586c9d25a2`.
+  - `ndwq-integrated-android-apk-fix4`: 4,038,848 bytes (about 3.85 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43822354931/artifacts/14205013189); SHA-256 `e24e02186d12d82fd007a49d73812d3ca86ec53699c46a2898359bde3f0cebe2`.
+  - `ndwq-integrated-windows-desktop`: 95,586,800 bytes (about 91.2 MiB), [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43822354931/artifacts/14204712925); SHA-256 `87b776da974247cd92fefa11cc5f057d2160f4d6b82ab17a8020767c69e959df`.
+  - GitHub listed all three artifacts as unexpired when checked on 16 November 2026; their individual expiry timestamps are 30 November 2026 (web: 07:14:40 UTC; Windows: 07:16:34 UTC; Android: 07:17:31 UTC). Preserve required evidence before expiry.
+- The successful workflow confirms the configured automated build and smoke-test steps passed for this commit. The completed Android log records Gradle `BUILD SUCCESSFUL`, ADB install `Success`, launcher activity `Status: ok`, and a detected resumed activity. The web test log records 114 tests passed and 0 failed. It is not a substitute for the physical-device and scientific acceptance checks below.
 
 **Do not interpret these checks as proof of full app functionality on physical devices or as approval to distribute/install the artifacts as a production release.**
 
