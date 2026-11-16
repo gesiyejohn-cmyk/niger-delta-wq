@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APK="source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk"
+APK="${NDWQ_ANDROID_APK:-source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk}"
 
 adb_bounded() {
   local seconds="$1"
