@@ -108,7 +108,7 @@ jobs:
         run: |
           npm install
           npm run build
-          node -e 'const fs=require("node:fs"); const c=JSON.parse(fs.readFileSync("capacitor.config.json","utf8")); if(typeof c.appId!=="string" || !/^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+$/.test(c.appId)) throw new Error("Original Capacitor appId is missing or invalid"); console.log("::notice::Original source Capacitor appId: "+c.appId); console.log("::notice::Original source Capacitor appName: "+(c.appName || "(not set)"));'
+          node -e 'const fs=require("node:fs"); const c=JSON.parse(fs.readFileSync("capacitor.config.json","utf8")); const p=JSON.parse(fs.readFileSync("package.json","utf8")); const id=c.appId || p.capacitor?.appId || null; const name=c.appName || p.capacitor?.appName || null; console.log("::notice::Original source Capacitor config keys: "+Object.keys(c).sort().join(", ")); console.log("::notice::Original source application ID: "+(id || "(not declared in these config files)")); console.log("::notice::Original source application name: "+(name || "(not declared in these config files)"));'
           node -e "const fs=require('fs'); const p='capacitor.config.json'; const c=JSON.parse(fs.readFileSync(p,'utf8')); c.appId='com.nigerdeltawq.mobile.upgradefix3'; c.appName='Niger Delta WQ Upgrade Fix 3'; fs.writeFileSync(p, JSON.stringify(c,null,2)+'\\n');"
           npx cap add android
           npx cap sync android
