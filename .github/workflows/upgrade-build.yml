@@ -12,8 +12,8 @@ jobs:
   web-and-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
       - name: Enable Android emulator hardware acceleration
@@ -48,7 +48,7 @@ jobs:
       - name: Build web application
         working-directory: source/niger-delta-wq
         run: npm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ndwq-integrated-web
           path: source/niger-delta-wq/dist
@@ -58,11 +58,11 @@ jobs:
     timeout-minutes: 45
     needs: web-and-tests
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
           java-version: 21
@@ -80,7 +80,7 @@ jobs:
           fi
           ls -l /dev/kvm
           echo "KVM access is available to the Android emulator."
-      - uses: android-actions/setup-android@v4
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
           cmdline-tools-version: 15859902
           accept-android-sdk-licenses: true
@@ -118,7 +118,7 @@ jobs:
           ./gradlew assembleDebug
       - name: Boot Android emulator and launch APK
         run: bash upgrade/scripts/android-emulator-boot-and-smoke-test.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ndwq-integrated-android-debug-apk
           path: source/niger-delta-wq/android/app/build/outputs/apk/debug/app-debug.apk
@@ -127,8 +127,8 @@ jobs:
     runs-on: windows-latest
     needs: web-and-tests
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
       - name: Extract and apply upgrade overlay
@@ -145,7 +145,7 @@ jobs:
           npm run build
           npx electron-builder --win nsis --publish never
       - name: Upload Windows desktop installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ndwq-integrated-windows-desktop
           path: source/niger-delta-wq/release/*.exe
