@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { coordinateToDecimal, decimalToCoordinate, decimalToUTM } from '../engine/coordinates.js';
+import { coordinateToDecimal, decimalToCoordinate, decimalToUTM, getStandardUTMZone } from '../engine/coordinates.js';
 
 const field = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
 
@@ -15,9 +15,14 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
     }
   } catch { /* Validation is reported when the record is saved. */ }
   let utm = null;
+  let standardZone = null;
+  let selectedZone = null;
   if (converted && value.crs.startsWith('UTM Zone')) {
-    try { utm = decimalToUTM(converted.latitude, converted.longitude, Number(value.crs.match(/Zone (\d+)/)?.[1])); }
-    catch { utm = null; }
+    selectedZone = Number(value.crs.match(/Zone (\\d+)/)?.[1]);
+    try {
+      utm = decimalToUTM(converted.latitude, converted.longitude, selectedZone);
+      standardZone = getStandardUTMZone(converted.latitude, converted.longitude);
+    } catch { utm = null; }
   }
   const set = (key, next) => onChange(old => ({ ...old, [key]: next }));
   return <div className="span-two" style={{ border: '1px solid #dbe3ea', borderRadius: 9, padding: 12, margin: '8px 0' }}>
@@ -39,17 +44,48 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
       </select>
     </label>
     <button type="button" style={{ ...field, marginTop: 8, cursor: 'pointer' }} disabled={gpsBusy} onClick={() => {
-      if (!navigator.geolocation) { setGpsMessage('GPS location is not available in this browser.'); return; }
-      setGpsBusy(true); setGpsMessage('Requesting device location…');
-      navigator.geolocation.getCurrentPosition(position => {
-        const lat = position.coords.latitude, lon = position.coords.longitude;
-        onChange(old => ({ ...old, latitude: decimalToCoordinate(lat, old.format), longitude: decimalToCoordinate(lon, old.format), latitudeHemisphere: lat < 0 ? 'S' : 'N', longitudeHemisphere: lon < 0 ? 'W' : 'E' }));
-        setGpsMessage('Location captured. Estimated accuracy: ' + Math.round(position.coords.accuracy) + ' m. Check the coordinates before saving.');
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        setGpsMessage('GPS location is not available in this browser.');
+        return;
+      }
+      setGpsBusy(true);
+      setGpsMessage('Requesting device location…');
+      try {
+        navigator.geolocation.getCurrentPosition(position => {
+          try {
+            const lat = Number(position?.coords?.latitude);
+            const lon = Number(position?.coords?.longitude);
+            const accuracy = Number(position?.coords?.accuracy);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+              throw new Error('The device returned invalid coordinates.');
+            }
+            onChange(old => ({
+              ...old,
+              latitude: decimalToCoordinate(lat, old.format),
+              longitude: decimalToCoordinate(lon, old.format),
+              latitudeHemisphere: lat < 0 ? 'S' : 'N',
+              longitudeHemisphere: lon < 0 ? 'W' : 'E'
+            }));
+            setGpsMessage('Location captured.' + (Number.isFinite(accuracy) && accuracy >= 0
+              ? ' Estimated accuracy: ' + Math.round(accuracy) + ' m.' : '') + ' Check the coordinates before saving.');
+          } catch {
+            setGpsMessage('The device location could not be converted or applied. Check the coordinate fields and try again.');
+          } finally {
+            setGpsBusy(false);
+          }
+        }, error => {
+          try {
+            setGpsMessage(error?.code === 1 ? 'Location permission was denied.'
+              : error?.code === 2 ? 'Device location is unavailable.'
+                : 'Location request timed out. Try again.');
+          } finally {
+            setGpsBusy(false);
+          }
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+      } catch {
+        setGpsMessage('The device location request could not be started. Check browser permissions and try again.');
         setGpsBusy(false);
-      }, error => {
-        setGpsMessage(error.code === 1 ? 'Location permission was denied.' : error.code === 2 ? 'Device location is unavailable.' : 'Location request timed out. Try again.');
-        setGpsBusy(false);
-      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+      }
     }}>{gpsBusy ? 'Getting GPS location…' : 'Use device GPS location'}</button>
     {gpsMessage && <p className="muted" role="status">{gpsMessage}</p>}
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 90px', gap: 8, marginTop: 8 }}>
@@ -71,6 +107,7 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
       </label>
     </div>
     {converted && <><p className="muted">Canonical WGS84 decimal degrees: {converted.latitude.toFixed(8)}°, {converted.longitude.toFixed(8)}°</p>{utm && <p className="muted">Derived {utm.zone}{utm.hemisphere} UTM (EPSG:{utm.epsg}): Easting {utm.easting.toFixed(3)} m · Northing {utm.northing.toFixed(3)} m</p>}</>}
+    {utm && standardZone !== null && selectedZone !== standardZone && <p className="muted" role="status">The selected UTM Zone {selectedZone} differs from the standard zone {standardZone} for this location. Confirm the intended coordinate reference system before using or exporting these values. Adjacent-zone or custom-zone projections may still be intentional.</p>}
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
       <label>Datum
         <select style={field} value={value.datum} onChange={event => set('datum', event.target.value)}>

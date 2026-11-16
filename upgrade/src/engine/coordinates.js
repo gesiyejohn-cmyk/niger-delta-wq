@@ -62,12 +62,28 @@ const WGS84_A = 6378137;
 const WGS84_E2 = 0.0066943799901413165;
 const UTM_K0 = 0.9996;
 
+export function getStandardUTMZone(latitude, longitude) {
+  const lat = Number(latitude), lon = Number(longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -80 || lat > 84 || lon < -180 || lon > 180) {
+    throw new Error('WGS84 coordinates are outside the supported UTM latitude/longitude range.');
+  }
+  // Standard six-degree longitude bands, with the official Norway and Svalbard exceptions.
+  if (lat >= 56 && lat < 64 && lon >= 3 && lon < 12) return 32;
+  if (lat >= 72 && lat < 84) {
+    if (lon >= 0 && lon < 9) return 31;
+    if (lon >= 9 && lon < 21) return 33;
+    if (lon >= 21 && lon < 33) return 35;
+    if (lon >= 33 && lon < 42) return 37;
+  }
+  return Math.min(60, Math.max(1, Math.floor((lon + 180) / 6) + 1));
+}
+
 export function decimalToUTM(latitude, longitude, requestedZone) {
   const lat = Number(latitude), lon = Number(longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -80 || lat > 84 || lon < -180 || lon > 180) {
     throw new Error('WGS84 coordinates are outside the supported UTM latitude/longitude range.');
   }
-  const zone = requestedZone == null ? Math.min(60, Math.max(1, Math.floor((lon + 180) / 6) + 1)) : Number(requestedZone);
+  const zone = requestedZone == null ? getStandardUTMZone(lat, lon) : Number(requestedZone);
   if (!Number.isInteger(zone) || zone < 1 || zone > 60) throw new Error('UTM zone must be an integer from 1 to 60.');
   const phi = lat * Math.PI / 180, lambda = lon * Math.PI / 180;
   const lambda0 = ((zone - 1) * 6 - 180 + 3) * Math.PI / 180;

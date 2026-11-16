@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { coordinateToDecimal, decimalToCoordinate, validateCoordinatePair } from '../src/engine/coordinates.js';
+import { coordinateToDecimal, decimalToCoordinate, validateCoordinatePair, getStandardUTMZone } from '../src/engine/coordinates.js';
 
 test('DD coordinates respect hemisphere and axis limits', () => {
   assert.equal(coordinateToDecimal('4.92', 'DD', 'N', 'latitude'), 4.92);
@@ -69,4 +69,22 @@ test('WGS84 UTM Zone 32N matches an independent PROJ EPSG:32632 reference', () =
   assert.equal(utm.epsg, 32632);
   assert.ok(Math.abs(utm.easting - 196107.609) <= 0.001);
   assert.ok(Math.abs(utm.northing - 544444.788) <= 0.001);
+});
+
+test('standard UTM zone selection follows longitude bands and Norway exception', () => {
+  assert.equal(getStandardUTMZone(4.92, 5.99), 31);
+  assert.equal(getStandardUTMZone(4.92, 6.26), 32);
+  assert.equal(getStandardUTMZone(60, 4), 32);
+});
+
+test('standard UTM zone selection applies Svalbard exceptions', () => {
+  assert.equal(getStandardUTMZone(75, 5), 31);
+  assert.equal(getStandardUTMZone(75, 15), 33);
+  assert.equal(getStandardUTMZone(75, 25), 35);
+  assert.equal(getStandardUTMZone(75, 35), 37);
+});
+
+test('standard UTM zone selection rejects coordinates outside UTM limits', () => {
+  assert.throws(() => getStandardUTMZone(85, 6.26));
+  assert.throws(() => getStandardUTMZone(4.92, 181));
 });
