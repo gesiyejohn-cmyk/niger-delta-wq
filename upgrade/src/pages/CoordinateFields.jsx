@@ -18,7 +18,7 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
   let standardZone = null;
   let selectedZone = null;
   if (converted && value.crs.startsWith('UTM Zone')) {
-    selectedZone = Number(value.crs.match(/Zone (\\d+)/)?.[1]);
+    selectedZone = Number(value.crs.match(/Zone (\d+)/)?.[1]);
     try {
       utm = decimalToUTM(converted.latitude, converted.longitude, selectedZone);
       standardZone = getStandardUTMZone(converted.latitude, converted.longitude);
