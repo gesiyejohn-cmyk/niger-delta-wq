@@ -60,3 +60,13 @@ test('UTM inverse rejects out-of-grid eastings and coordinates beyond UTM latitu
   assert.throws(() => utmToDecimal(900001, 550000, 32, 'N'));
   assert.throws(() => utmToDecimal(500000, 10000000, 32, 'N'));
 });
+
+test('WGS84 UTM Zone 32N matches an independent PROJ EPSG:32632 reference', () => {
+  // Reference for latitude 4.92°, longitude 6.26° from PROJ / EPSG:32632.
+  // This independent control prevents a forward/inverse round-trip from hiding
+  // a shared implementation error in both conversion directions.
+  const utm = decimalToUTM(4.92, 6.26, 32);
+  assert.equal(utm.epsg, 32632);
+  assert.ok(Math.abs(utm.easting - 196107.609) <= 0.001);
+  assert.ok(Math.abs(utm.northing - 544444.788) <= 0.001);
+});
