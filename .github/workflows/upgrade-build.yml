@@ -66,6 +66,20 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      - name: Enable Android emulator hardware acceleration
+        run: |
+          if [ ! -c /dev/kvm ]; then
+            echo "KVM device /dev/kvm is unavailable on this runner."
+            exit 1
+          fi
+          sudo chmod 666 /dev/kvm
+          if [ ! -r /dev/kvm ] || [ ! -w /dev/kvm ]; then
+            echo "Runner user still cannot access /dev/kvm after permission setup."
+            ls -l /dev/kvm
+            exit 1
+          fi
+          ls -l /dev/kvm
+          echo "KVM access is available to the Android emulator."
       - uses: android-actions/setup-android@v4
         with:
           cmdline-tools-version: 15859902
