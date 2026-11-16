@@ -32,7 +32,7 @@ Use one status for every test: **[ ] Not run  [ ] Pass  [ ] Fail  [ ] Blocked  [
 
 ## 2. Known build and release boundaries
 
-The latest verified CI run is [Run 43827925449](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43827925449), on commit `d7c1a6933b8b19720e208b100cfe37c5d68833a8` (16 November 2026). GitHub reports all three jobs (`web-and-tests`, `windows-desktop`, and `android`) completed with conclusion `success`.
+Run [43827925449](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43827925449) is retained below as a historical baseline. The newer same-branch verification on commit `092cf3cce41dbd3be159adcbd8186ea53c0405ce` is recorded in the superseding evidence block below.
 
 - Web: all 114 automated scientific/geophysics tests passed (114 passed, 0 failed); the production web build and artifact upload passed.
 - Android: debug APK build passed; API 35 emulator boot completed, APK installation returned `Success`, launcher activity was `com.nigerdeltawq.mobile.MainActivity`, and the resumed app activity was detected. The APK metadata confirmed package ID `com.nigerdeltawq.mobile` and label `Niger Delta WQ`. This is automated emulator evidence only; it does not establish physical-device acceptance, first-frame rendering on a real phone, or compatibility with an existing installation.
@@ -44,6 +44,26 @@ The latest verified CI run is [Run 43827925449](https://github.com/gesiyejohn-cm
   - `ndwq-integrated-windows-desktop`: 95,586,786 bytes, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43827925449/artifacts/14207382340); SHA-256 `50ed284c9f5b1ec7f765fd02c2d4b4ca7df0a73b818af684bbd0da20a61452eb`; expires 30 November 2026 at 08:03:24 UTC.
 - The web test log records 114 tests passed and 0 failed. The Windows job built the NSIS installer with publishing disabled. The Android job records API 35 emulator readiness, ADB install success, the original package ID and launcher label, a detected resumed activity, and successful APK artifact upload.
 - GitHub's artifact retention is temporary; these downloads expire on the dates above. Expiry does not disable an installed app or remove the source code. Preserve required build evidence before expiry.
+
+### Latest superseding CI evidence — 16 November 2026
+
+The branch head at this check is `092cf3cce41dbd3be159adcbd8186ea53c0405ce` (commit message: “Use a fresh package ID for the next Android preview”). Pull request [#2](https://github.com/gesiyejohn-cmyk/niger-delta-wq/pull/2) remains **open and draft**; it has not been merged.
+
+[Run 43847919643](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43847919643) ran on that exact head commit. All three required jobs completed successfully:
+
+- `web-and-tests`: 114 tests passed, 0 failed; production web build and upload passed. Web artifact `ndwq-integrated-web`, ID `14215813153`, 301,073 bytes, ZIP SHA-256 `6c81dd056030c919fce0d21687f00d88019ec4731e1a706f18b3fbca405a7f25`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43847919643/artifacts/14215813153); expires 30 November 2026 at 10:20:42 UTC.
+- `android`: debug APK build, API 35 emulator boot, install and launcher launch passed for the original source identity. Metadata records package ID `com.nigerdeltawq.mobile`, label `Niger Delta WQ`, version code `1`, version name `1.0`, and launcher `com.nigerdeltawq.mobile.MainActivity`. The resumed launcher activity was observed. The CI debug signing certificate SHA-256 fingerprint is `5b1fe7f778f95389af1a007388b544a1b1157016ef21f717f5cde6ad783f8d68`; this is not a configured production key and does not establish compatibility with the user's installed app. The separate side-by-side preview also installed/launched with package ID `com.nigerdeltawq.mobile.preview2`. Original APK SHA-256: `d2719835a3872d16df80895c1a9d07a6377d445a4f2e34f5ed64df2c0bd5b390`; preview APK SHA-256: `a4a74ff8f82ae333b4d95e7e80d3780fb1ac476ca11b269b8aabb5d425bc4f5b`. Artifact `ndwq-integrated-android-debug-apk`, ID `14215773285`, 8,080,666 bytes, archive SHA-256 `1ab60587cb2e8afea027b73b3a96573893e85bbc79c61575e4f3a93ba5cff261`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43847919643/artifacts/14215773285); expires 30 November 2026 at 10:24:53 UTC. The archive contains the original-identity debug APK, side-by-side preview APK and signing/build metadata.
+- `windows-desktop`: NSIS installer generation and upload passed. Installer file name `Niger-Delta-WQ-Setup-1.0.0.exe`; no code-signing certificate was configured. Artifact `ndwq-integrated-windows-desktop`, ID `14217085434`, 95,586,913 bytes, archive SHA-256 `062015acc14109ba1d508954a25f69b22636405570d95922ef37343d29c1f782`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43847919643/artifacts/14217085434); expires 30 November 2026 at 10:22:38 UTC.
+
+The requested earlier emulator workflow [Run 43762079209](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43762079209) is now complete and **failed only in its Android job**, at the emulator launch step; its web/tests and Windows jobs passed. The Android log ended with ADB exit code 224 after a settings-service broken-pipe error. The newer workflow now explicitly installs the API 35 emulator image, verifies KVM access and AVD files, waits for boot/system readiness, bounds ADB calls and performs separate original-identity and preview launches. Run 43847919643 confirms those CI emulator checks now pass.
+
+These results establish a successful multi-platform **CI build and emulator smoke test on one commit**, not a production release:
+- Web deployment to an accessible public URL and browser acceptance remain unverified.
+- The Android artifact is debug-signed. Existing-device signer compatibility and production signing remain unverified; do not uninstall, clear data or install over the current phone app.
+- The emulator did not provide human visual acceptance on the user's physical phone. Physical-device installation, first-screen rendering and core workflows remain outstanding.
+- Windows installer installation and runtime remain untested on a real Windows computer; the installer is unsigned.
+- Backup/restore still needs a recoverable backup and verification against the user's actual device data.
+- Scientific reference/calibration review and formal acceptance sign-off remain outstanding.
 
 **Do not interpret these checks as proof of full app functionality on physical devices or as approval to distribute/install the artifacts as a production release.**
 Release restrictions and product limitations to retain during testing:
