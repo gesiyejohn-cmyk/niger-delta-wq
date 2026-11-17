@@ -160,10 +160,16 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
   function exportCSV() {
     try {
       const clean = validateGeologicalInterpretation({ ...draft, interpretationStatus: 'provisional' }, model);
-      const rows = [['ERT line ID','Station distance (m)','Unit order','Geological unit','Top depth (m)','Bottom depth (m)','Thickness (m)','Confidence','Aquifer potential','Evidence','Interpretation notes']];
+      const rows = [[
+        'ERT model ID','ERT line ID','Latitude','Longitude','Coordinate datum','Coordinate CRS',
+        'Station distance (m)','Unit ID','Unit order','Geological unit','Top depth (m)',
+        'Bottom depth (m)','Thickness (m)','Confidence','Aquifer potential','Evidence','Interpretation notes'
+      ]];
       clean.stations.forEach(station => clean.units.forEach((unit, index) => rows.push([
-        clean.lineId, station.x, index + 1, unit.name, station.boundaries[index],
-        station.boundaries[index + 1], station.boundaries[index + 1] - station.boundaries[index],
+        clean.ertModelId, clean.lineId, model.latitude ?? '', model.longitude ?? '',
+        model.coordinateDatum ?? '', model.coordinateCRS ?? '', station.x, unit.id, index + 1,
+        unit.name, station.boundaries[index], station.boundaries[index + 1],
+        station.boundaries[index + 1] - station.boundaries[index],
         unit.confidence, unit.aquiferPotential, unit.evidence, clean.notes
       ])));
       const csv = rows.map(row => row.map(csvCell).join(',')).join('\r\n');
