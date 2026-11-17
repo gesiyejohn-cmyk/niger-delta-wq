@@ -1,0 +1,191 @@
+import { useEffect, useMemo, useState } from 'react';
+import {
+  createGeologicalInterpretation, validateGeologicalInterpretation,
+  getGeologicalColumnAtDistance
+} from '../engine/geologicalInterpretation.js';
+import {
+  getERTInterpretation, saveERTInterpretation, deleteERTInterpretation
+} from '../storage/geophysics.js';
+
+const palette = ['#d6b98c', '#b8a7d9', '#e8c65a', '#83b7a5', '#9bb7d8', '#b9b9b9'];
+const field = { width: '100%', boxSizing: 'border-box', padding: 8, border: '1px solid #cbd5e1', borderRadius: 6 };
+const btn = { padding: '7px 10px', border: '1px solid #94a3b8', borderRadius: 6, background: '#f8fafc', color: '#0f172a' };
+
+function makeStation(x, boundaries) {
+  return { x, boundaries: [...boundaries] };
+}
+
+export default function GeologicalInterpretationEditor({ model, selectedDistance = null, onDistanceChange = () => {} }) {
+  const [draft, setDraft] = useState(null);
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const saved = await getERTInterpretation(model.id);
+        if (!active) return;
+        setDraft(saved || createGeologicalInterpretation(model));
+        setMessage(saved ? 'Saved geological interpretation loaded.' : 'No geological interpretation saved yet. Start by defining the section.');
+      } catch (error) { if (active) setMessage('Could not load interpretation: ' + error.message); }
+    })();
+    return () => { active = false; };
+  }, [model.id]);
+
+  const range = draft?.depthRange || [0, 1];
+  const xRange = draft?.xRange || [0, 1];
+  const stations = draft?.stations || [];
+  const units = draft?.units || [];
+  const column = useMemo(() => {
+    if (!draft || !units.length || stations.length < 2) return null;
+    const x = selectedDistance == null ? xRange[0] : Math.max(xRange[0], Math.min(xRange[1], selectedDistance));
+    try { return getGeologicalColumnAtDistance(draft, x); } catch { return null; }
+  }, [draft, selectedDistance]);
+
+  function startSection() {
+    setDraft(old => ({ ...old, stations: [
+      makeStation(xRange[0], [range[0], range[1]]),
+      makeStation(xRange[1], [range[0], range[1]])
+    ] }));
+    setMessage('Section stations created at both ends of the ERT line.');
+  }
+
+  function addUnit() {
+    const id = globalThis.crypto?.randomUUID?.() || 'unit_' + Date.now();
+    const nextUnit = { id, name: 'New geological unit', confidence: 'low', aquiferPotential: 'unknown', evidence: '' };
+    setDraft(old => {
+      const nextStations = old.stations.map(station => {
+        const bounds = [...station.boundaries];
+        let split = 0, largest = -1;
+        for (let i = 0; i < bounds.length - 1; i++) {
+          const thickness = bounds[i + 1] - bounds[i];
+          if (thickness > largest) { largest = thickness; split = i; }
+        }
+        bounds.splice(split + 1, 0, (bounds[split] + bounds[split + 1]) / 2);
+        return { ...station, boundaries: bounds };
+      });
+      return { ...old, units: [...old.units, nextUnit], stations: nextStations };
+    });
+  }
+
+  function addStation() {
+    setDraft(old => {
+      if (old.stations.length < 2) return old;
+      let gapIndex = 0, largest = -1;
+      for (let i = 0; i < old.stations.length - 1; i++) {
+        const gap = old.stations[i + 1].x - old.stations[i].x;
+        if (gap > largest) { largest = gap; gapIndex = i; }
+      }
+      const left = old.stations[gapIndex], right = old.stations[gapIndex + 1];
+      const fraction = 0.5;
+      const x = (left.x + right.x) / 2;
+      const boundaries = left.boundaries.map((depth, i) => depth + (right.boundaries[i] - depth) * fraction);
+      const next = [...old.stations, makeStation(x, boundaries)].sort((a, b) => a.x - b.x);
+      return { ...old, stations: next };
+    });
+  }
+
+  function updateUnit(index, key, value) {
+    setDraft(old => ({ ...old, units: old.units.map((unit, i) => i === index ? { ...unit, [key]: value } : unit) }));
+  }
+  function updateBoundary(stationIndex, boundaryIndex, value) {
+    setDraft(old => ({ ...old, stations: old.stations.map((station, i) => i === stationIndex
+      ? { ...station, boundaries: station.boundaries.map((depth, j) => j === boundaryIndex ? Number(value) : depth) }
+      : station) }));
+  }
+
+  async function save() {
+    setBusy(true);
+    try {
+      const clean = validateGeologicalInterpretation({ ...draft, interpretationStatus: 'provisional' }, model);
+      await saveERTInterpretation(model.id, clean);
+      setDraft(clean);
+      setMessage('Geological interpretation saved. It will be available when this ERT line is reopened.');
+    } catch (error) { setMessage('Not saved: ' + error.message); }
+    finally { setBusy(false); }
+  }
+  async function remove() {
+    if (!globalThis.confirm?.('Delete the saved geological interpretation for this ERT line?')) return;
+    await deleteERTInterpretation(model.id);
+    setDraft(createGeologicalInterpretation(model));
+    setMessage('Saved geological interpretation deleted. The imported ERT measurements remain unchanged.');
+  }
+
+  if (!draft) return <section style={{marginTop:20}}><h2>2D Geological Interpretation</h2><p role="status">Loading interpretation…</p></section>;
+
+  const plot = stations.length >= 2 && units.length
+    ? units.map((unit, layerIndex) => {
+      const points = stations.map((station, i) => {
+        const x = 70 + (station.x - xRange[0]) / (xRange[1] - xRange[0]) * 650;
+        const top = 30 + (station.boundaries[layerIndex] - range[0]) / (range[1] - range[0]) * 300;
+        return [x, top];
+      });
+      const lower = stations.slice().reverse().map(station => {
+        const x = 70 + (station.x - xRange[0]) / (xRange[1] - xRange[0]) * 650;
+        const y = 30 + (station.boundaries[layerIndex + 1] - range[0]) / (range[1] - range[0]) * 300;
+        return [x, y];
+      });
+      return { unit, points, lower, d: [...points, ...lower].map((p, i) => (i ? 'L' : 'M') + p[0] + ' ' + p[1]).join(' ') + ' Z' };
+    }) : [];
+
+  return <section style={{marginTop:24, padding:14, border:'1px solid #cbd5e1', borderRadius:10, background:'#fff'}}>
+    <h2>2D Geological Subsurface Interpretation</h2>
+    <p className="muted">Manual geological interpretation linked to <strong>{model.lineId || 'Unlabelled ERT line'}</strong>. Distance and depth use the same coordinate ranges as the imported ERT model. Lithology is not automatically inferred from resistivity.</p>
+    <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}}>
+      <button type="button" style={btn} onClick={startSection}>Create section stations</button>
+      <button type="button" style={btn} onClick={addUnit} disabled={stations.length < 2}>Add geological layer</button>
+      <button type="button" style={btn} onClick={addStation} disabled={stations.length < 2}>Add interpretation station</button>
+      <button type="button" style={{...btn,background:'#eff6ff'}} onClick={save} disabled={busy || !units.length || stations.length < 2}>{busy ? 'Saving…' : 'Save interpretation'}</button>
+      <button type="button" style={btn} onClick={remove}>Delete interpretation</button>
+    </div>
+    {message && <p className="notice" role="status">{message}</p>}
+    {units.length > 0 && <div style={{display:'grid',gap:12}}>
+      <h3 style={{marginBottom:0}}>Geological units (shallow to deep)</h3>
+      {units.map((unit, index) => <div key={unit.id} style={{border:'1px solid #e2e8f0',borderLeft:'6px solid ' + palette[index % palette.length],borderRadius:7,padding:10}}>
+        <label>Unit {index + 1} — lithology / material
+          <input style={field} value={unit.name} onChange={e => updateUnit(index,'name',e.target.value)} placeholder="e.g. topsoil, clay, fine sand, saturated sand" />
+        </label>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(135px,1fr))',gap:8,marginTop:8}}>
+          <label>Confidence<select style={field} value={unit.confidence} onChange={e => updateUnit(index,'confidence',e.target.value)}><option value="low">Low</option><option value="moderate">Moderate</option><option value="high">High</option></select></label>
+          <label>Aquifer potential<select style={field} value={unit.aquiferPotential} onChange={e => updateUnit(index,'aquiferPotential',e.target.value)}><option value="unknown">Unknown</option><option value="unlikely">Unlikely</option><option value="possible">Possible</option><option value="probable">Probable</option></select></label>
+        </div>
+        <label>Evidence / borehole or field control
+          <textarea style={field} rows="2" value={unit.evidence} onChange={e => updateUnit(index,'evidence',e.target.value)} placeholder="Record borehole log, outcrop, sample, local geology, or why confidence is limited." />
+        </label>
+      </div>)}
+    </div>}
+    {stations.length >= 2 && <div style={{marginTop:16}}>
+      <h3>Layer boundaries at each interpretation station (depth in metres)</h3>
+      <p className="muted">Enter boundaries from shallow to deep. The first and last values must match the ERT model depth limits. Values between stations are interpolated linearly.</p>
+      {stations.map((station, stationIndex) => <div key={station.x} style={{border:'1px solid #e2e8f0',borderRadius:7,padding:10,marginBottom:8}}>
+        <strong>Station {stationIndex + 1}</strong> · Distance {station.x.toFixed(2)} m
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(115px,1fr))',gap:8,marginTop:8}}>
+          {station.boundaries.map((depth, boundaryIndex) => <label key={boundaryIndex}>{boundaryIndex === 0 ? 'Top boundary' : boundaryIndex === station.boundaries.length - 1 ? 'Bottom boundary' : 'Base of ' + units[boundaryIndex - 1]?.name}
+            <input style={field} type="number" step="any" value={depth} onChange={e => updateBoundary(stationIndex,boundaryIndex,e.target.value)} />
+          </label>)}
+        </div>
+      </div>)}
+    </div>}
+    {plot.length > 0 && <div style={{marginTop:16}}>
+      <h3>Geological cross-section</h3>
+      <div style={{overflowX:'auto',border:'1px solid #cbd5e1',borderRadius:7}}>
+        <svg viewBox="0 0 760 390" role="img" aria-label="Manually interpreted geological cross-section with shared ERT distance and depth ranges" style={{width:'100%',minWidth:320,background:'#f8fafc',display:'block'}}>
+          <path d="M70 30V330H720" fill="none" stroke="#334155" strokeWidth="1.5"/>
+          {plot.map((item,i) => <path key={item.unit.id} d={item.d} fill={palette[i % palette.length]} fillOpacity=".78" stroke="#475569" strokeWidth="1.2"><title>{item.unit.name}</title></path>)}
+          {stations.map((station,i) => <g key={station.x}><path d={'M'+(70+(station.x-xRange[0])/(xRange[1]-xRange[0])*650)+' 30v300'} stroke="#64748b" strokeDasharray="3 4" opacity=".5"/><text x={70+(station.x-xRange[0])/(xRange[1]-xRange[0])*650} y="348" textAnchor="middle" fontSize="10" fill="#334155">{station.x.toFixed(1)}</text></g>)}
+          {[0,1,2,3,4].map(i => <text key={i} x="60" y={34+i*74} textAnchor="end" fontSize="10" fill="#334155">{(range[0]+(range[1]-range[0])*i/4).toFixed(1)}</text>)}
+          <text x="390" y="378" textAnchor="middle" fontSize="12" fill="#0f172a">Profile distance (m)</text>
+          <text x="15" y="180" transform="rotate(-90 15 180)" textAnchor="middle" fontSize="12" fill="#0f172a">Depth (m)</text>
+          {selectedDistance != null && <path d={'M'+(70+(Math.max(xRange[0],Math.min(xRange[1],selectedDistance))-xRange[0])/(xRange[1]-xRange[0])*650)+' 30v300'} stroke="#111827" strokeWidth="2.5"/>}
+        </svg>
+      </div>
+      <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:8}}>{units.map((unit,i)=><span key={unit.id} style={{fontSize:13}}><span style={{display:'inline-block',width:12,height:12,background:palette[i%palette.length],marginRight:5}}/>{unit.name}</span>)}</div>
+      {column && <div className="notice" style={{marginTop:10}}>
+        <strong>Interpreted column at {column.x.toFixed(2)} m</strong>
+        {column.layers.map(layer=><div key={layer.id}>{layer.name}: {layer.topDepth.toFixed(2)}–{layer.bottomDepth.toFixed(2)} m · thickness {layer.thickness.toFixed(2)} m · {layer.confidence} confidence · aquifer potential: {layer.aquiferPotential}</div>)}
+      </div>}
+    </div>}
+    <p className="muted" style={{marginTop:12}}>Scientific caution: resistivity is non-unique. Interpretations are provisional unless supported by borehole logs, lithological samples, groundwater data, or other independent evidence. “Possible/probable aquifer” is an interpretation, not confirmation of a productive aquifer.</p>
+  </section>;
+}
