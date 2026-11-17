@@ -90,7 +90,7 @@ export default function ERTTomogram({ models = [] }) {
                 fill={colour(cell.value,min,max)} stroke={isSelected ? '#111827' : 'none'}
                 strokeWidth={isSelected ? 2.5 : 0} role="button" tabIndex={0}
                 aria-label={`Interpolated resistivity ${cell.value.toFixed(2)} ohm metres at distance ${cellX.toFixed(2)} metres and depth ${cellDepth.toFixed(2)} metres`}
-                onClick={() => { if (!suppressCellClick.current) setSelected({r:cell.r,c:cell.c,x:cellX,depth:cellDepth,value:cell.value}); }}
+                onClick={() => { if (suppressCellClick.current) suppressCellClick.current = false; else setSelected({r:cell.r,c:cell.c,x:cellX,depth:cellDepth,value:cell.value}); }}
                 onKeyDown={event => {if(event.key === 'Enter' || event.key === ' '){event.preventDefault();setSelected({r:cell.r,c:cell.c,x:cellX,depth:cellDepth,value:cell.value});}}}
                 style={{cursor:'pointer',outline:'none'}} />;
             })}
