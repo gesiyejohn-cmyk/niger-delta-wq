@@ -15,6 +15,23 @@ function makeStation(x, boundaries) {
   return { x, boundaries: [...boundaries] };
 }
 
+function downloadText(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function csvCell(value) {
+  const text = String(value ?? '');
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+
 export default function GeologicalInterpretationEditor({ model, selectedDistance = null, onDistanceChange = () => {} }) {
   const [draft, setDraft] = useState(null);
   const [message, setMessage] = useState('');
@@ -101,6 +118,34 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
     } catch (error) { setMessage('Not saved: ' + error.message); }
     finally { setBusy(false); }
   }
+  function exportJSON() {
+    try {
+      const clean = validateGeologicalInterpretation({ ...draft, interpretationStatus: 'provisional' }, model);
+      downloadText((model.lineId || 'ERT-line') + '-geological-interpretation.json', JSON.stringify({
+        ...clean,
+        exportedAt: new Date().toISOString(),
+        units: clean.units,
+        stations: clean.stations
+      }, null, 2), 'application/json;charset=utf-8');
+      setMessage('Interpretation JSON export prepared.');
+    } catch (error) { setMessage('Export unavailable: ' + error.message); }
+  }
+
+  function exportCSV() {
+    try {
+      const clean = validateGeologicalInterpretation({ ...draft, interpretationStatus: 'provisional' }, model);
+      const rows = [['ERT line ID','Station distance (m)','Unit order','Geological unit','Top depth (m)','Bottom depth (m)','Thickness (m)','Confidence','Aquifer potential','Evidence','Interpretation notes']];
+      clean.stations.forEach(station => clean.units.forEach((unit, index) => rows.push([
+        clean.lineId, station.x, index + 1, unit.name, station.boundaries[index],
+        station.boundaries[index + 1], station.boundaries[index + 1] - station.boundaries[index],
+        unit.confidence, unit.aquiferPotential, unit.evidence, clean.notes
+      ])));
+      const csv = rows.map(row => row.map(csvCell).join(',')).join('\r\n');
+      downloadText((model.lineId || 'ERT-line') + '-geological-interpretation.csv', csv, 'text/csv;charset=utf-8');
+      setMessage('Interpretation CSV export prepared.');
+    } catch (error) { setMessage('Export unavailable: ' + error.message); }
+  }
+
   async function remove() {
     if (!globalThis.confirm?.('Delete the saved geological interpretation for this ERT line?')) return;
     await deleteERTInterpretation(model.id);
@@ -134,6 +179,8 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
       <button type="button" style={btn} onClick={addStation} disabled={stations.length < 2}>Add interpretation station</button>
       <button type="button" style={{...btn,background:'#eff6ff'}} onClick={save} disabled={busy || !units.length || stations.length < 2}>{busy ? 'Saving…' : 'Save interpretation'}</button>
       <button type="button" style={btn} onClick={remove}>Delete interpretation</button>
+      <button type="button" style={btn} onClick={exportJSON} disabled={!units.length || stations.length < 2}>Export JSON</button>
+      <button type="button" style={btn} onClick={exportCSV} disabled={!units.length || stations.length < 2}>Export CSV</button>
     </div>
     {message && <p className="notice" role="status">{message}</p>}
     <label style={{display:'block',margin:'12px 0'}}>Interpretation notes / limitations
@@ -168,8 +215,25 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
     </div>}
     {plot.length > 0 && <div style={{marginTop:16}}>
       <h3>Geological cross-section</h3>
+      <p className="muted">Tap or click the section to select a profile distance. The nearest imported ERT measurement will be selected in the ERT plot above. Use the left/right arrow keys when the section is focused.</p>
       <div style={{overflowX:'auto',border:'1px solid #cbd5e1',borderRadius:7}}>
-        <svg viewBox="0 0 760 390" role="img" aria-label="Manually interpreted geological cross-section with shared ERT distance and depth ranges" style={{width:'100%',minWidth:320,background:'#f8fafc',display:'block'}}>
+        <svg viewBox="0 0 760 390" role="img" aria-label="Manually interpreted geological cross-section with shared ERT distance and depth ranges" onClick={event => {
+            if (!onDistanceChange) return;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const plotX = ((event.clientX - rect.left) / rect.width) * 760;
+            const fraction = Math.max(0, Math.min(1, (plotX - 70) / 650));
+            onDistanceChange(xRange[0] + fraction * (xRange[1] - xRange[0]));
+          }}
+          onKeyDown={event => {
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+              event.preventDefault();
+              const current = selectedDistance == null ? xRange[0] : selectedDistance;
+              const step = (xRange[1] - xRange[0]) / 20;
+              onDistanceChange(Math.max(xRange[0], Math.min(xRange[1], current + (event.key === 'ArrowRight' ? step : -step))));
+            }
+          }}
+          tabIndex={0}
+          style={{width:'100%',minWidth:320,background:'#f8fafc',display:'block'}}>
           <path d="M70 30V330H720" fill="none" stroke="#334155" strokeWidth="1.5"/>
           {plot.map((item,i) => <path key={item.unit.id} d={item.d} fill={palette[i % palette.length]} fillOpacity=".78" stroke="#475569" strokeWidth="1.2"><title>{item.unit.name}</title></path>)}
           {stations.map((station,i) => <g key={station.x}><path d={'M'+(70+(station.x-xRange[0])/(xRange[1]-xRange[0])*650)+' 30v300'} stroke="#64748b" strokeDasharray="3 4" opacity=".5"/><text x={70+(station.x-xRange[0])/(xRange[1]-xRange[0])*650} y="348" textAnchor="middle" fontSize="10" fill="#334155">{station.x.toFixed(1)}</text></g>)}
