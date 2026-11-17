@@ -221,3 +221,5 @@ jobs:
           path: source/niger-delta-wq/release/*.exe
           if-no-files-found: error
           retention-days: 14
+
+# Geological interpretation validation is included in this branch's CI run.
