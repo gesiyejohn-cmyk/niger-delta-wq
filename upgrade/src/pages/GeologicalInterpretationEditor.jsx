@@ -99,6 +99,32 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
     });
   }
 
+  function removeUnit(index) {
+    setDraft(old => {
+      if (old.units.length === 1) {
+        return {
+          ...old,
+          units: [],
+          stations: old.stations.map(station => ({
+            ...station,
+            boundaries: [station.boundaries[0], station.boundaries[station.boundaries.length - 1]]
+          }))
+        };
+      }
+      const isLast = index === old.units.length - 1;
+      return {
+        ...old,
+        units: old.units.filter((_, i) => i !== index),
+        stations: old.stations.map(station => ({
+          ...station,
+          boundaries: station.boundaries.filter((_, boundaryIndex) =>
+            boundaryIndex !== (isLast ? index : index + 1)
+          )
+        }))
+      };
+    });
+  }
+
   function updateUnit(index, key, value) {
     setDraft(old => ({ ...old, units: old.units.map((unit, i) => i === index ? { ...unit, [key]: value } : unit) }));
   }
@@ -189,7 +215,11 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
     {units.length > 0 && <div style={{display:'grid',gap:12}}>
       <h3 style={{marginBottom:0}}>Geological units (shallow to deep)</h3>
       {units.map((unit, index) => <div key={unit.id} style={{border:'1px solid #e2e8f0',borderLeft:'6px solid ' + palette[index % palette.length],borderRadius:7,padding:10}}>
-        <label>Unit {index + 1} — lithology / material
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+          <strong>Unit {index + 1}</strong>
+          <button type="button" style={btn} onClick={() => removeUnit(index)}>Remove layer</button>
+        </div>
+        <label>Lithology / material
           <input style={field} value={unit.name} onChange={e => updateUnit(index,'name',e.target.value)} placeholder="e.g. topsoil, clay, fine sand, saturated sand" />
         </label>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(135px,1fr))',gap:8,marginTop:8}}>
