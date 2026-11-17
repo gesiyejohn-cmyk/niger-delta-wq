@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { buildERTGrid } from '../engine/ert.js';
 
 function colour(value, min, max) {
@@ -20,6 +20,8 @@ export default function ERTTomogram({ models = [] }) {
   const [selected, setSelected] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const touchGesture = useRef(null);
+  const suppressCellClick = useRef(false);
   const points = useMemo(() => models.flatMap(model =>
     (model.cells || []).map(p => ({...p, lineId: model.lineId || 'Unlabelled line'}))
   ), [models]);
@@ -55,8 +57,26 @@ export default function ERTTomogram({ models = [] }) {
       </div>
       <div style={{width:'100%',overflow:'hidden',border:'1px solid #94a3b8',borderRadius:8,background:'#fff'}}>
         <svg viewBox={`${viewX} ${viewY} ${viewWidth} ${viewHeight}`} role="group"
-          aria-label="Interactive interpolated resistivity tomogram. Select a coloured cell to inspect its estimated resistivity."
-          style={{display:'block',width:'100%',height:'auto',minHeight:260,touchAction:'pan-y'}}>
+          aria-label="Interactive interpolated resistivity tomogram. Select a coloured cell to inspect its estimated resistivity. Pinch to zoom and drag to pan."
+          onWheel={event => { event.preventDefault(); setZoom(v => Math.max(1, Math.min(4, +(v * (event.deltaY < 0 ? 1.12 : 0.89)).toFixed(2)))); }}
+          onTouchStart={event => {
+            if (event.touches.length === 1) { const t=event.touches[0]; touchGesture.current={mode:"pan",x:t.clientX,y:t.clientY,pan}; }
+            else if (event.touches.length >= 2) { const a=event.touches[0],b=event.touches[1]; touchGesture.current={mode:"pinch",distance:Math.hypot(b.clientX-a.clientX,b.clientY-a.clientY),zoom,pan}; }
+          }}
+          onTouchMove={event => {
+            const g=touchGesture.current; if(!g) return;
+            if(g.mode==="pinch" && event.touches.length>=2) {
+              event.preventDefault(); const a=event.touches[0],b=event.touches[1];
+              const d=Math.hypot(b.clientX-a.clientX,b.clientY-a.clientY);
+              if(Math.abs(d-g.distance)>3) suppressCellClick.current=true;
+              setZoom(Math.max(1,Math.min(4,g.zoom*d/Math.max(1,g.distance))));
+            } else if(g.mode==="pan" && event.touches.length===1) {
+              const t=event.touches[0],dx=t.clientX-g.x,dy=t.clientY-g.y;
+              if(Math.hypot(dx,dy)>8) { event.preventDefault(); suppressCellClick.current=true; setPan({x:g.pan.x-dx/Math.max(1,zoom),y:g.pan.y-dy/Math.max(1,zoom)}); }
+            }
+          }}
+          onTouchEnd={() => { touchGesture.current=null; }}
+          style={{display:'block',width:'100%',height:'auto',minHeight:260,touchAction:'none'}}>
           <text x="65" y="16" fontSize="13" fontWeight="600" fill="#0f172a">Depth (m)</text>
           <text x="350" y="375" fontSize="13" fontWeight="600" fill="#0f172a">Profile distance (m)</text>
           <g transform="translate(65 28)">
@@ -70,7 +90,7 @@ export default function ERTTomogram({ models = [] }) {
                 fill={colour(cell.value,min,max)} stroke={isSelected ? '#111827' : 'none'}
                 strokeWidth={isSelected ? 2.5 : 0} role="button" tabIndex={0}
                 aria-label={`Interpolated resistivity ${cell.value.toFixed(2)} ohm metres at distance ${cellX.toFixed(2)} metres and depth ${cellDepth.toFixed(2)} metres`}
-                onClick={() => setSelected({r:cell.r,c:cell.c,x:cellX,depth:cellDepth,value:cell.value})}
+                onClick={() => { if (!suppressCellClick.current) setSelected({r:cell.r,c:cell.c,x:cellX,depth:cellDepth,value:cell.value}); }}
                 onKeyDown={event => {if(event.key === 'Enter' || event.key === ' '){event.preventDefault();setSelected({r:cell.r,c:cell.c,x:cellX,depth:cellDepth,value:cell.value});}}}
                 style={{cursor:'pointer',outline:'none'}} />;
             })}
