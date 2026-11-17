@@ -22,6 +22,7 @@ export default function GeophysicsPage() {
   const [cells, setCells] = useState([]);
   const [sourceImport, setSourceImport] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
+  const [selectedERTDistance, setSelectedERTDistance] = useState(null);
   const [selectedErtModelId, setSelectedErtModelId] = useState('');
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState('info');
@@ -97,6 +98,7 @@ export default function GeophysicsPage() {
       setCells(clean);
       setSourceImport({ fileName: file.name, content: sourceText, importedAt: new Date().toISOString() });
       setSelectedCell(clean[0] || null);
+      setSelectedERTDistance(clean[0]?.x ?? null);
       notify(clean.length + ' ERT model points loaded. Confirm the metadata and save the imported model.', 'success');
     } catch (error) {
       notify('ERT import failed: ' + error.message, 'error');
@@ -120,6 +122,7 @@ export default function GeophysicsPage() {
       setCells([]);
       setSourceImport(null);
       setSelectedCell(null);
+      setSelectedERTDistance(null);
       notify('ERT model saved. The app displays imported inversion results; it does not perform geophysical inversion.', 'success');
       await refresh();
     } catch (error) {
@@ -144,6 +147,7 @@ export default function GeophysicsPage() {
       Math.abs(cell.x - distance) < Math.abs(best.x - distance) ? cell : best
     , displayCells[0]);
     setSelectedCell(nearest);
+    setSelectedERTDistance(distance);
   }
 
   function colourFor(value) {
@@ -234,12 +238,12 @@ export default function GeophysicsPage() {
         <h2>Saved ERT lines</h2>
         {ert.map(record => <div key={record.id} style={{ padding: 8, borderTop: '1px solid #e2e8f0' }}>
           <strong>{record.lineId || 'Unlabelled line'}</strong> · {record.cells.length} points · RMS {record.rms || 'not recorded'}%
-          <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); } await refresh(); }}>Delete</button>
+          <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); setSelectedERTDistance(null); } await refresh(); }}>Delete</button>
         </div>)}
         {allCells.length > 0 && <>
           <h2>ERT resistivity point section</h2>
           <label>Survey line to display
-            <select style={input} value={activeERTModel?.id || ''} onChange={event => { setSelectedErtModelId(event.target.value); setSelectedCell(null); }}>
+            <select style={input} value={activeERTModel?.id || ''} onChange={event => { setSelectedErtModelId(event.target.value); setSelectedCell(null); setSelectedERTDistance(null); }}>
               {ert.map((model, index) => <option key={model.id} value={model.id}>{model.lineId || 'Unlabelled line'} — {model.cells.length} points (model {index + 1})</option>)}
             </select>
           </label>
@@ -260,8 +264,8 @@ export default function GeophysicsPage() {
                 fill={colourFor(cell.resistivity)} stroke={selectedCell?.key === cell.key ? '#0f172a' : '#ffffff'}
                 strokeWidth="2" role="button" tabIndex="0"
                 aria-label={cell.resistivity + ' ohm metres at distance ' + cell.x + ' metres and depth ' + cell.depth + ' metres'}
-                onClick={() => setSelectedCell(cell)}
-                onKeyDown={event => (event.key === 'Enter' || event.key === ' ') && setSelectedCell(cell)} />
+                onClick={() => { setSelectedCell(cell); setSelectedERTDistance(cell.x); }}
+                onKeyDown={event => (event.key === 'Enter' || event.key === ' ') && (setSelectedCell(cell), setSelectedERTDistance(cell.x))} />
             })}
           </svg>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', margin: '8px 0' }}>
@@ -277,13 +281,13 @@ export default function GeophysicsPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr><th align="left">Line</th><th align="right">Distance (m)</th><th align="right">Depth (m)</th><th align="right">Resistivity (Ωm)</th></tr></thead>
-              <tbody>{displayCells.map(cell => <tr key={cell.key} onClick={() => setSelectedCell(cell)}>
+              <tbody>{displayCells.map(cell => <tr key={cell.key} onClick={() => { setSelectedCell(cell); setSelectedERTDistance(cell.x); }}>
                 <td>{cell.lineId}</td><td align="right">{cell.x}</td><td align="right">{cell.depth}</td><td align="right">{cell.resistivity}</td>
               </tr>)}</tbody>
             </table>
           </div>
         </>}
-        {activeERTModel && <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedCell?.x ?? null} onDistanceChange={selectERTDistance} />}
+        {activeERTModel && <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedERTDistance} onDistanceChange={selectERTDistance} />}
       </>}
     </section>
   </div>;
