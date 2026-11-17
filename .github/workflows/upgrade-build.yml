@@ -1,7 +1,7 @@
 name: Validate integrated geophysics upgrade
 on:
   push:
-    branches: [ndwq-integrated-geophysics-upgrade, ndwq-desktop-build-integration, ndwq-coordinate-system-upgrade, feature/ert-interactive-tomogram-ui]
+    branches: [ndwq-integrated-geophysics-upgrade, ndwq-desktop-build-integration, ndwq-coordinate-system-upgrade, feature/ert-interactive-tomogram-ui, feature/ert-geological-interpretation]
   workflow_dispatch:
 concurrency:
   group: ndwq-${{ github.workflow }}-${{ github.ref }}
