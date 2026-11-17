@@ -138,6 +138,14 @@ export default function GeophysicsPage() {
   const minR = displayCells.length ? Math.min(...displayCells.map(cell => cell.resistivity)) : 1;
   const maxR = displayCells.length ? Math.max(...displayCells.map(cell => cell.resistivity)) : 1;
 
+  function selectERTDistance(distance) {
+    if (!activeERTModel || !displayCells.length || !Number.isFinite(distance)) return;
+    const nearest = displayCells.reduce((best, cell) =>
+      Math.abs(cell.x - distance) < Math.abs(best.x - distance) ? cell : best
+    , displayCells[0]);
+    setSelectedCell(nearest);
+  }
+
   function colourFor(value) {
     const ratio = (Math.log10(value) - Math.log10(minR)) /
       (Math.log10(maxR) - Math.log10(minR) || 1);
@@ -275,7 +283,7 @@ export default function GeophysicsPage() {
             </table>
           </div>
         </>}
-        {activeERTModel && <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedCell?.x ?? null} />}
+        {activeERTModel && <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedCell?.x ?? null} onDistanceChange={selectERTDistance} />}
       </>}
     </section>
   </div>;
