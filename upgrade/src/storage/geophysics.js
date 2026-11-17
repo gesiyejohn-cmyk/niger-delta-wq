@@ -139,3 +139,32 @@ export async function deleteERT(id) {
   await tx.objectStore('ertSource').delete(id);
   await tx.done;
 }
+
+export async function saveERTInterpretation(ertModelId, interpretation) {
+  const db = await getDB();
+  const tx = db.transaction(['ert', 'ertInterpretations'], 'readwrite');
+  const model = await tx.objectStore('ert').get(ertModelId);
+  if (!model) {
+    tx.abort();
+    throw new Error('The selected raw ERT model no longer exists.');
+  }
+  const saved = {
+    ...interpretation,
+    id: ertModelId,
+    ertModelId,
+    updatedAt: new Date().toISOString()
+  };
+  await tx.objectStore('ertInterpretations').put(saved);
+  await tx.done;
+  return saved;
+}
+
+export async function getERTInterpretation(ertModelId) {
+  const db = await getDB();
+  return db.get('ertInterpretations', ertModelId);
+}
+
+export async function deleteERTInterpretation(ertModelId) {
+  const db = await getDB();
+  await db.delete('ertInterpretations', ertModelId);
+}
