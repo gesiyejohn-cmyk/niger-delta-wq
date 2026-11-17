@@ -298,6 +298,29 @@ Use a known test location and retain the source/reference coordinates.
 - [ ] Backup/restore preserves supported records and rejects invalid files safely.
 - [ ] No known data-loss, cross-record overwrite or duplicate-record defect remains open.
 
+## Latest migration and multi-platform CI verification — 17 November 2026
+
+Commit `d72d90312303ad26afae8da51aa984183d7fcb70` adds a guarded migration for legacy ERT records that stored their original CSV source inside the model record. On first ERT list/source access, the migration moves the source file and its metadata to the separate `ertSource` store and removes the embedded copy only in the same successful IndexedDB transaction. If a different source file already exists for the same model ID, the migration aborts instead of overwriting either version.
+
+A new regression test, `upgrade/tests/indexeddb-migration.test.js`, creates a real schema-version-6 IndexedDB database and opens it through the application's version-7 database code. It checks that existing sample, settings, sync-queue, VES and ERT data survive; new stores are created; legacy VES interpretations and ERT source CSV files are separated; conflicting source copies roll back atomically; and backup snapshots retain the migrated records. The test also confirms a missing nitrate value remains `null`, not zero.
+
+[CI run #44088353445](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44088353445) on that commit completed successfully:
+- Web/scientific tests: **115 passed, 0 failed**; production web build and artifact upload passed.
+- Android: debug APK build passed; the API 35 emulator installed and launched the original-identity package `com.nigerdeltawq.mobile`. The workflow observed a live app process and resumed `com.nigerdeltawq.mobile/.MainActivity`. The isolated preview package `com.nigerdeltawq.mobile.preview2` also built and launched successfully.
+- Windows: NSIS installer generation and artifact upload passed. Installer creation is not physical Windows installation/runtime acceptance.
+
+Artifacts from run #44088353445 (uploaded ZIP sizes):
+- Web `ndwq-integrated-web`: 301,330 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44088353445/artifacts/14330407191); SHA-256 `88c88e67b17685351b930a19516314e9b38605b97d372bff258ec419ad75319b`; expires 1 December 2026 at 13:00:21 UTC.
+- Android `ndwq-integrated-android-debug-apk`: 8,081,006 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44088353445/artifacts/14329574735); SHA-256 `d7f83be72b8e4c6f96bc792b04ea7fa8cc4a032fe8f8cf1262d82f70c40d2b2a`; expires 1 December 2026 at 13:04:23 UTC.
+- Windows `ndwq-integrated-windows-desktop`: 95,587,137 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44088353445/artifacts/14329679660); SHA-256 `48f2680a182b1d383613b44c6a042cac6161fc7b8ca557fb35c8e5602c11c8b9`; expires 1 December 2026 at 13:02:10 UTC.
+
+Android identity/signing evidence from this run:
+- Original-identity APK: package `com.nigerdeltawq.mobile`, label `Niger Delta WQ`, launcher `com.nigerdeltawq.mobile.MainActivity`; APK SHA-256 `92da0cde3efdc09792b8f1a9e6511df96a479a17a628b0d6192a4345a6d873f5`.
+- The APK is signed with an Android **debug** certificate, SHA-256 fingerprint `e71224dfd44e30a53db8a755a64fa693c5b5391e56012d4d98c97991376a5154`. This is not a configured production signing identity and does not prove compatibility with the user's installed app.
+- The preview APK has a separate package ID `com.nigerdeltawq.mobile.preview2`; it is for side-by-side testing, not an update.
+
+This is a successful CI/emulator build check, not a release approval. Physical Android visual/core-workflow acceptance, signer compatibility and production signing, real-device backup/restore, Windows installation/runtime, public web deployment/browser acceptance, and scientific reference/calibration sign-off remain outstanding. Do not uninstall, clear app data or install over an existing phone copy as part of this CI result.
+
 ## 9. Defect and evidence log
 
 | Issue ID | Platform / device | Test ID | Severity (Critical / High / Medium / Low) | Expected result | Actual result | Evidence / log | Owner | Status |
