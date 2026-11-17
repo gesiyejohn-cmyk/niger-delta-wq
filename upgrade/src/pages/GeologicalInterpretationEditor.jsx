@@ -57,11 +57,7 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
     setDraft(old => {
       const nextStations = old.stations.map(station => {
         const bounds = [...station.boundaries];
-        let split = 0, largest = -1;
-        for (let i = 0; i < bounds.length - 1; i++) {
-          const thickness = bounds[i + 1] - bounds[i];
-          if (thickness > largest) { largest = thickness; split = i; }
-        }
+        const split = bounds.length - 2;
         bounds.splice(split + 1, 0, (bounds[split] + bounds[split + 1]) / 2);
         return { ...station, boundaries: bounds };
       });
