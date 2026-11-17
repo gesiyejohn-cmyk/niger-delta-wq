@@ -3,6 +3,7 @@ import Papa from 'papaparse';
 import { calculateVES, validateVES, validateERT } from '../engine/geophysics.js';
 import VESInterpretation from './VESInterpretation.jsx';
 import CoordinateFields from './CoordinateFields.jsx';
+import GeologicalInterpretationEditor from './GeologicalInterpretationEditor.jsx';
 import { validateCoordinatePair } from '../engine/coordinates.js';
 import { saveVES, listVES, deleteVES, saveERT, listERT, deleteERT } from '../storage/geophysics.js';
 
@@ -274,6 +275,7 @@ export default function GeophysicsPage() {
             </table>
           </div>
         </>}
+        {activeERTModel && <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedCell?.x ?? null} />}
       </>}
     </section>
   </div>;
