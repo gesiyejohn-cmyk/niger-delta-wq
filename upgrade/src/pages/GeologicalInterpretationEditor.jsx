@@ -136,6 +136,9 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
       <button type="button" style={btn} onClick={remove}>Delete interpretation</button>
     </div>
     {message && <p className="notice" role="status">{message}</p>}
+    <label style={{display:'block',margin:'12px 0'}}>Interpretation notes / limitations
+      <textarea style={field} rows="2" value={draft.notes || ''} onChange={e => setDraft(old => ({ ...old, notes: e.target.value }))} placeholder="Record the basis of the section, borehole correlations, assumptions and unresolved uncertainty." />
+    </label>
     {units.length > 0 && <div style={{display:'grid',gap:12}}>
       <h3 style={{marginBottom:0}}>Geological units (shallow to deep)</h3>
       {units.map((unit, index) => <div key={unit.id} style={{border:'1px solid #e2e8f0',borderLeft:'6px solid ' + palette[index % palette.length],borderRadius:7,padding:10}}>
