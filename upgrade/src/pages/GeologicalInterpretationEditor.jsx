@@ -36,19 +36,32 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
   const [draft, setDraft] = useState(null);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
+    setLoadError('');
+    setDraft(null);
     (async () => {
       try {
         const saved = await getERTInterpretation(model.id);
         if (!active) return;
         setDraft(saved || createGeologicalInterpretation(model));
         setMessage(saved ? 'Saved geological interpretation loaded.' : 'No geological interpretation saved yet. Start by defining the section.');
-      } catch (error) { if (active) setMessage('Could not load interpretation: ' + error.message); }
+      } catch (error) {
+        if (active) {
+          setLoadError(error?.message || String(error));
+          setMessage('The geological editor could not load its saved draft. Your imported ERT measurements have not been changed.');
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
     })();
     return () => { active = false; };
-  }, [model.id]);
+  }, [model.id, loadAttempt]);
 
   const range = draft?.depthRange || [0, 1];
   const xRange = draft?.xRange || [0, 1];
@@ -185,7 +198,7 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
     setMessage('Saved geological interpretation deleted. The imported ERT measurements remain unchanged.');
   }
 
-  if (!draft) return <section style={{marginTop:20}}><h2>2D Geological Interpretation</h2><p role="status">Loading interpretation…</p></section>;
+  if (!draft) return <section style={{marginTop:24,padding:14,border:'2px solid #2563eb',borderRadius:10,background:'#eff6ff'}} aria-live="polite"><h2>2D Geological Subsurface Interpretation</h2>{loading ? <p role="status">Loading the interpretation workspace for {model.lineId || 'this ERT line'}…</p> : <><p role="alert">{loadError ? 'Could not open the interpretation workspace: ' + loadError : 'The interpretation workspace is not ready yet.'}</p><p>Your imported ERT model and measurements are kept separately and have not been deleted.</p><button type="button" style={btn} onClick={() => setLoadAttempt(value => value + 1)}>Retry loading editor</button></>}</section>;
 
   const plot = stations.length >= 2 && units.length
     ? units.map((unit, layerIndex) => {
