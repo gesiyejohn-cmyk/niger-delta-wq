@@ -287,7 +287,11 @@ export default function GeophysicsPage() {
             </table>
           </div>
         </>}
-        {activeERTModel && <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedERTDistance} onDistanceChange={selectERTDistance} />}
+        <div id="ert-geological-interpretation-workspace" style={{marginTop:24}}>
+          {activeERTModel
+            ? <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedERTDistance} onDistanceChange={selectERTDistance} />
+            : <section style={{padding:14,border:'2px solid #d97706',borderRadius:10,background:'#fffbeb'}}><h2>2D Geological Subsurface Interpretation</h2><p role="status">No saved ERT model is currently selected. Save or select an imported ERT line to open its geological interpretation workspace. Existing records are not changed.</p></section>}
+        </div>
       </>}
     </section>
   </div>;
