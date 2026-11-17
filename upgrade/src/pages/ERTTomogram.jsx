@@ -33,8 +33,8 @@ export default function ERTTomogram({ models = [] }) {
     const distance = Math.hypot(Number(point.x) - selected.x, Number(point.depth) - selected.depth);
     return !best || distance < best.distance ? { point, distance } : best;
   }, null) : null;
-  const viewWidth = 760 / zoom, viewHeight = 390 / zoom;
-  const viewX = (760 - viewWidth) / 2 + pan.x;
+  const viewWidth = 820 / zoom, viewHeight = 390 / zoom;
+  const viewX = (820 - viewWidth) / 2 + pan.x;
   const viewY = (390 - viewHeight) / 2 + pan.y;
 
   return <section aria-label="Interpolated ERT resistivity section" style={{marginTop:20}}>
@@ -77,8 +77,12 @@ export default function ERTTomogram({ models = [] }) {
           }}
           onTouchEnd={() => { touchGesture.current=null; }}
           style={{display:'block',width:'100%',height:'auto',minHeight:260,touchAction:'none'}}>
-          <text x="65" y="16" fontSize="13" fontWeight="600" fill="#0f172a">Depth (m)</text>
-          <text x="350" y="375" fontSize="13" fontWeight="600" fill="#0f172a">Profile distance (m)</text>
+          <defs><linearGradient id="ert-resistivity-scale" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stopColor="rgb(37,99,235)"/><stop offset="33%" stopColor="rgb(6,182,212)"/>
+            <stop offset="66%" stopColor="rgb(250,204,21)"/><stop offset="100%" stopColor="rgb(220,38,38)"/>
+          </linearGradient></defs>
+          <text x="390" y="375" textAnchor="middle" fontSize="14" fontWeight="700" fill="#0f172a">Profile distance (m)</text>
+          <text x="16" y="180" textAnchor="middle" transform="rotate(-90 16 180)" fontSize="14" fontWeight="700" fill="#0f172a">Depth (m)</text>
           <g transform="translate(65 28)">
             {grid.values.map(cell => {
               const cellX = grid.x0 + (cell.c + 0.5) / grid.cols * (grid.x1-grid.x0);
@@ -96,10 +100,20 @@ export default function ERTTomogram({ models = [] }) {
             })}
           </g>
           <path d="M65 28V328H715" fill="none" stroke="#0f172a" strokeWidth="1.6"/>
-          <text x="65" y="346" fontSize="12" fontWeight="600" fill="#0f172a">{grid.x0} m</text>
-          <text x="680" y="346" fontSize="12" fontWeight="600" fill="#0f172a">{grid.x1} m</text>
-          <text x="18" y="36" fontSize="12" fontWeight="600" fill="#0f172a">{grid.z0} m</text>
-          <text x="18" y="328" fontSize="12" fontWeight="600" fill="#0f172a">{grid.z1} m</text>
+          {[0,1,2,3,4].map(i => <g key={"xtick"+i}>
+            <path d={`M${65+i*162.5} 328v5`} stroke="#0f172a"/>
+            <text x={65+i*162.5} y="346" textAnchor="middle" fontSize="12" fontWeight="600" fill="#0f172a">{(grid.x0+(grid.x1-grid.x0)*i/4).toFixed(1)}</text>
+          </g>)}
+          {[0,1,2,3,4].map(i => <g key={"ztick"+i}>
+            <path d={`M60 ${28+i*75}h5`} stroke="#0f172a"/>
+            <text x="53" y={32+i*75} textAnchor="end" fontSize="12" fontWeight="600" fill="#0f172a">{(grid.z0+(grid.z1-grid.z0)*i/4).toFixed(1)}</text>
+          </g>)}
+          <rect x="738" y="28" width="18" height="300" fill="url(#ert-resistivity-scale)" stroke="#334155" strokeWidth=".6"/>
+          {[0,1,2,3,4].map(i => <g key={"legend"+i}>
+            <path d={`M756 ${28+i*75}h5`} stroke="#0f172a"/>
+            <text x="764" y={32+i*75} fontSize="12" fontWeight="600" fill="#0f172a">{(max-(max-min)*i/4).toFixed(1)}</text>
+          </g>)}
+          <text x="747" y="16" textAnchor="middle" fontSize="11" fontWeight="700" fill="#0f172a">Ω·m</text>
         </svg>
       </div>
       <div style={{display:'flex',justifyContent:'space-between',gap:8,flexWrap:'wrap',fontSize:13,fontWeight:600,marginTop:8}}>
