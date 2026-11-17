@@ -78,8 +78,60 @@ export async function saveERT(record) {
   await tx.done;
   return saved;
 }
-export async function listERT() { return (await getDB()).getAll('ert'); }
-export async function getERTSource(id) { return (await getDB()).get('ertSource', id); }
+async function migrateLegacyERTSourceImports(db) {
+  const tx = db.transaction(['ert', 'ertSource'], 'readwrite');
+  const transactionDone = tx.done;
+  transactionDone.catch(() => {});
+  const models = await tx.objectStore('ert').getAll();
+  const modelStore = tx.objectStore('ert');
+  const sourceStore = tx.objectStore('ertSource');
+
+  try {
+    for (const model of models) {
+      const legacySource = model.sourceImport;
+      if (!legacySource || typeof legacySource !== 'object' || legacySource.content == null) continue;
+
+      const existingSource = await sourceStore.get(model.id);
+      if (existingSource && existingSource.content !== legacySource.content) {
+        throw new Error(`ERT record ${model.id} already has a different separately stored source file.`);
+      }
+
+      if (!existingSource) {
+        const sourceMetadata = { ...legacySource };
+        delete sourceMetadata.id;
+        await sourceStore.put({
+          ...sourceMetadata,
+          id: model.id,
+          fileName: sourceMetadata.fileName || 'imported-ert-model.csv',
+          contentType: sourceMetadata.contentType || 'text/csv',
+          ...(!sourceMetadata.importedAt && model.createdAt ? { importedAt: model.createdAt } : {})
+        });
+      }
+
+      const normalizedModel = { ...model };
+      delete normalizedModel.sourceImport;
+      normalizedModel.sourceImportId = model.id;
+      await modelStore.put(normalizedModel);
+    }
+    await transactionDone;
+  } catch (error) {
+    try { tx.abort(); } catch { /* transaction may already be closed */ }
+    await transactionDone.catch(() => {});
+    throw new Error('ERT source migration was not completed: ' + error.message);
+  }
+}
+
+export async function listERT() {
+  const db = await getDB();
+  await migrateLegacyERTSourceImports(db);
+  return db.getAll('ert');
+}
+
+export async function getERTSource(id) {
+  const db = await getDB();
+  await migrateLegacyERTSourceImports(db);
+  return db.get('ertSource', id);
+}
 export async function deleteERT(id) {
   const db = await getDB();
   const tx = db.transaction(['ert', 'ertSource'], 'readwrite');
