@@ -134,9 +134,10 @@ export async function getERTSource(id) {
 }
 export async function deleteERT(id) {
   const db = await getDB();
-  const tx = db.transaction(['ert', 'ertSource'], 'readwrite');
+  const tx = db.transaction(['ert', 'ertSource', 'ertInterpretations'], 'readwrite');
   await tx.objectStore('ert').delete(id);
   await tx.objectStore('ertSource').delete(id);
+  await tx.objectStore('ertInterpretations').delete(id);
   await tx.done;
 }
 
