@@ -88,9 +88,6 @@ export function validateGeologicalInterpretation(input, expectedModel = null) {
   }
   const [xMin, xMax] = input.xRange;
   const [zMin, zMax] = input.depthRange;
-  if (input.stations[0]?.x !== xMin || input.stations.at(-1)?.x !== xMax) {
-    throw new Error('Interpretation stations must cover both ends of the ERT profile distance range.');
-  }
   let previousX = -Infinity;
   input.stations.forEach((station, index) => {
     if (!finite(station.x) || station.x < xMin || station.x > xMax || station.x <= previousX) {
@@ -113,6 +110,9 @@ export function validateGeologicalInterpretation(input, expectedModel = null) {
       }
     }
   });
+  if (input.stations[0]?.x !== xMin || input.stations.at(-1)?.x !== xMax) {
+    throw new Error('Interpretation stations must cover both ends of the ERT profile distance range.');
+  }
   if (input.interpretationStatus && !['provisional', 'reviewed'].includes(input.interpretationStatus)) {
     throw new Error('Interpretation status must be provisional or reviewed.');
   }
