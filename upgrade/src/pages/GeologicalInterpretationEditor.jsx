@@ -24,7 +24,7 @@ function downloadText(filename, content, mimeType) {
   document.body.appendChild(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function csvCell(value) {
@@ -174,7 +174,7 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
     <h2>2D Geological Subsurface Interpretation</h2>
     <p className="muted">Manual geological interpretation linked to <strong>{model.lineId || 'Unlabelled ERT line'}</strong>. Distance and depth use the same coordinate ranges as the imported ERT model. Lithology is not automatically inferred from resistivity.</p>
     <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}}>
-      <button type="button" style={btn} onClick={startSection}>Create section stations</button>
+      <button type="button" style={btn} onClick={startSection} disabled={stations.length >= 2}>Create section stations</button>
       <button type="button" style={btn} onClick={addUnit} disabled={stations.length < 2}>Add geological layer</button>
       <button type="button" style={btn} onClick={addStation} disabled={stations.length < 2}>Add interpretation station</button>
       <button type="button" style={{...btn,background:'#eff6ff'}} onClick={save} disabled={busy || !units.length || stations.length < 2}>{busy ? 'Saving…' : 'Save interpretation'}</button>
