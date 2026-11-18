@@ -64,6 +64,16 @@ test('rejects incomplete depth coverage and non-increasing stations', () => {
   assert.throws(() => validateGeologicalInterpretation(duplicate), /unique, increasing distances/);
 });
 
+test('rejects a station with an extra boundary for its geological unit count', () => {
+  const invalid = structuredClone(validInterpretation);
+  invalid.units = [invalid.units[0]];
+  invalid.stations = invalid.stations.map(station => ({
+    ...station,
+    boundaries: [station.boundaries[0], 0, station.boundaries.at(-1)]
+  }));
+  assert.throws(() => validateGeologicalInterpretation(invalid), /one more depth boundary/);
+});
+
 test('interpolates interpreted boundaries at the selected profile distance', () => {
   const column = getGeologicalColumnAtDistance(validInterpretation, 5);
   assert.equal(column.layers.length, 3);
