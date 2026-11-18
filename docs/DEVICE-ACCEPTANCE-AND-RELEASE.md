@@ -321,6 +321,28 @@ Android identity/signing evidence from this run:
 
 This is a successful CI/emulator build check, not a release approval. Physical Android visual/core-workflow acceptance, signer compatibility and production signing, real-device backup/restore, Windows installation/runtime, public web deployment/browser acceptance, and scientific reference/calibration sign-off remain outstanding. Do not uninstall, clear app data or install over an existing phone copy as part of this CI result.
 
+
+## Latest backup/restore regression and multi-platform CI — 18 November 2026
+
+The branch now validates backup record primary keys before beginning a restore. NDWQ backup stores use non-empty string IDs and finite numeric IDs (including the auto-increment sync queue); boolean, object, array, blank-string and non-finite keys are rejected during preview rather than being allowed to fail later as IndexedDB write errors.
+
+`upgrade/tests/backup.test.js` now exercises a full backup/replace-restore round trip across all nine stores. The fixture verifies preservation of samples and `null` measurements, settings, sync queue entries, raw VES readings, separate VES interpretations, ERT model cells and original CSV source content, vulnerability records and saved WQI snapshots. Additional tests verify Merge skips an existing ID without overwriting it, partial Replace leaves stores omitted from the backup untouched, and an empty Replace backup is rejected before current records are cleared.
+
+[CI run #44302004508](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44302004508) completed successfully on exact branch commit `1c8084d75ccdd9a0dda1d8ffc58af5af8e0ba812`. Pull request [#2](https://github.com/gesiyejohn-cmyk/niger-delta-wq/pull/2) remains open and draft; it is not merged.
+
+- `web-and-tests`: **120 tests passed, 0 failed**; web production build and artifact upload passed.
+- `android`: debug APK build, API 35 emulator boot, original-identity APK install/launch, preview APK build/launch and artifact upload all passed. Original package `com.nigerdeltawq.mobile`, label `Niger Delta WQ`, version code `1`, version name `1.0`, launcher `com.nigerdeltawq.mobile.MainActivity`. The original APK SHA-256 is `3d1748a8c0f9033ac1f525f45d866db95dfb52d0f310c63c8b620669d350340a`. Its debug signing certificate SHA-256 fingerprint is `5884a3636f39bd8f7b5e6f8c2c461adc22c013ff649612532d392a848e9341e3`.
+- `windows-desktop`: NSIS installer generation and upload passed. Installer name `Niger-Delta-WQ-Setup-1.0.0.exe`; no code-signing certificate was configured.
+
+Artifacts from run #44302004508 (sizes are uploaded ZIP artifact sizes):
+- Web `ndwq-integrated-web`, ID `14426367566`, 301,361 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44302004508/artifacts/14426367566); expires 2 December 2026 at 12:15:05 UTC.
+- Android `ndwq-integrated-android-debug-apk`, ID `14425503693`, 8,081,068 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44302004508/artifacts/14425503693); expires 2 December 2026 at 12:19:30 UTC. The archive contains the original-identity debug APK, the side-by-side preview APK and build/signing metadata. Preview package ID is `com.nigerdeltawq.mobile.preview2`; preview APK SHA-256 is `74a4d50467a3ee152cd2ec7675bf3203140cce080a13256786ce4644cc20ca1e`.
+- Windows `ndwq-integrated-windows-desktop`, ID `14426368029`, 95,587,126 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44302004508/artifacts/14426368029); expires 2 December 2026 at 12:17:07 UTC.
+
+This verifies a same-commit three-platform CI build and emulator launch smoke test, not a production release. The Android artifact remains debug-signed; compatibility with the certificate on the user's installed app and an approved persistent production signing key are unverified. Physical Android first-screen/core-workflow acceptance and backup/restore against actual phone data remain untested. The Windows installer has not been installed/runtime-tested on a real Windows machine. The web artifact has not been deployed to an accessible public destination or browser-tested there. Scientific references, local DRASTIC calibration assumptions and formal acceptance sign-off remain outstanding.
+
+Retain the existing product limitations: ERT inversion is not implemented; imported inversion products and their interpolation are not raw-field-data inversion; DRASTIC classes are screening bands requiring local justification; WQI alone does not establish potability. Do not install the debug APK over an existing phone installation, uninstall the current app or clear its data based on this CI result.
+
 ## 9. Defect and evidence log
 
 | Issue ID | Platform / device | Test ID | Severity (Critical / High / Medium / Low) | Expected result | Actual result | Evidence / log | Owner | Status |
