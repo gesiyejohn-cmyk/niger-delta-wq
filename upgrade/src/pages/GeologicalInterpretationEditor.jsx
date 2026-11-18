@@ -138,6 +138,24 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
     });
   }
 
+  function rebuildBoundariesFromUnits() {
+    setDraft(old => {
+      const [top, bottom] = old.depthRange;
+      const boundaryCount = old.units.length + 1;
+      const boundaries = Array.from({ length: boundaryCount }, (_, index) =>
+        top + ((bottom - top) * index) / (boundaryCount - 1)
+      );
+      return {
+        ...old,
+        stations: old.stations.map(station => ({
+          ...station,
+          boundaries: [...boundaries]
+        }))
+      };
+    });
+    setMessage('Boundaries rebuilt to match the current geological units. The ERT depth limits and unit descriptions were preserved; internal boundary positions were reset to equal intervals. Review them before saving.');
+  }
+
   function updateUnit(index, key, value) {
     setDraft(old => ({ ...old, units: old.units.map((unit, i) => i === index ? { ...unit, [key]: value } : unit) }));
   }
@@ -253,6 +271,8 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
     {stations.length >= 2 && <div style={{marginTop:16}}>
       <h3>Layer boundaries at each interpretation station (depth in metres)</h3>
       <p className="muted">Enter boundaries from shallow to deep. The first and last values must match the ERT model depth limits. Values between stations are interpolated linearly.</p>
+      <button type="button" style={btn} onClick={rebuildBoundariesFromUnits} disabled={!units.length || !stations.length}>Rebuild boundaries from geological units</button>
+      <p className="muted">Use this recovery action if the number of boundaries no longer matches the number of units. It preserves the top and bottom ERT depth limits and all unit descriptions, but resets internal boundaries to equal intervals. Review the resulting depths before saving.</p>
       {stations.map((station, stationIndex) => <div key={station.x} style={{border:'1px solid #e2e8f0',borderRadius:7,padding:10,marginBottom:8}}>
         <strong>Station {stationIndex + 1}</strong> · Distance {station.x.toFixed(2)} m
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(115px,1fr))',gap:8,marginTop:8}}>
