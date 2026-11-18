@@ -5,7 +5,7 @@
 **Related pull request:** [PR #5](https://github.com/gesiyejohn-cmyk/niger-delta-wq/pull/5)  
 **Purpose:** Maintain a traceable engineering, testing, release and product-development history.
 
-> This register is a living project record. Historical entries below are based on the development records available when this document was created. Future entries must be tied to actual commits, pull requests, workflow runs, test evidence or approved decisions. Do not mark work complete without evidence.
+> **Historical completeness notice (18 November 2026):** This register was created retrospectively from the Git history and development evidence available at that time; it was not maintained continuously from the project's first conception. It therefore captures the verified milestones currently known, not necessarily every early design discussion, prototype, manual change, test, or decision. The branch history and earlier release/acceptance records should be reconciled to extend the timeline. Where primary evidence is missing, entries must be labelled as recollections or user-confirmed history, not verified commits. Future entries must be tied to actual commits, pull requests, workflow runs, test evidence or approved decisions. Do not mark work complete without evidence.
 
 ## Milestone history
 
