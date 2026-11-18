@@ -27,6 +27,13 @@ export async function createDatabaseBackup() {
   };
 }
 
+function hasValidPrimaryKey(key) {
+  // NDWQ stores use string IDs; the auto-increment sync queue uses numbers.
+  // Reject values IndexedDB cannot use as keys before restore starts a transaction.
+  return (typeof key === 'string' && key.trim().length > 0)
+    || (typeof key === 'number' && Number.isFinite(key));
+}
+
 export function validateDatabaseBackup(backup) {
   if (!backup || backup.format !== BACKUP_FORMAT) throw new Error('This file is not a Niger Delta WQ backup.');
   if (backup.version !== BACKUP_VERSION) throw new Error('Unsupported backup version: ' + backup.version);
@@ -40,7 +47,9 @@ export function validateDatabaseBackup(backup) {
     for (const record of backup.stores[name] || []) {
       if (!record || typeof record !== 'object' || Array.isArray(record)) throw new Error('Backup contains an invalid record in ' + name + '.');
       const key = name === 'settings' ? record.key : record.id;
-      if (key == null) throw new Error('A record in ' + name + ' is missing its primary key.');
+      if (!hasValidPrimaryKey(key)) {
+        throw new Error('A record in ' + name + ' must have a non-empty string or finite numeric primary key.');
+      }
       if (keys.has(key)) throw new Error('Backup contains duplicate primary keys in ' + name + '.');
       keys.add(key);
     }
