@@ -16,11 +16,11 @@ export function classifyVESCurve(rows) {
   if (valid.length < 3) return { code: null, label: 'Insufficient data', description: 'At least three valid readings are required.' };
   const first = Math.sign(Number(valid[1].apparentResistivity)-Number(valid[0].apparentResistivity));
   const second = Math.sign(Number(valid[2].apparentResistivity)-Number(valid[1].apparentResistivity));
-  if (first > 0 && second > 0) return { code: 'A', label: 'A-type trend (increasing)', description: 'Apparent resistivity increases across the first three points.' };
-  if (first < 0 && second < 0) return { code: 'Q', label: 'Q-type trend (decreasing)', description: 'Apparent resistivity decreases across the first three points.' };
-  if (first > 0 && second < 0) return { code: 'K', label: 'K-type trend (rise then fall)', description: 'Apparent resistivity rises and then falls across the first three points.' };
-  if (first < 0 && second > 0) return { code: 'H', label: 'H-type trend (fall then rise)', description: 'Apparent resistivity falls and then rises across the first three points.' };
-  return { code: 'Mixed', label: 'Mixed / flat trend', description: 'The first three points do not show a clear classical two-segment trend.' };
+  if (first > 0 && second > 0) return { code: 'A', label: 'A-type trend (increasing)', description: 'The first three valid readings increase; later readings are not included in this preliminary trend check.' };
+  if (first < 0 && second < 0) return { code: 'Q', label: 'Q-type trend (decreasing)', description: 'The first three valid readings decrease; later readings are not included in this preliminary trend check.' };
+  if (first > 0 && second < 0) return { code: 'K', label: 'K-type trend (rise then fall)', description: 'The first three valid readings rise and then fall; later readings are not included in this preliminary trend check.' };
+  if (first < 0 && second > 0) return { code: 'H', label: 'H-type trend (fall then rise)', description: 'The first three valid readings fall and then rise; later readings are not included in this preliminary trend check.' };
+  return { code: 'Mixed', label: 'Mixed / flat trend', description: 'The first three valid readings do not show a clear two-segment trend; a full sounding review is still required.' };
 }
 
 export function validateVESLayers(layers) {
