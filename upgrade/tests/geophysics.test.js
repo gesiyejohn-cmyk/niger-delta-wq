@@ -4,6 +4,7 @@ import {
   schlumbergerGeometricFactor,
   calculateVES,
   validateVES,
+  assessVESQuality,
   validateERT,
   descriptiveStats,
   pearsonCorrelation,
@@ -123,4 +124,44 @@ test('ERT import accepts distinct cells with numeric strings', () => {
   ]);
   assert.equal(result[0].x, 10);
   assert.equal(result[1].resistivity, 80);
+});
+
+
+test('VES quality assessment flags incomplete rows without changing source data', () => {
+  const rows = [
+    { ab2: 5, mn2: 1, resistance: 10 },
+    { ab2: 10, mn2: '', resistance: 12 }
+  ];
+  const before = structuredClone(rows);
+  const result = assessVESQuality(rows);
+  assert.equal(result.completeCount, 1);
+  assert.equal(result.incompleteCount, 1);
+  assert.equal(result.issues[0].code, 'incomplete-row');
+  assert.deepEqual(rows, before);
+});
+
+test('VES quality assessment flags duplicate AB/2 and reports MN/2 changes as informational', () => {
+  const result = assessVESQuality([
+    { ab2: 5, mn2: 1, resistance: 10 },
+    { ab2: 10, mn2: 1, resistance: 12 },
+    { ab2: 10, mn2: 2, resistance: 8 }
+  ]);
+  assert.ok(result.issues.some(issue => issue.code === 'duplicate-ab2' && issue.severity === 'error'));
+  assert.ok(result.issues.some(issue => issue.code === 'mn2-change' && issue.severity === 'info'));
+});
+
+test('VES quality assessment flags descending AB/2 but does not reject valid MN/2 expansion', () => {
+  const result = assessVESQuality([
+    { ab2: 10, mn2: 1, resistance: 10 },
+    { ab2: 8, mn2: 2, resistance: 12 }
+  ]);
+  assert.ok(result.issues.some(issue => issue.code === 'descending-ab2' && issue.severity === 'warning'));
+  assert.ok(result.issues.some(issue => issue.code === 'mn2-change' && issue.severity === 'info'));
+});
+
+test('VES quality assessment ignores wholly blank input rows', () => {
+  const result = assessVESQuality([{ ab2: '', mn2: '', resistance: '' }]);
+  assert.equal(result.completeCount, 0);
+  assert.equal(result.incompleteCount, 0);
+  assert.deepEqual(result.issues, []);
 });
