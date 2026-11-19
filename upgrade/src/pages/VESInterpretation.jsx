@@ -85,7 +85,7 @@ export default function VESInterpretation({ records, onSaved, notify }) {
         </select>
       </label>
       {selected && <>
-        <p className="notice">Preliminary apparent-curve trend: <strong>{curve?.label || 'Insufficient data'}</strong>. {curve?.description || 'At least three valid readings are required.'} This is a curve-shape description, not a unique geological interpretation.</p>
+        <p className="notice">Preliminary early-curve trend (first three valid readings only): <strong>{curve?.label || 'Insufficient data'}</strong>. {curve?.description || 'At least three valid readings are required.'} This is only a first-three-point trend indicator, not a formal full-sounding curve classification or a unique geological interpretation. Review the complete log-log curve and inversion/model fit before assigning a curve type or geology.</p>
         <h3>Layer model</h3>
         <p className="muted">Enter one row per layer. Enter thickness for every layer except the last (assumed to extend downward as a half-space). Resistivity is in Ωm; thickness and interface depth are in metres.</p>
         {layers.map((layer, index) => <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, alignItems: 'end', borderTop: '1px solid #e2e8f0', padding: '10px 0' }}>
