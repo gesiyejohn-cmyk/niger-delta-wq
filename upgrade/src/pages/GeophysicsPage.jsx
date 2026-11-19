@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
-import { calculateVES, validateVES, validateERT } from '../engine/geophysics.js';
+import { calculateVES, validateVES, validateERT, assessVESQuality } from '../engine/geophysics.js';
 import VESInterpretation from './VESInterpretation.jsx';
 import CoordinateFields from './CoordinateFields.jsx';
 import GeologicalInterpretationEditor from './GeologicalInterpretationEditor.jsx';
@@ -26,6 +26,7 @@ export default function GeophysicsPage() {
   const [selectedErtModelId, setSelectedErtModelId] = useState('');
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState('info');
+  const vesQuality = assessVESQuality(readings);
 
   async function refresh() {
     try {
@@ -57,6 +58,7 @@ export default function GeophysicsPage() {
   }
   async function saveSounding() {
     try {
+      if (vesQuality.incompleteCount > 0) throw new Error('Complete or remove the partially filled VES row(s) before saving. No entered values have been discarded.');
       const completeRows = readings.filter(row =>
         row.ab2 !== '' && row.mn2 !== '' && row.resistance !== ''
       );
@@ -186,7 +188,13 @@ export default function GeophysicsPage() {
           </label>
         </div>
         <h2>Field readings</h2>
-        <p className="muted">AB/2 and MN/2 are in metres; resistance is in ohms. Blank rows are ignored. At least one complete reading can be stored; two or more are needed for a sounding curve.</p>
+        <p className="muted">AB/2 and MN/2 are in metres; resistance is in ohms. Completely blank rows are ignored. Partially completed rows must be finished or removed before saving. At least one complete reading can be stored; two or more are needed for a sounding curve.</p>
+        {vesQuality.issues.length > 0 && <div className="notice" role="status" aria-live="polite">
+          <strong>Field-entry quality checks</strong>
+          <p>{vesQuality.completeCount} complete reading(s); {vesQuality.incompleteCount} incomplete row(s).</p>
+          <ul>{vesQuality.issues.map((issue, index) => <li key={issue.code + '-' + issue.row + '-' + index}>{issue.message}</li>)}</ul>
+          <p className="muted">MN/2 changes are flagged for verification, not automatically treated as errors; electrode spread expansion may be legitimate. Original readings are not automatically altered.</p>
+        </div>}
         {readings.map((row, index) => {
           const preview = rowPreview(row);
           return <div key={index} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 10, marginBottom: 10 }}>
