@@ -218,6 +218,26 @@ test('VES CSV report handles missing interpretation and safely quotes metadata',
 });
 
 
+
+test('VES CSV report quotes embedded carriage returns and line breaks', async () => {
+  const { buildVESReportCSV } = await import('../src/engine/geophysics.js');
+  const report = buildVESReportCSV({
+    stationId: 'VES-03',
+    notes: 'Upper layer\r\nLower layer'
+  });
+  assert.ok(report.includes('"Upper layer\r\nLower layer"'));
+});
+
+test('VES CSV report tolerates null raw rows and null interpretation layers', async () => {
+  const { buildVESReportCSV } = await import('../src/engine/geophysics.js');
+  const report = buildVESReportCSV({
+    readings: [null],
+    interpretation: { layers: [null] }
+  });
+  assert.match(report, /Not calculated:/);
+  assert.match(report, /MANUALLY RECORDED LAYER INTERPRETATION/);
+});
+
 test('VES CSV report neutralises spreadsheet formula-like user text', async () => {
   const { buildVESReportCSV } = await import('../src/engine/geophysics.js');
   const report = buildVESReportCSV({
