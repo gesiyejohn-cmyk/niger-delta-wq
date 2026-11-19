@@ -99,8 +99,10 @@ export function validateVESLayers(layers) {
 // manually supplied interpretation are kept in separate labelled sections.
 const csvField = value => {
   if (value == null) return '';
-  const text = String(value);
-  return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+  let text = String(value);
+  // Prevent spreadsheet formula execution when opening exported user-entered text.
+  if (typeof value === 'string' && /^[\\s\\u0000-\\u001f]*[=+@-]/.test(text)) text = "'" + text;
+  return /[",\\r\\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
 };
 export function buildVESReportCSV(record) {
   if (!record || typeof record !== 'object') throw new Error('A saved VES sounding is required to build a report.');
