@@ -102,7 +102,7 @@ const csvField = value => {
   let text = String(value);
   // Prevent spreadsheet formula execution when opening exported user-entered text.
   if (typeof value === 'string' && /^[\s\u0000-\u001f]*[=+@-]/.test(text)) text = "'" + text;
-  return /[",\\r\\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+  return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
 };
 export function buildVESReportCSV(record) {
   if (!record || typeof record !== 'object') throw new Error('A saved VES sounding is required to build a report.');
@@ -139,7 +139,7 @@ export function buildVESReportCSV(record) {
       rho = result.apparentResistivity;
       status = 'Calculated from recorded AB/2, MN/2 and resistance';
     } catch (error) { status = 'Not calculated: ' + error.message; }
-    add([index + 1, reading.ab2 ?? '', reading.mn2 ?? '', reading.resistance ?? '', factor, rho, status]);
+    add([index + 1, reading?.ab2 ?? '', reading?.mn2 ?? '', reading?.resistance ?? '', factor, rho, status]);
   });
   add([]);
   add(['FIELD QUALITY-CONTROL FINDINGS']);
@@ -159,8 +159,8 @@ export function buildVESReportCSV(record) {
     add(['Interpretation status', interpretation.interpretationStatus || 'Status not recorded']);
     add(['Layer', 'Resistivity (ohm m)', 'Thickness (m)', 'Bottom/interface depth (m)', 'Notes']);
     interpretation.layers.forEach((layer, index) => add([
-      layer.layer ?? index + 1, layer.resistivity ?? '', layer.thickness ?? 'Half-space',
-      layer.bottomDepth ?? 'Not applicable (half-space)', ''
+      layer?.layer ?? index + 1, layer?.resistivity ?? '', layer?.thickness ?? 'Half-space',
+      layer?.bottomDepth ?? 'Not applicable (half-space)', ''
     ]));
     add(['Geological notes / borehole control', interpretation.notes || 'None recorded']);
   }
