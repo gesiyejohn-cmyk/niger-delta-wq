@@ -101,7 +101,7 @@ const csvField = value => {
   if (value == null) return '';
   let text = String(value);
   // Prevent spreadsheet formula execution when opening exported user-entered text.
-  if (typeof value === 'string' && /^[\\s\\u0000-\\u001f]*[=+@-]/.test(text)) text = "'" + text;
+  if (typeof value === 'string' && /^[\s\u0000-\u001f]*[=+@-]/.test(text)) text = "'" + text;
   return /[",\\r\\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
 };
 export function buildVESReportCSV(record) {
