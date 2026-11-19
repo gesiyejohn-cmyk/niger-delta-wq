@@ -159,6 +159,11 @@ test('VES quality assessment flags descending AB/2 but does not reject valid MN/
   assert.ok(result.issues.some(issue => issue.code === 'mn2-change' && issue.severity === 'info'));
 });
 
+test('VES curve classifier safely ignores malformed stored rows', () => {
+  assert.equal(classifyVESCurve([null, undefined, {}, { ab2: 5, apparentResistivity: 100 }]).label, 'Insufficient data');
+  assert.equal(classifyVESCurve(null).label, 'Insufficient data');
+});
+
 test('VES quality assessment ignores wholly blank input rows', () => {
   const result = assessVESQuality([{ ab2: '', mn2: '', resistance: '' }]);
   assert.equal(result.completeCount, 0);
