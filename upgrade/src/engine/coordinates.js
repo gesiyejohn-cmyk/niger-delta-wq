@@ -147,3 +147,29 @@ export function validateCoordinatePair({ latitude, longitude, format = 'DD', lat
     coordinateOriginal: { latitude: String(latitude), longitude: String(longitude), latitudeHemisphere, longitudeHemisphere }
   };
 }
+
+
+// Convert each entered axis independently so a partially completed location
+// remains numerically stable when the user changes DD/DMS/DDM input format.
+export function convertCoordinatePairFormat({
+  latitude,
+  longitude,
+  format = 'DD',
+  nextFormat,
+  latitudeHemisphere = 'N',
+  longitudeHemisphere = 'E'
+}) {
+  if (!['DD', 'DMS', 'DDM'].includes(nextFormat)) {
+    throw new Error('Choose DD, DMS or DDM as the coordinate format.');
+  }
+  const convert = (value, hemisphere, axis) => {
+    if (value === '' || value == null) return '';
+    const decimal = coordinateToDecimal(value, format, hemisphere, axis);
+    return decimalToCoordinate(decimal, nextFormat);
+  };
+  return {
+    format: nextFormat,
+    latitude: convert(latitude, latitudeHemisphere, 'latitude'),
+    longitude: convert(longitude, longitudeHemisphere, 'longitude')
+  };
+}

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { coordinateToDecimal, decimalToCoordinate, decimalToUTM, getStandardUTMZone } from '../engine/coordinates.js';
+import { coordinateToDecimal, decimalToCoordinate, decimalToUTM, getStandardUTMZone, convertCoordinatePairFormat } from '../engine/coordinates.js';
 
 const field = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
 
 export default function CoordinateFields({ value, onChange, label = 'Location coordinates' }) {
   const [gpsMessage, setGpsMessage] = useState('');
   const [gpsBusy, setGpsBusy] = useState(false);
+  const [formatMessage, setFormatMessage] = useState('');
   let converted = null;
   let latitudeError = '';
   let longitudeError = '';
@@ -39,25 +40,30 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
       standardZone = getStandardUTMZone(converted.latitude, converted.longitude);
     } catch { utm = null; }
   }
-  const set = (key, next) => onChange(old => ({ ...old, [key]: next }));
+  const set = (key, next) => {
+    setFormatMessage('');
+    onChange(old => ({ ...old, [key]: next }));
+  };
   return <div className="span-two" style={{ border: '1px solid #dbe3ea', borderRadius: 9, padding: 12, margin: '8px 0' }}>
     <h3>{label}</h3>
     <label>Coordinate input format
       <select style={field} value={value.format} onChange={event => {
         const nextFormat = event.target.value;
         try {
-          if (value.latitude !== '' && value.longitude !== '') {
-            const lat = coordinateToDecimal(value.latitude, value.format, value.latitudeHemisphere, 'latitude');
-            const lon = coordinateToDecimal(value.longitude, value.format, value.longitudeHemisphere, 'longitude');
-            onChange(old => ({ ...old, format: nextFormat, latitude: decimalToCoordinate(lat, nextFormat), longitude: decimalToCoordinate(lon, nextFormat) }));
-          } else onChange(old => ({ ...old, format: nextFormat }));
-        } catch { onChange(old => ({ ...old, format: nextFormat })); }
+          const converted = convertCoordinatePairFormat({ ...value, nextFormat });
+          setFormatMessage('');
+          onChange(old => ({ ...old, ...converted }));
+        } catch (error) {
+          setFormatMessage('Format was not changed. Correct the entered coordinate first. ' +
+            (error instanceof Error ? error.message : 'Invalid coordinate.'));
+        }
       }}>
         <option value="DD">Decimal Degrees (DD)</option>
         <option value="DMS">Degrees-Minutes-Seconds (DMS)</option>
         <option value="DDM">Degrees-Decimal Minutes (DDM)</option>
       </select>
     </label>
+    {formatMessage && <p className="error" role="alert">{formatMessage}</p>}
     <button type="button" style={{ ...field, marginTop: 8, cursor: 'pointer' }} disabled={gpsBusy} onClick={() => {
       if (typeof navigator === 'undefined' || !navigator.geolocation) {
         setGpsMessage('GPS location is not available in this browser.');

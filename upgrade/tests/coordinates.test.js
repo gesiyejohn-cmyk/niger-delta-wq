@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { coordinateToDecimal, decimalToCoordinate, validateCoordinatePair, getStandardUTMZone } from '../src/engine/coordinates.js';
+import { coordinateToDecimal, decimalToCoordinate, validateCoordinatePair, getStandardUTMZone, convertCoordinatePairFormat } from '../src/engine/coordinates.js';
 
 test('DD coordinates respect hemisphere and axis limits', () => {
   assert.equal(coordinateToDecimal('4.92', 'DD', 'N', 'latitude'), 4.92);
@@ -90,4 +90,46 @@ test('standard UTM zone selection applies Svalbard exceptions', () => {
 test('standard UTM zone selection rejects coordinates outside UTM limits', () => {
   assert.throws(() => getStandardUTMZone(85, 6.26));
   assert.throws(() => getStandardUTMZone(4.92, 181));
+});
+
+
+test('changing coordinate format converts a populated latitude while preserving a blank longitude', () => {
+  const converted = convertCoordinatePairFormat({
+    latitude: '4.92', longitude: '', format: 'DD', nextFormat: 'DMS',
+    latitudeHemisphere: 'N', longitudeHemisphere: 'E'
+  });
+  assert.equal(converted.format, 'DMS');
+  assert.equal(converted.latitude, '4° 55\' 12.00"');
+  assert.equal(converted.longitude, '');
+  assert.equal(coordinateToDecimal(converted.latitude, converted.format, 'N', 'latitude'), 4.92);
+});
+
+test('changing coordinate format preserves southern and western hemispheres', () => {
+  const converted = convertCoordinatePairFormat({
+    latitude: '4.92', longitude: '6.26', format: 'DD', nextFormat: 'DDM',
+    latitudeHemisphere: 'S', longitudeHemisphere: 'W'
+  });
+  assert.equal(converted.latitude, "4° 55.2000'");
+  assert.equal(converted.longitude, "6° 15.6000'");
+  assert.equal(coordinateToDecimal(converted.latitude, converted.format, 'S', 'latitude'), -4.92);
+  assert.equal(coordinateToDecimal(converted.longitude, converted.format, 'W', 'longitude'), -6.26);
+});
+
+test('changing coordinate format converts a populated longitude independently', () => {
+  const converted = convertCoordinatePairFormat({
+    latitude: '', longitude: '6.26', format: 'DD', nextFormat: 'DMS',
+    latitudeHemisphere: 'N', longitudeHemisphere: 'E'
+  });
+  assert.equal(converted.latitude, '');
+  assert.equal(converted.longitude, '6° 15\' 36.00"');
+});
+
+test('changing coordinate format rejects invalid partial input instead of reinterpreting it', () => {
+  assert.throws(() => convertCoordinatePairFormat({
+    latitude: '4 55', longitude: '', format: 'DD', nextFormat: 'DDM',
+    latitudeHemisphere: 'N', longitudeHemisphere: 'E'
+  }), /Decimal Degrees must contain one number/);
+  assert.throws(() => convertCoordinatePairFormat({
+    latitude: '', longitude: '', format: 'DD', nextFormat: 'UTM'
+  }), /Choose DD, DMS or DDM/);
 });
