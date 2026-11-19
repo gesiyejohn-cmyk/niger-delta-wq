@@ -216,3 +216,15 @@ test('VES CSV report handles missing interpretation and safely quotes metadata',
   assert.match(report, /No layer interpretation is saved/);
   assert.match(report, /Not a full sounding classification|Indicator only/);
 });
+
+
+test('VES CSV report neutralises spreadsheet formula-like user text', async () => {
+  const { buildVESReportCSV } = await import('../src/engine/geophysics.js');
+  const report = buildVESReportCSV({
+    stationId: '=HYPERLINK("https://example.invalid","open")',
+    notes: '  @SUM(1,2)',
+    readings: [{ ab2: 5, mn2: 1, resistance: 10 }]
+  });
+  assert.match(report, /'=HYPERLINK/);
+  assert.match(report, /'  @SUM/);
+});
