@@ -63,7 +63,8 @@ export default function VESInterpretation({ records, onSaved, notify }) {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
+      // Keep the object URL alive briefly so mobile browsers finish the download hand-off.
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
       notify('VES report prepared. Check your device downloads for the CSV file.', 'success');
     } catch (error) {
       notify('VES report could not be generated: ' + error.message, 'error');
