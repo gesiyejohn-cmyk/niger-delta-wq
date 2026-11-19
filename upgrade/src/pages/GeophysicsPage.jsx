@@ -298,18 +298,49 @@ export default function GeophysicsPage() {
 }
 
 function VESPlot({ record }) {
-  const points = record.readings.filter(row => row.ab2 > 0 && row.apparentResistivity > 0);
-  const maxX = Math.max(1, ...points.map(point => point.ab2));
-  const maxY = Math.max(1, ...points.map(point => point.apparentResistivity));
+  const points = (record.readings || [])
+    .filter(row => Number.isFinite(Number(row.ab2)) && Number(row.ab2) > 0 &&
+      Number.isFinite(Number(row.apparentResistivity)) && Number(row.apparentResistivity) > 0)
+    .map(row => ({ ab2: Number(row.ab2), apparentResistivity: Number(row.apparentResistivity) }))
+    .sort((a, b) => a.ab2 - b.ab2);
+  const left = 78, right = 690, top = 22, bottom = 270;
+  const logX = points.map(point => Math.log10(point.ab2));
+  const logY = points.map(point => Math.log10(point.apparentResistivity));
+  let minX = logX.length ? Math.floor(Math.min(...logX)) : 0;
+  let maxX = logX.length ? Math.ceil(Math.max(...logX)) : 1;
+  let minY = logY.length ? Math.floor(Math.min(...logY)) : 0;
+  let maxY = logY.length ? Math.ceil(Math.max(...logY)) : 1;
+  if (minX === maxX) { minX -= 0.5; maxX += 0.5; }
+  if (minY === maxY) { minY -= 0.5; maxY += 0.5; }
+  const xAt = value => left + (Math.log10(value) - minX) / (maxX - minX) * (right - left);
+  const yAt = value => bottom - (Math.log10(value) - minY) / (maxY - minY) * (bottom - top);
+  const curvePath = points.map((point, index) =>
+    (index ? 'L' : 'M') + xAt(point.ab2).toFixed(2) + ',' + yAt(point.apparentResistivity).toFixed(2)
+  ).join(' ');
+  const xTicks = Array.from({ length: Math.max(0, maxX - minX + 1) }, (_, i) => minX + i);
+  const yTicks = Array.from({ length: Math.max(0, maxY - minY + 1) }, (_, i) => minY + i);
   return <section>
     <h2>VES sounding curve — {record.stationId || 'Unlabelled sounding'}</h2>
-    <svg viewBox="0 0 720 300" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
-      <path d="M55 15V255H700" fill="none" stroke="#64748b" />
-      {points.map((point, index) => <g key={index}>
-        <circle cx={55 + point.ab2 / maxX * 630} cy={255 - point.apparentResistivity / maxY * 220} r="4" fill="#2563eb" />
-        <title>AB/2 {point.ab2} m; apparent resistivity {point.apparentResistivity.toFixed(2)} Ωm</title>
-      </g>)}
-    </svg>
-    <p className="muted">Linear axes for quick review only. Formal VES interpretation requires appropriate log-log plotting and a validated layered-earth interpretation workflow.</p>
+    {points.length < 2 ? <p className="notice">At least two valid readings are required to draw the sounding curve. Stored measurements remain available.</p> : <>
+      <svg viewBox="0 0 720 330" role="img" aria-label="VES apparent resistivity sounding curve on logarithmic axes" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
+        {xTicks.map(tick => <g key={'x' + tick}>
+          <path d={`M${xAt(10 ** tick)} ${top}V${bottom}`} stroke="#e2e8f0" />
+          <text x={xAt(10 ** tick)} y="290" textAnchor="middle" fontSize="11" fill="#475569">{'10^' + tick}</text>
+        </g>)}
+        {yTicks.map(tick => <g key={'y' + tick}>
+          <path d={`M${left} ${yAt(10 ** tick)}H${right}`} stroke="#e2e8f0" />
+          <text x={left - 10} y={yAt(10 ** tick) + 4} textAnchor="end" fontSize="11" fill="#475569">{'10^' + tick}</text>
+        </g>)}
+        <path d={`M${left} ${top}V${bottom}H${right}`} fill="none" stroke="#64748b" strokeWidth="1.5" />
+        <path d={curvePath} fill="none" stroke="#2563eb" strokeWidth="2" />
+        {points.map((point, index) => <g key={index}>
+          <circle cx={xAt(point.ab2)} cy={yAt(point.apparentResistivity)} r="4" fill="#2563eb" />
+          <title>{'AB/2 ' + point.ab2 + ' m; apparent resistivity ' + point.apparentResistivity.toFixed(2) + ' Ωm'}</title>
+        </g>)}
+        <text x={(left + right) / 2} y="320" textAnchor="middle" fontSize="12" fill="#334155">AB/2 (m) — logarithmic scale</text>
+        <text transform="translate(18 150) rotate(-90)" textAnchor="middle" fontSize="12" fill="#334155">Apparent resistivity (Ωm) — logarithmic scale</text>
+      </svg>
+      <p className="muted">Log-log display of measured apparent resistivity against AB/2. The line joins field observations for visual guidance; it is not an inversion curve or a geological model.</p>
+    </>}
   </section>;
 }
