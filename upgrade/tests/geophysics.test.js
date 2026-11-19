@@ -165,3 +165,54 @@ test('VES quality assessment ignores wholly blank input rows', () => {
   assert.equal(result.incompleteCount, 0);
   assert.deepEqual(result.issues, []);
 });
+
+
+test('VES CSV report separates raw readings, quality findings and manual interpretation', async () => {
+  const { buildVESReportCSV } = await import('../src/engine/geophysics.js');
+  const report = buildVESReportCSV({
+    stationId: 'VES-01',
+    latitude: 4.9,
+    longitude: 6.1,
+    coordinateDatum: 'WGS84',
+    coordinateCRS: 'Geographic (WGS84)',
+    array: 'Schlumberger',
+    notes: 'Test station, north sector',
+    readings: [
+      { ab2: 5, mn2: 1, resistance: 10 },
+      { ab2: 10, mn2: 1, resistance: 12 },
+      { ab2: 15, mn2: 1, resistance: 8 }
+    ],
+    interpretation: {
+      method: 'User-entered layered-earth model',
+      inversionSoftware: 'Example software 1.0',
+      rmsErrorPercent: 4.2,
+      interpretationStatus: 'Manually reviewed',
+      layers: [
+        { layer: 1, resistivity: 100, thickness: 5, bottomDepth: 5 },
+        { layer: 2, resistivity: 250, thickness: null, bottomDepth: null }
+      ],
+      notes: 'Compare with borehole log'
+    }
+  });
+  assert.match(report, /RAW FIELD READINGS AND CALCULATED VALUES/);
+  assert.match(report, /FIELD QUALITY-CONTROL FINDINGS/);
+  assert.match(report, /MANUALLY RECORDED LAYER INTERPRETATION/);
+  assert.match(report, /VES-01/);
+  assert.match(report, /WGS84/);
+  assert.match(report, /Example software 1\.0/);
+  assert.match(report, /does not perform automatic 1D VES inversion/);
+  assert.match(report, /MN\/2/);
+});
+
+test('VES CSV report handles missing interpretation and safely quotes metadata', async () => {
+  const { buildVESReportCSV } = await import('../src/engine/geophysics.js');
+  const report = buildVESReportCSV({
+    stationId: 'VES,"02"',
+    notes: 'Line one, with comma',
+    readings: [{ ab2: 5, mn2: 1, resistance: 10 }]
+  });
+  assert.match(report, /"VES,""02"""/);
+  assert.match(report, /"Line one, with comma"/);
+  assert.match(report, /No layer interpretation is saved/);
+  assert.match(report, /Not a full sounding classification|Indicator only/);
+});
