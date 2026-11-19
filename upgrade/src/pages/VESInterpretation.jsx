@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { saveVESInterpretation } from '../storage/geophysics.js';
-import { classifyVESCurve, validateVESLayers } from '../engine/geophysics.js';
+import { classifyVESCurve, validateVESLayers, buildVESReportCSV } from '../engine/geophysics.js';
 
 const field = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
 const box = { border: '1px solid #dbe3ea', borderRadius: 10, padding: 14, margin: '14px 0', background: '#fff' };
@@ -50,6 +50,27 @@ export default function VESInterpretation({ records, onSaved, notify }) {
     setLayers(old => old.map((layer, i) => i === index ? { ...layer, [key]: value } : layer));
   }
 
+  function downloadSoundingReport() {
+    if (!selected) return notify('Select a saved VES sounding first.', 'error');
+    try {
+      const csv = buildVESReportCSV(selected);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const safeStation = (selected.stationId || 'VES-sounding').replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '');
+      link.href = url;
+      link.download = (safeStation || 'VES-sounding') + '-report.csv';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      // Keep the object URL alive briefly so mobile browsers finish the download hand-off.
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+      notify('VES report prepared. Check your device downloads for the CSV file.', 'success');
+    } catch (error) {
+      notify('VES report could not be generated: ' + error.message, 'error');
+    }
+  }
+
   async function saveInterpretation() {
     if (!selected) return notify('Select a saved VES sounding first.', 'error');
     try {
@@ -85,7 +106,11 @@ export default function VESInterpretation({ records, onSaved, notify }) {
         </select>
       </label>
       {selected && <>
-        <p className="notice">Preliminary apparent-curve trend: <strong>{curve?.label || 'Insufficient data'}</strong>. {curve?.description || 'At least three valid readings are required.'} This is a curve-shape description, not a unique geological interpretation.</p>
+        <p className="notice">Preliminary early-curve trend (first three valid readings only): <strong>{curve?.label || 'Insufficient data'}</strong>. {curve?.description || 'At least three valid readings are required.'} This is only a first-three-point trend indicator, not a formal full-sounding curve classification or a unique geological interpretation. Review the complete log-log curve and inversion/model fit before assigning a curve type or geology.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '12px 0' }}>
+          <button type="button" onClick={downloadSoundingReport}>Export complete VES report (CSV)</button>
+        </div>
+        <p className="muted">The report includes station metadata and coordinate reference, raw readings, calculated geometric factors and apparent resistivity, quality-control findings, preliminary trend limitations, and any saved manual layer interpretation. It does not invent missing field or inversion information.</p>
         <h3>Layer model</h3>
         <p className="muted">Enter one row per layer. Enter thickness for every layer except the last (assumed to extend downward as a half-space). Resistivity is in Ωm; thickness and interface depth are in metres.</p>
         {layers.map((layer, index) => <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, alignItems: 'end', borderTop: '1px solid #e2e8f0', padding: '10px 0' }}>

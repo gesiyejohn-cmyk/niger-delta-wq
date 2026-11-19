@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
-import { calculateVES, validateVES, validateERT } from '../engine/geophysics.js';
+import { calculateVES, validateVES, validateERT, assessVESQuality } from '../engine/geophysics.js';
 import VESInterpretation from './VESInterpretation.jsx';
 import CoordinateFields from './CoordinateFields.jsx';
+import GeologicalInterpretationEditor from './GeologicalInterpretationEditor.jsx';
 import { validateCoordinatePair } from '../engine/coordinates.js';
 import { saveVES, listVES, deleteVES, saveERT, listERT, deleteERT } from '../storage/geophysics.js';
 
@@ -13,7 +14,7 @@ export default function GeophysicsPage() {
   const [tab, setTab] = useState('VES');
   const [ves, setVes] = useState([]);
   const [ert, setErt] = useState([]);
-  const [meta, setMeta] = useState({ stationId: '', latitude: '', longitude: '', array: 'Schlumberger', notes: '' });
+  const [meta, setMeta] = useState({ stationId: '', surveyDate: '', latitude: '', longitude: '', array: 'Schlumberger', notes: '' });
   const [vesCoordinates, setVesCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
   const [ertCoordinates, setErtCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
   const [readings, setReadings] = useState([{ ab2: '', mn2: '', resistance: '' }]);
@@ -21,9 +22,11 @@ export default function GeophysicsPage() {
   const [cells, setCells] = useState([]);
   const [sourceImport, setSourceImport] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
+  const [selectedERTDistance, setSelectedERTDistance] = useState(null);
   const [selectedErtModelId, setSelectedErtModelId] = useState('');
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState('info');
+  const vesQuality = assessVESQuality(readings);
 
   async function refresh() {
     try {
@@ -55,6 +58,7 @@ export default function GeophysicsPage() {
   }
   async function saveSounding() {
     try {
+      if (vesQuality.incompleteCount > 0) throw new Error('Complete or remove the partially filled VES row(s) before saving. No entered values have been discarded.');
       const completeRows = readings.filter(row =>
         row.ab2 !== '' && row.mn2 !== '' && row.resistance !== ''
       );
@@ -96,6 +100,7 @@ export default function GeophysicsPage() {
       setCells(clean);
       setSourceImport({ fileName: file.name, content: sourceText, importedAt: new Date().toISOString() });
       setSelectedCell(clean[0] || null);
+      setSelectedERTDistance(clean[0]?.x ?? null);
       notify(clean.length + ' ERT model points loaded. Confirm the metadata and save the imported model.', 'success');
     } catch (error) {
       notify('ERT import failed: ' + error.message, 'error');
@@ -119,6 +124,7 @@ export default function GeophysicsPage() {
       setCells([]);
       setSourceImport(null);
       setSelectedCell(null);
+      setSelectedERTDistance(null);
       notify('ERT model saved. The app displays imported inversion results; it does not perform geophysical inversion.', 'success');
       await refresh();
     } catch (error) {
@@ -136,6 +142,15 @@ export default function GeophysicsPage() {
   const maxDepth = displayCells.length ? Math.max(1, ...displayCells.map(cell => cell.depth)) : 1;
   const minR = displayCells.length ? Math.min(...displayCells.map(cell => cell.resistivity)) : 1;
   const maxR = displayCells.length ? Math.max(...displayCells.map(cell => cell.resistivity)) : 1;
+
+  function selectERTDistance(distance) {
+    if (!activeERTModel || !displayCells.length || !Number.isFinite(distance)) return;
+    const nearest = displayCells.reduce((best, cell) =>
+      Math.abs(cell.x - distance) < Math.abs(best.x - distance) ? cell : best
+    , displayCells[0]);
+    setSelectedCell(nearest);
+    setSelectedERTDistance(distance);
+  }
 
   function colourFor(value) {
     const ratio = (Math.log10(value) - Math.log10(minR)) /
@@ -162,6 +177,9 @@ export default function GeophysicsPage() {
           <label>Station / sounding ID
             <input style={input} value={meta.stationId} onChange={event => setMeta(old => ({ ...old, stationId: event.target.value }))} />
           </label>
+          <label>Survey date
+            <input style={input} type="date" value={meta.surveyDate} onChange={event => setMeta(old => ({ ...old, surveyDate: event.target.value }))} />
+          </label>
           <CoordinateFields value={vesCoordinates} onChange={setVesCoordinates} label="VES station coordinates" />
           <label>Array configuration
             <select style={input} value={meta.array} onChange={event => setMeta(old => ({ ...old, array: event.target.value }))}>
@@ -173,7 +191,13 @@ export default function GeophysicsPage() {
           </label>
         </div>
         <h2>Field readings</h2>
-        <p className="muted">AB/2 and MN/2 are in metres; resistance is in ohms. Blank rows are ignored. At least one complete reading can be stored; two or more are needed for a sounding curve.</p>
+        <p className="muted">AB/2 and MN/2 are in metres; resistance is in ohms. Completely blank rows are ignored. Partially completed rows must be finished or removed before saving. At least one complete reading can be stored; two or more are needed for a sounding curve.</p>
+        {vesQuality.issues.length > 0 && <div className="notice" role="status" aria-live="polite">
+          <strong>Field-entry quality checks</strong>
+          <p>{vesQuality.completeCount} complete reading(s); {vesQuality.incompleteCount} incomplete row(s).</p>
+          <ul>{vesQuality.issues.map((issue, index) => <li key={issue.code + '-' + issue.row + '-' + index}>{issue.message}</li>)}</ul>
+          <p className="muted">MN/2 changes are flagged for verification, not automatically treated as errors; electrode spread expansion may be legitimate. Original readings are not automatically altered.</p>
+        </div>}
         {readings.map((row, index) => {
           const preview = rowPreview(row);
           return <div key={index} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 10, marginBottom: 10 }}>
@@ -225,12 +249,12 @@ export default function GeophysicsPage() {
         <h2>Saved ERT lines</h2>
         {ert.map(record => <div key={record.id} style={{ padding: 8, borderTop: '1px solid #e2e8f0' }}>
           <strong>{record.lineId || 'Unlabelled line'}</strong> · {record.cells.length} points · RMS {record.rms || 'not recorded'}%
-          <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); } await refresh(); }}>Delete</button>
+          <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); setSelectedERTDistance(null); } await refresh(); }}>Delete</button>
         </div>)}
         {allCells.length > 0 && <>
           <h2>ERT resistivity point section</h2>
           <label>Survey line to display
-            <select style={input} value={activeERTModel?.id || ''} onChange={event => { setSelectedErtModelId(event.target.value); setSelectedCell(null); }}>
+            <select style={input} value={activeERTModel?.id || ''} onChange={event => { setSelectedErtModelId(event.target.value); setSelectedCell(null); setSelectedERTDistance(null); }}>
               {ert.map((model, index) => <option key={model.id} value={model.id}>{model.lineId || 'Unlabelled line'} — {model.cells.length} points (model {index + 1})</option>)}
             </select>
           </label>
@@ -251,8 +275,8 @@ export default function GeophysicsPage() {
                 fill={colourFor(cell.resistivity)} stroke={selectedCell?.key === cell.key ? '#0f172a' : '#ffffff'}
                 strokeWidth="2" role="button" tabIndex="0"
                 aria-label={cell.resistivity + ' ohm metres at distance ' + cell.x + ' metres and depth ' + cell.depth + ' metres'}
-                onClick={() => setSelectedCell(cell)}
-                onKeyDown={event => (event.key === 'Enter' || event.key === ' ') && setSelectedCell(cell)} />
+                onClick={() => { setSelectedCell(cell); setSelectedERTDistance(cell.x); }}
+                onKeyDown={event => (event.key === 'Enter' || event.key === ' ') && (setSelectedCell(cell), setSelectedERTDistance(cell.x))} />
             })}
           </svg>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', margin: '8px 0' }}>
@@ -268,30 +292,66 @@ export default function GeophysicsPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr><th align="left">Line</th><th align="right">Distance (m)</th><th align="right">Depth (m)</th><th align="right">Resistivity (Ωm)</th></tr></thead>
-              <tbody>{displayCells.map(cell => <tr key={cell.key} onClick={() => setSelectedCell(cell)}>
+              <tbody>{displayCells.map(cell => <tr key={cell.key} onClick={() => { setSelectedCell(cell); setSelectedERTDistance(cell.x); }}>
                 <td>{cell.lineId}</td><td align="right">{cell.x}</td><td align="right">{cell.depth}</td><td align="right">{cell.resistivity}</td>
               </tr>)}</tbody>
             </table>
           </div>
         </>}
+        <div id="ert-geological-interpretation-workspace" style={{marginTop:24}}>
+          {activeERTModel
+            ? <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedERTDistance} onDistanceChange={selectERTDistance} />
+            : <section style={{padding:14,border:'2px solid #d97706',borderRadius:10,background:'#fffbeb'}}><h2>2D Geological Subsurface Interpretation</h2><p role="status">No saved ERT model is currently selected. Save or select an imported ERT line to open its geological interpretation workspace. Existing records are not changed.</p></section>}
+        </div>
       </>}
     </section>
   </div>;
 }
 
 function VESPlot({ record }) {
-  const points = record.readings.filter(row => row.ab2 > 0 && row.apparentResistivity > 0);
-  const maxX = Math.max(1, ...points.map(point => point.ab2));
-  const maxY = Math.max(1, ...points.map(point => point.apparentResistivity));
+  const points = (record.readings || [])
+    .filter(row => Number.isFinite(Number(row.ab2)) && Number(row.ab2) > 0 &&
+      Number.isFinite(Number(row.apparentResistivity)) && Number(row.apparentResistivity) > 0)
+    .map(row => ({ ab2: Number(row.ab2), apparentResistivity: Number(row.apparentResistivity) }))
+    .sort((a, b) => a.ab2 - b.ab2);
+  const left = 78, right = 690, top = 22, bottom = 270;
+  const logX = points.map(point => Math.log10(point.ab2));
+  const logY = points.map(point => Math.log10(point.apparentResistivity));
+  let minX = logX.length ? Math.floor(Math.min(...logX)) : 0;
+  let maxX = logX.length ? Math.ceil(Math.max(...logX)) : 1;
+  let minY = logY.length ? Math.floor(Math.min(...logY)) : 0;
+  let maxY = logY.length ? Math.ceil(Math.max(...logY)) : 1;
+  if (minX === maxX) { minX -= 0.5; maxX += 0.5; }
+  if (minY === maxY) { minY -= 0.5; maxY += 0.5; }
+  const xAt = value => left + (Math.log10(value) - minX) / (maxX - minX) * (right - left);
+  const yAt = value => bottom - (Math.log10(value) - minY) / (maxY - minY) * (bottom - top);
+  const curvePath = points.map((point, index) =>
+    (index ? 'L' : 'M') + xAt(point.ab2).toFixed(2) + ',' + yAt(point.apparentResistivity).toFixed(2)
+  ).join(' ');
+  const xTicks = Array.from({ length: Math.max(0, maxX - minX + 1) }, (_, i) => minX + i);
+  const yTicks = Array.from({ length: Math.max(0, maxY - minY + 1) }, (_, i) => minY + i);
   return <section>
     <h2>VES sounding curve — {record.stationId || 'Unlabelled sounding'}</h2>
-    <svg viewBox="0 0 720 300" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
-      <path d="M55 15V255H700" fill="none" stroke="#64748b" />
-      {points.map((point, index) => <g key={index}>
-        <circle cx={55 + point.ab2 / maxX * 630} cy={255 - point.apparentResistivity / maxY * 220} r="4" fill="#2563eb" />
-        <title>AB/2 {point.ab2} m; apparent resistivity {point.apparentResistivity.toFixed(2)} Ωm</title>
-      </g>)}
-    </svg>
-    <p className="muted">Linear axes for quick review only. Formal VES interpretation requires appropriate log-log plotting and a validated layered-earth interpretation workflow.</p>
+    {points.length < 2 ? <p className="notice">At least two valid readings are required to draw the sounding curve. Stored measurements remain available.</p> : <>
+      <svg viewBox="0 0 720 330" role="img" aria-label="VES apparent resistivity sounding curve on logarithmic axes" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
+        {xTicks.map(tick => <g key={'x' + tick}>
+          <path d={`M${xAt(10 ** tick)} ${top}V${bottom}`} stroke="#e2e8f0" />
+          <text x={xAt(10 ** tick)} y="290" textAnchor="middle" fontSize="11" fill="#475569">{'10^' + tick}</text>
+        </g>)}
+        {yTicks.map(tick => <g key={'y' + tick}>
+          <path d={`M${left} ${yAt(10 ** tick)}H${right}`} stroke="#e2e8f0" />
+          <text x={left - 10} y={yAt(10 ** tick) + 4} textAnchor="end" fontSize="11" fill="#475569">{'10^' + tick}</text>
+        </g>)}
+        <path d={`M${left} ${top}V${bottom}H${right}`} fill="none" stroke="#64748b" strokeWidth="1.5" />
+        <path d={curvePath} fill="none" stroke="#2563eb" strokeWidth="2" />
+        {points.map((point, index) => <g key={index}>
+          <circle cx={xAt(point.ab2)} cy={yAt(point.apparentResistivity)} r="4" fill="#2563eb" />
+          <title>{'AB/2 ' + point.ab2 + ' m; apparent resistivity ' + point.apparentResistivity.toFixed(2) + ' Ωm'}</title>
+        </g>)}
+        <text x={(left + right) / 2} y="320" textAnchor="middle" fontSize="12" fill="#334155">AB/2 (m) — logarithmic scale</text>
+        <text transform="translate(18 150) rotate(-90)" textAnchor="middle" fontSize="12" fill="#334155">Apparent resistivity (Ωm) — logarithmic scale</text>
+      </svg>
+      <p className="muted">Log-log display of measured apparent resistivity against AB/2. The line joins field observations for visual guidance; it is not an inversion curve or a geological model.</p>
+    </>}
   </section>;
 }
