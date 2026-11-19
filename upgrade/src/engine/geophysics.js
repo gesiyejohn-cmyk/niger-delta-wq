@@ -1,6 +1,52 @@
 const finite=(v)=>v!=null&&!(typeof v==='string'&&v.trim()==='')&&Number.isFinite(Number(v));
 export function schlumbergerGeometricFactor(ab2,mn2){const a=Number(ab2),m=Number(mn2);if(!finite(a)||!finite(m)||a<=m||m<=0)throw new Error('Schlumberger geometry requires AB/2 > MN/2 > 0.');const factor=Math.PI*(a*a-m*m)/(2*m);if(!Number.isFinite(factor)||factor<=0)throw new Error('Schlumberger geometric factor is outside the supported numeric range.');return factor;}
 export function calculateVES({ab2,mn2,resistance}){if(!finite(resistance)||Number(resistance)<=0)throw new Error('Measured resistance must be greater than zero.');const k=schlumbergerGeometricFactor(ab2,mn2);const apparentResistivity=k*Number(resistance);if(!Number.isFinite(apparentResistivity)||apparentResistivity<=0)throw new Error('Calculated apparent resistivity is outside the supported numeric range.');return{geometricFactor:k,apparentResistivity};}
+// Non-destructive VES field-entry quality checks. These flags never edit readings.
+export function assessVESQuality(rows) {
+  const source = Array.isArray(rows) ? rows : [];
+  const issues = [];
+  const seen = new Map();
+  let completeCount = 0;
+  let incompleteCount = 0;
+  let previousAB2 = null;
+  let previousMN2 = null;
+  source.forEach((row, index) => {
+    const fields = ['ab2', 'mn2', 'resistance'];
+    const populated = fields.filter(key => row?.[key] != null && String(row[key]).trim() !== '').length;
+    if (populated === 0) return;
+    if (populated < fields.length) {
+      incompleteCount += 1;
+      issues.push({ code: 'incomplete-row', severity: 'warning', row: index + 1,
+        message: 'Row ' + (index + 1) + ' is incomplete; finish it or remove it before saving.' });
+      return;
+    }
+    completeCount += 1;
+    const ab2 = Number(row.ab2), mn2 = Number(row.mn2), resistance = Number(row.resistance);
+    if (!finite(ab2) || !finite(mn2) || !finite(resistance) || ab2 <= 0 || mn2 <= 0 || resistance <= 0 || ab2 <= mn2) {
+      issues.push({ code: 'invalid-reading', severity: 'error', row: index + 1,
+        message: 'Row ' + (index + 1) + ' has invalid values or electrode geometry (AB/2 must exceed MN/2 > 0; resistance must be positive).' });
+      return;
+    }
+    if (seen.has(ab2)) {
+      issues.push({ code: 'duplicate-ab2', severity: 'error', row: index + 1,
+        message: 'Row ' + (index + 1) + ' repeats AB/2 = ' + ab2 + ' m from row ' + seen.get(ab2) + '.' });
+    } else seen.set(ab2, index + 1);
+    if (previousAB2 !== null && ab2 < previousAB2) {
+      issues.push({ code: 'descending-ab2', severity: 'warning', row: index + 1,
+        message: 'AB/2 at row ' + (index + 1) + ' is smaller than the preceding valid spacing; arrange readings in increasing order.' });
+    }
+    if (previousMN2 !== null && mn2 !== previousMN2) {
+      issues.push({ code: 'mn2-change', severity: 'info', row: index + 1,
+        message: 'MN/2 changes at row ' + (index + 1) + '. This can be a legitimate field expansion; verify and document the change.' });
+    }
+    previousAB2 = ab2;
+    previousMN2 = mn2;
+  });
+  return { completeCount, incompleteCount, issues,
+    errorCount: issues.filter(issue => issue.severity === 'error').length,
+    warningCount: issues.filter(issue => issue.severity === 'warning').length };
+}
+
 export function validateVES(rows){if(!Array.isArray(rows)||rows.length<1)throw new Error('Enter at least one complete VES reading.');const clean=rows.map((r,i)=>{const x=Number(r.ab2),m=Number(r.mn2),v=Number(r.resistance);if(!finite(x)||!finite(m)||!finite(v)||v<=0)throw new Error(`VES row ${i+1}: AB/2, MN/2 and positive resistance are required.`);return{...r,...calculateVES({ab2:x,mn2:m,resistance:v}),ab2:x,mn2:m,resistance:v};});if(clean.some((r,i)=>i&&r.ab2<=clean[i-1].ab2))throw new Error('VES AB/2 values must be entered in strictly increasing order.');return clean;}
 export function validateERT(points){if(!Array.isArray(points)||!points.length)throw new Error('No ERT model cells were supplied.');const seen=new Set();return points.map((p,i)=>{const x=Number(p.x),depth=Number(p.depth),resistivity=Number(p.resistivity);if(!finite(x)||!finite(depth)||!finite(resistivity)||depth<0||resistivity<=0)throw new Error(`ERT cell ${i+1}: provide numeric x, non-negative depth and positive resistivity.`);const key=x+'|'+depth;if(seen.has(key))throw new Error('ERT import contains duplicate distance/depth cells; resolve duplicate coordinates before saving.');seen.add(key);return{x,depth,resistivity};});}
 export function descriptiveStats(values){const a=values.filter(finite).map(Number);if(!a.length)return null;const sorted=[...a].sort((x,y)=>x-y),mean=a.reduce((s,v)=>s+v,0)/a.length,median=sorted.length%2?sorted[(sorted.length-1)/2]:(sorted[sorted.length/2-1]+sorted[sorted.length/2])/2;return{n:a.length,mean,median,min:sorted[0],max:sorted.at(-1),sd:Math.sqrt(a.reduce((s,v)=>s+(v-mean)**2,0)/a.length)};}
