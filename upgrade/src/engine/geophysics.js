@@ -93,3 +93,80 @@ export function validateVESLayers(layers) {
     return { layer: index + 1, resistivity: rho, thickness, bottomDepth };
   });
 }
+
+
+// Portable, spreadsheet-friendly VES report. Raw readings, QC findings and
+// manually supplied interpretation are kept in separate labelled sections.
+const csvField = value => {
+  if (value == null) return '';
+  const text = String(value);
+  return /[",\\r\\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+};
+export function buildVESReportCSV(record) {
+  if (!record || typeof record !== 'object') throw new Error('A saved VES sounding is required to build a report.');
+  const rows = Array.isArray(record.readings) ? record.readings : [];
+  const quality = assessVESQuality(rows);
+  const curve = classifyVESCurve(rows);
+  const output = [];
+  const add = values => output.push(values.map(csvField).join(','));
+  add(['Niger Delta Water Quality — VES sounding report']);
+  add(['Report generated', new Date().toISOString()]);
+  add(['SECTION', 'FIELD', 'VALUE', 'UNIT', 'STATUS / NOTES']);
+  add(['Metadata', 'Station ID', record.stationId || '', '', '']);
+  add(['Metadata', 'Survey date', record.surveyDate || record.date || '', '', 'Not available if blank']);
+  add(['Metadata', 'Record created', record.createdAt || '', '', '']);
+  add(['Metadata', 'Array configuration', record.array || record.method || 'Schlumberger', '', '']);
+  add(['Metadata', 'Latitude', record.latitude ?? '', 'decimal degrees', '']);
+  add(['Metadata', 'Longitude', record.longitude ?? '', 'decimal degrees', '']);
+  add(['Metadata', 'Coordinate datum', record.coordinateDatum || '', '', '']);
+  add(['Metadata', 'Coordinate CRS', record.coordinateCRS || '', '', '']);
+  add(['Metadata', 'Field notes', record.notes || '', '', '']);
+  add(['Summary', 'Stored readings', rows.length, 'count', '']);
+  add(['Summary', 'Complete readings', quality.completeCount, 'count', '']);
+  add(['Summary', 'Incomplete readings', quality.incompleteCount, 'count', '']);
+  add(['Preliminary curve', 'First-three-valid-point trend', curve.label, '', 'Indicator only; not a full sounding classification or geological interpretation']);
+  add(['Preliminary curve', 'Description', curve.description, '', '']);
+  add([]);
+  add(['RAW FIELD READINGS AND CALCULATED VALUES']);
+  add(['Reading', 'AB/2 (m)', 'MN/2 (m)', 'Measured resistance (ohm)', 'Geometric factor (m)', 'Apparent resistivity (ohm m)', 'Calculation status']);
+  rows.forEach((reading, index) => {
+    let factor = '', rho = '', status = 'Raw row retained';
+    try {
+      const result = calculateVES(reading);
+      factor = result.geometricFactor;
+      rho = result.apparentResistivity;
+      status = 'Calculated from recorded AB/2, MN/2 and resistance';
+    } catch (error) { status = 'Not calculated: ' + error.message; }
+    add([index + 1, reading.ab2 ?? '', reading.mn2 ?? '', reading.resistance ?? '', factor, rho, status]);
+  });
+  add([]);
+  add(['FIELD QUALITY-CONTROL FINDINGS']);
+  add(['Issue code', 'Severity', 'Row', 'Finding']);
+  if (!quality.issues.length) add(['none', 'info', '', 'No issues detected by the current VES entry checks. This does not replace field or instrument QA/QC.']);
+  quality.issues.forEach(issue => add([issue.code, issue.severity, issue.row, issue.message]));
+  add([]);
+  add(['MANUALLY RECORDED LAYER INTERPRETATION']);
+  const interpretation = record.interpretation;
+  if (!interpretation?.layers?.length) {
+    add(['Interpretation status', 'No layer interpretation is saved for this sounding.']);
+  } else {
+    add(['Interpretation method', interpretation.method || 'User-entered layered-earth model']);
+    add(['Inversion software/version', interpretation.inversionSoftware || 'Not recorded']);
+    add(['Inversion RMS error (%)', interpretation.rmsErrorPercent ?? 'Not recorded']);
+    add(['Interpretation date', interpretation.interpretedAt || interpretation.updatedAt || 'Not recorded']);
+    add(['Interpretation status', interpretation.interpretationStatus || 'Status not recorded']);
+    add(['Layer', 'Resistivity (ohm m)', 'Thickness (m)', 'Bottom/interface depth (m)', 'Notes']);
+    interpretation.layers.forEach((layer, index) => add([
+      layer.layer ?? index + 1, layer.resistivity ?? '', layer.thickness ?? 'Half-space',
+      layer.bottomDepth ?? 'Not applicable (half-space)', ''
+    ]));
+    add(['Geological notes / borehole control', interpretation.notes || 'None recorded']);
+  }
+  add([]);
+  add(['SCIENTIFIC LIMITATIONS']);
+  add(['This report separates raw field observations from calculated apparent resistivity and manually entered layer interpretation.']);
+  add(['VES resistivity does not uniquely identify lithology, prove an aquifer, or establish groundwater quality or contamination.']);
+  add(['Geological assignments require independent local geological/hydrogeological evidence, such as borehole logs and hydrogeochemical results.']);
+  add(['The app does not perform automatic 1D VES inversion. Any software/RMS details above are user-entered and should be checked against the original inversion report.']);
+  return '\\uFEFF' + output.map(row => row.join(',')).join('\\r\\n');
+}
