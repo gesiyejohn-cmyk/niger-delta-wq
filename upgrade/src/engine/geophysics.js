@@ -170,5 +170,5 @@ export function buildVESReportCSV(record) {
   add(['VES resistivity does not uniquely identify lithology, prove an aquifer, or establish groundwater quality or contamination.']);
   add(['Geological assignments require independent local geological/hydrogeological evidence, such as borehole logs and hydrogeochemical results.']);
   add(['The app does not perform automatic 1D VES inversion. Any software/RMS details above are user-entered and should be checked against the original inversion report.']);
-  return '\uFEFF' + output.map(row => row.join(',')).join('\r\n');
+  return '\uFEFF' + output.join('\r\n');
 }
