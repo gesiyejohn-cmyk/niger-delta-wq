@@ -14,7 +14,7 @@ export default function GeophysicsPage() {
   const [tab, setTab] = useState('VES');
   const [ves, setVes] = useState([]);
   const [ert, setErt] = useState([]);
-  const [meta, setMeta] = useState({ stationId: '', latitude: '', longitude: '', array: 'Schlumberger', notes: '' });
+  const [meta, setMeta] = useState({ stationId: '', surveyDate: '', latitude: '', longitude: '', array: 'Schlumberger', notes: '' });
   const [vesCoordinates, setVesCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
   const [ertCoordinates, setErtCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
   const [readings, setReadings] = useState([{ ab2: '', mn2: '', resistance: '' }]);
@@ -176,6 +176,9 @@ export default function GeophysicsPage() {
         <div className="form-grid">
           <label>Station / sounding ID
             <input style={input} value={meta.stationId} onChange={event => setMeta(old => ({ ...old, stationId: event.target.value }))} />
+          </label>
+          <label>Survey date
+            <input style={input} type="date" value={meta.surveyDate} onChange={event => setMeta(old => ({ ...old, surveyDate: event.target.value }))} />
           </label>
           <CoordinateFields value={vesCoordinates} onChange={setVesCoordinates} label="VES station coordinates" />
           <label>Array configuration
