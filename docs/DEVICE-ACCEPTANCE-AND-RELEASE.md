@@ -384,3 +384,36 @@ Do not approve a production release if any of the following is true:
 **Outstanding exceptions and expiry dates:** ____________________
 
 Approval must refer to one exact build SHA. Any new code change after acceptance requires the affected tests to be rerun.
+
+
+## 11. Coordinate-format regression and latest same-commit multi-platform CI — 19 November 2026
+
+The branch head is `2bd19247813d1ab108bd665cfdcffe9aa2e7b461` (`fix(coordinates): preserve partial entries when changing format`). Pull request [#2](https://github.com/gesiyejohn-cmyk/niger-delta-wq/pull/2) remains open and draft, targeting `ndwq-desktop-build-integration`; it has not been merged.
+
+The coordinate-format regression fix converts each populated axis independently when changing DD, DMS or DDM. An empty latitude or longitude remains empty; the populated axis is converted using its own axis limit and the selected N/S or E/W hemisphere. Invalid partial input rejects the format change without silently reinterpreting the value. The regression suite includes separate latitude-only and longitude-only cases, southern/western hemisphere preservation, invalid partial-input rejection, WGS84 UTM round-trip checks, and an independent PROJ/EPSG:32632 reference control.
+
+[CI run #44523260517](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44523260517) completed successfully on this exact branch-head commit:
+
+- `web-and-tests`: **124 passed, 0 failed**; production web build and artifact upload succeeded.
+- `android`: debug APK build succeeded; API 35 emulator installed and launched the original-identity package `com.nigerdeltawq.mobile` (`Niger Delta WQ`) and the separate preview package `com.nigerdeltawq.mobile.preview2`. The original launcher activity `com.nigerdeltawq.mobile.MainActivity` was observed as the resumed activity. APK metadata and debug certificate were recorded.
+- `windows-desktop`: NSIS installer `Niger-Delta-WQ-Setup-1.0.0.exe` was generated and uploaded. The workflow explicitly reported that no code-signing certificate was configured.
+
+Artifacts from run #44523260517 (sizes are uploaded ZIP artifact sizes):
+
+- Web `ndwq-integrated-web`, ID `14528891642`, **301,488 bytes**; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44523260517/artifacts/14528891642); expires **3 December 2026 at 12:22:49 UTC**.
+- Android `ndwq-integrated-android-debug-apk`, ID `14529516754`, **8,081,134 bytes**; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44523260517/artifacts/14529516754); expires **3 December 2026 at 12:27:16 UTC**. The archive contains the original-identity debug APK, side-by-side preview debug APK and build/signing metadata.
+- Windows `ndwq-integrated-windows-desktop`, ID `14529401732`, **95,587,261 bytes**; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44523260517/artifacts/14529401732); expires **3 December 2026 at 12:24:33 UTC**.
+
+Android identity/signing evidence from the run:
+
+- Original package: `com.nigerdeltawq.mobile`; label: `Niger Delta WQ`; launcher: `com.nigerdeltawq.mobile.MainActivity`.
+- Original debug APK SHA-256: `c0ab22b15b057398903033c455c424ba00afc2cf5fb4bebe96fdc08c52f03ff0`.
+- Debug certificate SHA-256 fingerprint: `cd468ee5cfedd72647e41cdc2d4d8f26c3d57e3af75c9faed5c4073e62713a30`.
+- The certificate subject is Android Debug. It is not a persistent production signing identity and does not establish compatibility with the user's installed app.
+- Preview package: `com.nigerdeltawq.mobile.preview2`; preview APK SHA-256: `2d63c4c1c2df4d90c000bcf3075c6427d315d17a7476d0a5034b4266d1c28887`.
+
+The specifically requested earlier [run #43762079209](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43762079209), on commit `0e81667b0876f6d3373fd4aa7b8d227843448676`, is complete but **failed**. Its exact Android step, `Launch APK in Android emulator`, failed after the emulator booted: the settings service returned `Broken pipe (32)` and ADB exited with code `224`. The Android artifact upload was skipped. Its web and Windows artifacts uploaded, but there was no Android APK artifact for that run. The later successful run #44523260517 verifies the corrected emulator workflow on the current branch-head commit; it does not retroactively make the earlier run successful.
+
+This is a same-commit three-platform CI pass and emulator launch smoke test, not production or device acceptance. The web build artifact has **not** been deployed to an accessible public URL. The Windows installer has **not** been installed/runtime-tested on a real Windows computer. Android physical-device first-screen/core-workflow acceptance, a recoverable backup/restore against actual device data, production signing, and compatibility with the currently installed app remain unverified. Do not uninstall, clear app data or install the debug APK over an existing phone installation based on this CI result.
+
+Retain the scientific limitations: ERT inversion is not implemented; imported inversion results and interpolation are not a field-data inversion; DRASTIC bands require local hydrogeological justification; WQI alone does not establish potability. Scientific reference/calibration review and formal sign-off remain outstanding.
