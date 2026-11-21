@@ -4,6 +4,7 @@ import { calculateVES, validateVES, validateERT } from '../engine/geophysics.js'
 import VESInterpretation from './VESInterpretation.jsx';
 import CoordinateFields from './CoordinateFields.jsx';
 import ERTTomogram from './ERTTomogram.jsx';
+import GeologicalInterpretationEditor from './GeologicalInterpretationEditor.jsx';
 import { validateCoordinatePair } from '../engine/coordinates.js';
 import { saveVES, listVES, deleteVES, saveERT, listERT, deleteERT } from '../storage/geophysics.js';
 
@@ -17,7 +18,8 @@ export default function GeophysicsPage() {
   const [meta, setMeta] = useState({ stationId: '', latitude: '', longitude: '', array: 'Schlumberger', notes: '' });
   const [vesCoordinates, setVesCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
   const [ertCoordinates, setErtCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
-  const [readings, setReadings] = useState([{ ab2: '', mn2: '', resistance: '' }]);
+  const [readings, setReadings] = useState([{ ab2: '', mn2: '', spacing: '', resistance: '' }]);
+  const [selectedDistance, setSelectedDistance] = useState(null);
   const [line, setLine] = useState({ lineId: '', spacing: '', electrodes: '', rms: '', software: '', notes: '' });
   const [cells, setCells] = useState([]);
   const [sourceImport, setSourceImport] = useState(null);
@@ -49,7 +51,7 @@ export default function GeophysicsPage() {
   function rowPreview(row) {
     if (row.ab2 === '' || row.mn2 === '' || row.resistance === '') return null;
     try {
-      return calculateVES(row);
+      return calculateVES({ ...row, array: meta.array });
     } catch {
       return null;
     }
@@ -59,7 +61,7 @@ export default function GeophysicsPage() {
       const completeRows = readings.filter(row =>
         row.ab2 !== '' && row.mn2 !== '' && row.resistance !== ''
       );
-      const clean = validateVES(completeRows);
+      const clean = validateVES(completeRows, meta.array);
       const partial = clean.length < 2;
       const coordinates = validateCoordinatePair(vesCoordinates);
       await saveVES({
@@ -72,7 +74,7 @@ export default function GeophysicsPage() {
         interpretationStatus: partial ? 'Partial sounding - additional readings required' : 'Uninterpreted',
         dataStatus: partial ? 'One valid reading stored; curve requires at least two readings' : 'Field readings stored'
       });
-      setReadings([{ ab2: '', mn2: '', resistance: '' }]);
+      setReadings([{ ab2: '', mn2: '', spacing: '', resistance: '' }]);
       notify(partial
         ? 'VES reading saved. Add at least one more valid reading to produce a sounding curve.'
         : 'VES sounding saved. Apparent resistivity and geometric factors were calculated; layer interpretation remains a separate expert task.', 'success');
@@ -167,6 +169,7 @@ export default function GeophysicsPage() {
           <label>Array configuration
             <select style={input} value={meta.array} onChange={event => setMeta(old => ({ ...old, array: event.target.value }))}>
               <option>Schlumberger</option>
+              <option>Wenner alpha</option>
             </select>
           </label>
           <label className="span-two">Field notes
@@ -174,16 +177,15 @@ export default function GeophysicsPage() {
           </label>
         </div>
         <h2>Field readings</h2>
-        <p className="muted">AB/2 and MN/2 are in metres; resistance is in ohms. Blank rows are ignored. At least one complete reading can be stored; two or more are needed for a sounding curve.</p>
+        <p className="muted">{meta.array === 'Wenner alpha' ? 'Equal electrode spacing a is in metres; resistance is in ohms. Geometric factor K = 2πa.' : 'AB/2 and MN/2 are in metres; resistance is in ohms. Geometric factor K = π[(AB/2)² − (MN/2)²] / [2(MN/2)].'} Blank rows are ignored. At least one complete reading can be stored; two or more are needed for a sounding curve.</p>
         {readings.map((row, index) => {
           const preview = rowPreview(row);
           return <div key={index} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 10, marginBottom: 10 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
-              {[
-                ['ab2', 'AB/2 (m)'],
-                ['mn2', 'MN/2 (m)'],
-                ['resistance', 'Resistance (Ω)']
-              ].map(([key, label]) => <label key={key}>{label}
+              {(meta.array === 'Wenner alpha'
+                ? [['spacing', 'Equal electrode spacing a (m)'], ['resistance', 'Resistance (Ω)']]
+                : [['ab2', 'AB/2 (m)'], ['mn2', 'MN/2 (m)'], ['resistance', 'Resistance (Ω)']]
+              ).map(([key, label]) => <label key={key}>{label}
                 <input style={input} type="number" min="0" step="any" value={row[key]} onChange={event => editRow(index, key, event.target.value)} />
               </label>)}
             </div>
@@ -192,7 +194,7 @@ export default function GeophysicsPage() {
           </div>;
         })}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button type="button" onClick={() => setReadings(old => [...old, { ab2: '', mn2: '', resistance: '' }])}>Add reading</button>
+          <button type="button" onClick={() => setReadings(old => [...old, { ab2: '', mn2: '', spacing: '', resistance: '' }])}>Add reading</button>
           <button type="button" className="primary" onClick={saveSounding}>Save VES sounding</button>
         </div>
         <h2>Saved VES soundings</h2>
@@ -228,7 +230,8 @@ export default function GeophysicsPage() {
           <strong>{record.lineId || 'Unlabelled line'}</strong> · {record.cells.length} points · RMS {record.rms || 'not recorded'}%
           <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); } await refresh(); }}>Delete</button>
         </div>)}
-        {allCells.length > 0 && <ERTTomogram models={ert} />}
+        {activeERTModel && <ERTTomogram models={[activeERTModel]} onCellSelect={cell => { setSelectedCell({ ...cell, modelId: activeERTModel.id, lineId: activeERTModel.lineId || 'Unlabelled line' }); setSelectedDistance(cell.x); }} />}
+        {activeERTModel && <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedDistance} onDistanceChange={distance => { setSelectedDistance(distance); const nearest = displayCells.reduce((best, cell) => !best || Math.abs(cell.x-distance) < Math.abs(best.x-distance) ? cell : best, null); if (nearest) setSelectedCell(nearest); }} />}
         {allCells.length > 0 && <>
           <h2>ERT resistivity point section</h2>
           <label>Survey line to display
