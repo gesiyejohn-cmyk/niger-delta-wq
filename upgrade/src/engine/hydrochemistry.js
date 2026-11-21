@@ -43,7 +43,7 @@ export function calculateHydrochemistry(sample) {
   const cationName={ca:'calcium',mg:'magnesium',naK:'sodium-potassium'}[cationDominant];
   const anionName={hco3Co3:'bicarbonate-carbonate',so4:'sulphate',clNo3:'chloride-nitrate'}[anionDominant];
   const facies=(cationPct[cationDominant]>=50?'':'mixed ')+cationName+'-'+(anionPct[anionDominant]>=50?'':'mixed ')+anionName;
-  const sodiumCalcium=meq.na+meq.k+meq.ca>0?(meq.na+meq.k)/(meq.na+meq.k+meq.ca):null;
+  const sodiumCalcium=meq.na+meq.k+meq.ca>0?meq.na/(meq.na+meq.ca):null;
   const chlorideBicarbonate=meq.cl+meq.hco3+meq.co3>0?meq.cl/(meq.cl+meq.hco3+meq.co3):null;
   const bicarbonateCalcium=pct(meq.hco3+meq.co3,cations+anions);
   const alkalineEarths=pct(meq.ca+meq.mg,cations);
