@@ -3,6 +3,7 @@ import Papa from 'papaparse';
 import { calculateVES, validateVES, validateERT } from '../engine/geophysics.js';
 import VESInterpretation from './VESInterpretation.jsx';
 import CoordinateFields from './CoordinateFields.jsx';
+import ERTTomogram from './ERTTomogram.jsx';
 import { validateCoordinatePair } from '../engine/coordinates.js';
 import { saveVES, listVES, deleteVES, saveERT, listERT, deleteERT } from '../storage/geophysics.js';
 
@@ -227,6 +228,7 @@ export default function GeophysicsPage() {
           <strong>{record.lineId || 'Unlabelled line'}</strong> · {record.cells.length} points · RMS {record.rms || 'not recorded'}%
           <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); } await refresh(); }}>Delete</button>
         </div>)}
+        {allCells.length > 0 && <ERTTomogram models={ert} />}
         {allCells.length > 0 && <>
           <h2>ERT resistivity point section</h2>
           <label>Survey line to display
