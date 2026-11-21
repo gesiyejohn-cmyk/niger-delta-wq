@@ -48,6 +48,27 @@ jobs:
       - name: Build web application
         working-directory: source/niger-delta-wq
         run: npm run build
+      - name: Package integrated source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ndwq-integrated-source/.github/workflows
+          cp NDWQ-Source-Compact.zip ndwq-integrated-source/
+          cp -R upgrade ndwq-integrated-source/
+          cp .github/workflows/upgrade-build.yml ndwq-integrated-source/.github/workflows/
+          cp README.md ndwq-integrated-source/
+          if [ -f docs/DEVICE-ACCEPTANCE-AND-RELEASE.md ]; then
+            mkdir -p ndwq-integrated-source/docs
+            cp docs/DEVICE-ACCEPTANCE-AND-RELEASE.md ndwq-integrated-source/docs/
+          fi
+          printf 'Integrated source commit: %s\n' "$GITHUB_SHA" > ndwq-integrated-source/SOURCE-COMMIT.txt
+          (cd ndwq-integrated-source && zip -qr ../NDWQ-Integrated-Source.zip .)
+          unzip -t NDWQ-Integrated-Source.zip
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: ndwq-integrated-source
+          path: NDWQ-Integrated-Source.zip
+          retention-days: 30
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ndwq-integrated-web
