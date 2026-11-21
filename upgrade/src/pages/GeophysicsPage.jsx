@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
 import { calculateVES, validateVES, validateERT } from '../engine/geophysics.js';
 import VESInterpretation from './VESInterpretation.jsx';
+import CoordinateFields from './CoordinateFields.jsx';
+import { validateCoordinatePair } from '../engine/coordinates.js';
 import { saveVES, listVES, deleteVES, saveERT, listERT, deleteERT } from '../storage/geophysics.js';
 
 const input = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
@@ -12,17 +14,23 @@ export default function GeophysicsPage() {
   const [ves, setVes] = useState([]);
   const [ert, setErt] = useState([]);
   const [meta, setMeta] = useState({ stationId: '', latitude: '', longitude: '', array: 'Schlumberger', notes: '' });
+  const [vesCoordinates, setVesCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
+  const [ertCoordinates, setErtCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
   const [readings, setReadings] = useState([{ ab2: '', mn2: '', resistance: '' }]);
   const [line, setLine] = useState({ lineId: '', spacing: '', electrodes: '', rms: '', software: '', notes: '' });
   const [cells, setCells] = useState([]);
+  const [sourceImport, setSourceImport] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
+  const [selectedErtModelId, setSelectedErtModelId] = useState('');
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState('info');
 
   async function refresh() {
     try {
       setVes(await listVES());
-      setErt(await listERT());
+      const savedERT = await listERT();
+      setErt(savedERT);
+      setSelectedErtModelId(current => current || savedERT[0]?.id || '');
     } catch (error) {
       setMsg('Could not load saved geophysical records: ' + error.message);
       setMsgType('error');
@@ -52,8 +60,12 @@ export default function GeophysicsPage() {
       );
       const clean = validateVES(completeRows);
       const partial = clean.length < 2;
+      const coordinates = validateCoordinatePair(vesCoordinates);
       await saveVES({
         ...meta,
+        ...(coordinates || {}),
+        coordinateDatum: vesCoordinates.datum,
+        coordinateCRS: vesCoordinates.crs,
         readings: clean,
         method: meta.array,
         interpretationStatus: partial ? 'Partial sounding - additional readings required' : 'Uninterpreted',
@@ -71,7 +83,9 @@ export default function GeophysicsPage() {
 
   async function importERT(file) {
     try {
-      const parsed = Papa.parse(await file.text(), { header: true, skipEmptyLines: true, dynamicTyping: true });
+      const sourceText = await file.text();
+      if (sourceText.length > 10 * 1024 * 1024) throw new Error('ERT CSV is larger than the 10 MB import limit.');
+      const parsed = Papa.parse(sourceText, { header: true, skipEmptyLines: true, dynamicTyping: true });
       if (parsed.errors.length) throw new Error(parsed.errors[0].message);
       const rows = parsed.data.map(row => ({
         x: row.x ?? row.X ?? row.electrode_x ?? row.distance,
@@ -80,6 +94,7 @@ export default function GeophysicsPage() {
       }));
       const clean = validateERT(rows);
       setCells(clean);
+      setSourceImport({ fileName: file.name, content: sourceText, importedAt: new Date().toISOString() });
       setSelectedCell(clean[0] || null);
       notify(clean.length + ' ERT model points loaded. Confirm the metadata and save the imported model.', 'success');
     } catch (error) {
@@ -90,13 +105,19 @@ export default function GeophysicsPage() {
   async function saveModel() {
     try {
       const clean = validateERT(cells);
+      const coordinates = validateCoordinatePair(ertCoordinates);
       await saveERT({
         ...line,
+        ...(coordinates || {}),
+        coordinateDatum: ertCoordinates.datum,
+        coordinateCRS: ertCoordinates.crs,
         cells: clean,
+        sourceImport,
         source: 'Imported inverted resistivity model',
         inversionPerformedInApp: false
       });
       setCells([]);
+      setSourceImport(null);
       setSelectedCell(null);
       notify('ERT model saved. The app displays imported inversion results; it does not perform geophysical inversion.', 'success');
       await refresh();
@@ -106,13 +127,15 @@ export default function GeophysicsPage() {
   }
 
   const allCells = useMemo(() => ert.flatMap(model =>
-    model.cells.map((cell, index) => ({ ...cell, lineId: model.lineId || 'Unlabelled line', key: model.id + '-' + index }))
+    model.cells.map((cell, index) => ({ ...cell, modelId: model.id, lineId: model.lineId || 'Unlabelled line', key: model.id + '-' + index }))
   ), [ert]);
-  const minX = allCells.length ? Math.min(...allCells.map(cell => cell.x)) : 0;
-  const maxX = allCells.length ? Math.max(...allCells.map(cell => cell.x)) : 1;
-  const maxDepth = allCells.length ? Math.max(1, ...allCells.map(cell => cell.depth)) : 1;
-  const minR = allCells.length ? Math.min(...allCells.map(cell => cell.resistivity)) : 1;
-  const maxR = allCells.length ? Math.max(...allCells.map(cell => cell.resistivity)) : 1;
+  const activeERTModel = ert.find(model => model.id === selectedErtModelId) || ert[0] || null;
+  const displayCells = activeERTModel ? allCells.filter(cell => cell.modelId === activeERTModel.id) : [];
+  const minX = displayCells.length ? Math.min(...displayCells.map(cell => cell.x)) : 0;
+  const maxX = displayCells.length ? Math.max(...displayCells.map(cell => cell.x)) : 1;
+  const maxDepth = displayCells.length ? Math.max(1, ...displayCells.map(cell => cell.depth)) : 1;
+  const minR = displayCells.length ? Math.min(...displayCells.map(cell => cell.resistivity)) : 1;
+  const maxR = displayCells.length ? Math.max(...displayCells.map(cell => cell.resistivity)) : 1;
 
   function colourFor(value) {
     const ratio = (Math.log10(value) - Math.log10(minR)) /
@@ -136,13 +159,10 @@ export default function GeophysicsPage() {
       {tab === 'VES' ? <>
         <h2>VES station metadata</h2>
         <div className="form-grid">
-          {[
-            ['stationId', 'Station / sounding ID'],
-            ['latitude', 'Latitude'],
-            ['longitude', 'Longitude']
-          ].map(([key, label]) => <label key={key}>{label}
-            <input style={input} value={meta[key]} onChange={event => setMeta(old => ({ ...old, [key]: event.target.value }))} />
-          </label>)}
+          <label>Station / sounding ID
+            <input style={input} value={meta.stationId} onChange={event => setMeta(old => ({ ...old, stationId: event.target.value }))} />
+          </label>
+          <CoordinateFields value={vesCoordinates} onChange={setVesCoordinates} label="VES station coordinates" />
           <label>Array configuration
             <select style={input} value={meta.array} onChange={event => setMeta(old => ({ ...old, array: event.target.value }))}>
               <option>Schlumberger</option>
@@ -179,7 +199,7 @@ export default function GeophysicsPage() {
           <strong>{record.stationId || 'Unlabelled sounding'}</strong> · {record.readings.length} readings · {record.createdAt.slice(0, 10)}
           <button onClick={async () => { await deleteVES(record.id); await refresh(); }}>Delete</button>
         </div>)}
-        {ves.length > 0 && <VESPlot rows={ves.flatMap(record => record.readings)} />}
+        {ves.map(record => <VESPlot key={record.id} record={record} />)}
         <VESInterpretation records={ves} onSaved={refresh} notify={notify} />
       </> : <>
         <h2>ERT line metadata</h2>
@@ -196,6 +216,7 @@ export default function GeophysicsPage() {
           <label className="span-two">Notes
             <textarea style={input} value={line.notes} onChange={event => setLine(old => ({ ...old, notes: event.target.value }))} />
           </label>
+          <CoordinateFields value={ertCoordinates} onChange={setErtCoordinates} label="ERT survey location coordinates" />
         </div>
         <p className="muted">Import a CSV exported from inversion software with columns x, depth, resistivity (or electrode_x, depth_m, resistivity_ohm_m). RMS error and software details should come from the actual inversion report.</p>
         <input type="file" accept=".csv,text/csv" onChange={event => event.target.files?.[0] && importERT(event.target.files[0])} />
@@ -204,10 +225,16 @@ export default function GeophysicsPage() {
         <h2>Saved ERT lines</h2>
         {ert.map(record => <div key={record.id} style={{ padding: 8, borderTop: '1px solid #e2e8f0' }}>
           <strong>{record.lineId || 'Unlabelled line'}</strong> · {record.cells.length} points · RMS {record.rms || 'not recorded'}%
-          <button onClick={async () => { await deleteERT(record.id); await refresh(); }}>Delete</button>
+          <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); } await refresh(); }}>Delete</button>
         </div>)}
         {allCells.length > 0 && <>
           <h2>ERT resistivity point section</h2>
+          <label>Survey line to display
+            <select style={input} value={activeERTModel?.id || ''} onChange={event => { setSelectedErtModelId(event.target.value); setSelectedCell(null); }}>
+              {ert.map((model, index) => <option key={model.id} value={model.id}>{model.lineId || 'Unlabelled line'} — {model.cells.length} points (model {index + 1})</option>)}
+            </select>
+          </label>
+          <p className="muted">Showing {activeERTModel?.lineId || 'Unlabelled line'} only. Other survey lines are kept separate because their distance coordinates may have different origins.</p>
           <p className="muted">This is a plot of imported model points, not a continuous interpolated tomogram. Select a point to inspect its measured/imported value. A dense, gridded inversion export is needed for a continuous colour section.</p>
           <svg viewBox="0 0 760 390" role="img" aria-label="ERT resistivity point plot with distance and depth axes" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
             <path d="M65 25V330H730" fill="none" stroke="#475569" strokeWidth="1.5" />
@@ -217,7 +244,7 @@ export default function GeophysicsPage() {
             <text x="20" y="45" fontSize="11" fill="#64748b">{maxDepth}</text>
             <text x="65" y="348" fontSize="11" fill="#64748b">{minX}</text>
             <text x="700" y="348" fontSize="11" fill="#64748b">{maxX}</text>
-            {allCells.map(cell => {
+            {displayCells.map(cell => {
               const x = 65 + ((cell.x - minX) / (maxX - minX || 1)) * 650;
               const y = 30 + (cell.depth / maxDepth) * 295;
               return <circle key={cell.key} cx={x} cy={y} r={selectedCell?.key === cell.key ? 11 : 8}
@@ -241,7 +268,7 @@ export default function GeophysicsPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr><th align="left">Line</th><th align="right">Distance (m)</th><th align="right">Depth (m)</th><th align="right">Resistivity (Ωm)</th></tr></thead>
-              <tbody>{allCells.map(cell => <tr key={cell.key} onClick={() => setSelectedCell(cell)}>
+              <tbody>{displayCells.map(cell => <tr key={cell.key} onClick={() => setSelectedCell(cell)}>
                 <td>{cell.lineId}</td><td align="right">{cell.x}</td><td align="right">{cell.depth}</td><td align="right">{cell.resistivity}</td>
               </tr>)}</tbody>
             </table>
@@ -252,12 +279,12 @@ export default function GeophysicsPage() {
   </div>;
 }
 
-function VESPlot({ rows }) {
-  const points = rows.filter(row => row.ab2 > 0 && row.apparentResistivity > 0);
+function VESPlot({ record }) {
+  const points = record.readings.filter(row => row.ab2 > 0 && row.apparentResistivity > 0);
   const maxX = Math.max(1, ...points.map(point => point.ab2));
   const maxY = Math.max(1, ...points.map(point => point.apparentResistivity));
   return <section>
-    <h2>VES sounding curve</h2>
+    <h2>VES sounding curve — {record.stationId || 'Unlabelled sounding'}</h2>
     <svg viewBox="0 0 720 300" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
       <path d="M55 15V255H700" fill="none" stroke="#64748b" />
       {points.map((point, index) => <g key={index}>

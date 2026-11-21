@@ -82,3 +82,45 @@ test('VES layer validation rejects missing or non-positive thickness', () => {
     { resistivity: 35, thickness: '' }
   ]));
 });
+
+test('descriptive statistics exclude null, undefined, blank and non-numeric values', () => {
+  const stats = descriptiveStats([1, null, undefined, '', ' ', '2', 'not-a-number', 3]);
+  assert.equal(stats.n, 3);
+  assert.equal(stats.mean, 2);
+  assert.equal(stats.min, 1);
+  assert.equal(stats.max, 3);
+  assert.equal(descriptiveStats([null, undefined, '']), null);
+});
+test('Pearson correlation uses pairwise complete observations without zero-filling', () => {
+  assert.equal(pearsonCorrelation([1, null, 3, 4, ''], [2, 100, 6, 8, 10]), 1);
+  assert.equal(pearsonCorrelation([1, null, 3], [2, 4, 6]), null);
+  assert.equal(pearsonCorrelation([1, 2, 3], [2, '', 6]), null);
+});
+
+test('VES rejects finite inputs that overflow the geometric factor', () => {
+  assert.throws(() => schlumbergerGeometricFactor(1e308, 1),
+    /geometric factor is outside the supported numeric range/);
+});
+
+test('VES rejects apparent resistivity overflow and underflow', () => {
+  assert.throws(() => calculateVES({ ab2: 10, mn2: 2, resistance: Number.MAX_VALUE }),
+    /apparent resistivity is outside the supported numeric range/);
+  assert.throws(() => calculateVES({ ab2: 1e-200, mn2: 5e-201, resistance: 1e-200 }),
+    /geometric factor is outside the supported numeric range|apparent resistivity is outside the supported numeric range/);
+});
+
+test('ERT import rejects duplicate distance/depth cells', () => {
+  assert.throws(() => validateERT([
+    { x: 10, depth: 2, resistivity: 50 },
+    { x: 10, depth: 2, resistivity: 80 }
+  ]), /duplicate distance\/depth cells/);
+});
+
+test('ERT import accepts distinct cells with numeric strings', () => {
+  const result = validateERT([
+    { x: '10', depth: '2', resistivity: '50' },
+    { x: '15', depth: '2', resistivity: '80' }
+  ]);
+  assert.equal(result[0].x, 10);
+  assert.equal(result[1].resistivity, 80);
+});
