@@ -34,14 +34,14 @@ export function calculateHydrochemistry(sample) {
   const totalDissolvedIons=Object.keys(IONS).reduce((v,k)=>v+(finite(sample[k])?Number(sample[k]):0),0);
   const piperPoint=(parts)=>({x:parts[1]*0.5/100+parts[2]*1/100,y:parts[1]*Math.sqrt(3)/2/100});
   const cationXY=piperPoint([cationPct.ca,cationPct.mg,cationPct.naK]);
-  const anionXY=piperPoint([anionPct.hco3Co3,anionPct.so4,anionPct.clNo3]);
+  const anionXY=piperPoint([anionPct.hco3Co3,anionPct.so4,anionPct.cl]);
   // Two equilateral triangles are offset and joined to the central diamond.
   const triangle=(p,ox,oy,scale)=>({x:ox+p.x*scale,y:oy+p.y*scale});
   const cp=triangle(cationXY,0,0,100), ap=triangle(anionXY,220,0,100);
   const cationDominant=Object.entries(cationPct).sort((a,b)=>b[1]-a[1])[0][0];
   const anionDominant=Object.entries(anionPct).sort((a,b)=>b[1]-a[1])[0][0];
   const cationName={ca:'calcium',mg:'magnesium',naK:'sodium-potassium'}[cationDominant];
-  const anionName={hco3Co3:'bicarbonate-carbonate',so4:'sulphate',clNo3:'chloride-nitrate'}[anionDominant];
+  const anionName={hco3Co3:'bicarbonate-carbonate',so4:'sulphate',cl:'chloride'}[anionDominant];
   const facies=(cationPct[cationDominant]>=50?'':'mixed ')+cationName+'-'+(anionPct[anionDominant]>=50?'':'mixed ')+anionName;
   const sodiumCalcium=meq.na+meq.k+meq.ca>0?meq.na/(meq.na+meq.ca):null;
   const chlorideBicarbonate=meq.cl+meq.hco3+meq.co3>0?meq.cl/(meq.cl+meq.hco3+meq.co3):null;
