@@ -177,15 +177,17 @@ jobs:
           cp "$ANDROID_DIR/app/build/outputs/apk/debug/app-debug.apk" "$ARTIFACT_DIR/ndwq-original-debug.apk"
           cp "$ANDROID_DIR/app/build/outputs/apk/debug/ndwq-android-build-metadata.txt" "$ARTIFACT_DIR/ndwq-original-build-metadata.txt"
           python3 - <<'PY'
+          import os
           from pathlib import Path
           gradle = Path("source/niger-delta-wq/android/app/build.gradle")
           source = gradle.read_text()
           marker = "defaultConfig {"
+          run_number = os.environ["GITHUB_RUN_NUMBER"]
           if source.count(marker) != 1:
               raise SystemExit("Expected exactly one defaultConfig block; refusing unsafe Gradle edit.")
           if "applicationIdSuffix" in source:
               raise SystemExit("An applicationIdSuffix already exists; refusing to stack package suffixes.")
-          gradle.write_text(source.replace(marker, marker + '\n        applicationIdSuffix ".preview20261121"', 1))
+          gradle.write_text(source.replace(marker, marker + f'\n        applicationIdSuffix ".preview{run_number}"', 1))
           PY
           chmod +x "$ANDROID_DIR/gradlew"
           (cd "$ANDROID_DIR" && ./gradlew clean assembleDebug)
@@ -194,7 +196,7 @@ jobs:
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt -print | sort -V | tail -n 1)"
           test -s "$PREVIEW_APK"
           PREVIEW_ID="$("$AAPT" dump badging "$PREVIEW_APK" | sed -n "s/^package: name='\\([^']*\\)'.*/\\1/p" | head -n 1)"
-          test "$PREVIEW_ID" = "com.nigerdeltawq.mobile.preview20261121"
+          test "$PREVIEW_ID" = "com.nigerdeltawq.mobile.preview${GITHUB_RUN_NUMBER}"
           cp "$PREVIEW_APK" "$ARTIFACT_DIR/ndwq-side-by-side-preview-debug.apk"
           {
             echo "NDWQ side-by-side Android preview build"
