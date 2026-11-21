@@ -5,7 +5,7 @@ import { openDB } from 'idb';
 import { getDB } from '../src/storage/db.js';
 import { saveWQIAssessment, listWQIAssessments, deleteWQIAssessment } from '../src/storage/wqi.js';
 
-test('database upgrades from schema v6 to v7 without losing existing records', async () => {
+test('database upgrades from schema v6 to v9 without losing existing records', async () => {
   const legacy = await openDB('niger-delta-wq', 6, {
     upgrade(db) {
       db.createObjectStore('samples', { keyPath: 'id' });
@@ -22,7 +22,7 @@ test('database upgrades from schema v6 to v7 without losing existing records', a
   legacy.close();
 
   const db = await getDB();
-  assert.equal(db.version, 7);
+  assert.equal(db.version, 9);
   assert.ok(db.objectStoreNames.contains('wqiAssessments'));
   assert.equal((await db.get('samples', 'legacy-v6-sample')).sampleCode, 'V6-KEEP');
 });
