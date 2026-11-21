@@ -8,3 +8,4 @@ test('returns normalized cation and anion percentages',()=>{const r=calculateHyd
 test('does not silently treat missing core ions as zero',()=>{const incomplete={...sample,co3:''};assert.throws(()=>calculateHydrochemistry(incomplete),/require measured values/);});
 test('rejects negative or malformed laboratory concentrations',()=>{assert.throws(()=>validateHydrochemistrySample({...sample,ca:-1}),/non-negative/);assert.throws(()=>validateHydrochemistrySample({...sample,mg:'abc'}),/non-negative/);});
 test('allows optional nitrate to remain missing',()=>{const r=calculateHydrochemistry(sample);assert.equal(r.meqL.no3,null);assert.ok(r.totalAnionsMeqL>0);});
+test('Durov central square coordinates project the normalized cation and anion groups',()=>{const r=calculateHydrochemistry(sample);assert.ok(Math.abs(r.durovs.central.x-.625)<1e-9);assert.ok(Math.abs(r.durovs.central.y-.5)<1e-9);});
