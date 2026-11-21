@@ -6,7 +6,7 @@ import { getDB } from '../src/storage/db.js';
 import { listVES, listERT, getERTSource } from '../src/storage/geophysics.js';
 import { createDatabaseBackup } from '../src/storage/backup.js';
 
-test('upgrades a version 6 database to version 7 without losing records or embedded source data', async () => {
+test('upgrades a version 6 database to version 9 without losing records or embedded source data', async () => {
   const databaseName = 'niger-delta-wq';
   await deleteDB(databaseName);
 
@@ -60,8 +60,8 @@ test('upgrades a version 6 database to version 7 without losing records or embed
     legacyDb = undefined;
 
     db = await getDB();
-    assert.equal(db.version, 7);
-    for (const name of ['vesInterpretations', 'ertSource', 'vulnerability', 'wqiAssessments']) {
+    assert.equal(db.version, 9);
+    for (const name of ['vesInterpretations', 'ertSource', 'ertInterpretations', 'hydrochemistry', 'vulnerability', 'wqiAssessments']) {
       assert.equal(db.objectStoreNames.contains(name), true, `missing upgraded store: ${name}`);
     }
 
@@ -115,6 +115,8 @@ test('upgrades a version 6 database to version 7 without losing records or embed
     assert.equal(backup.stores.ert.length, 1);
     assert.equal(backup.stores.ertSource.length, 1);
     assert.equal(backup.stores.ertSource[0].content, originalCsv);
+    assert.deepEqual(backup.stores.ertInterpretations, []);
+    assert.deepEqual(backup.stores.hydrochemistry, []);
     assert.equal(backup.stores.samples[0].measurements.nitrate, null);
   } finally {
     legacyDb?.close();

@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {toCanonical,availableUnits} from '../src/engine/units.js';
+import {PARAMETER_REGISTRY} from '../src/engine/parameters.js';
+import {computeDualWQI} from '../src/engine/wqi.js';
+test('E. coli CFU/mL converts to CFU/100 mL',()=>{const r=toCanonical('ecoli',2,'CFU/mL');assert.equal(r.canonical,200);assert.equal(r.unit,'CFU/100 mL');});
+test('HPC CFU/100 mL converts to CFU/mL',()=>{const r=toCanonical('hpc',500,'CFU/100 mL');assert.equal(r.canonical,5);assert.equal(r.unit,'CFU/mL');});
+test('MPN is not silently converted to CFU',()=>{assert.throws(()=>toCanonical('ecoli',10,'MPN/100 mL'),/Unsupported unit/);});
+test('E. coli zero objective is included in WHO WQI but not assigned a SON objective',()=>{assert.deepEqual(PARAMETER_REGISTRY.ecoli.who,{max:0});assert.equal(PARAMETER_REGISTRY.ecoli.son,null);const r=computeDualWQI({ecoli:0});assert.ok(r.who.usedParams.includes('ecoli'));assert.equal(r.who.wqi,100);assert.equal(r.son.wqi,null);});
+test('total coliform faecal coliform and HPC have no invented default objectives',()=>{for(const id of ['total_coliform','fecal_coliform','hpc']){assert.equal(PARAMETER_REGISTRY[id].who,null);assert.equal(PARAMETER_REGISTRY[id].son,null);}});

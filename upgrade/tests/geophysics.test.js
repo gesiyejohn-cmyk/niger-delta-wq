@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   schlumbergerGeometricFactor,
+  wennerGeometricFactor,
   calculateVES,
   validateVES,
   validateERT,
@@ -123,4 +124,19 @@ test('ERT import accepts distinct cells with numeric strings', () => {
   ]);
   assert.equal(result[0].x, 10);
   assert.equal(result[1].resistivity, 80);
+});
+
+test('Wenner alpha geometric factor is 2πa', () => {
+  assert.ok(Math.abs(wennerGeometricFactor(5) - 2 * Math.PI * 5) < 1e-10);
+});
+test('Wenner alpha apparent resistivity is 2πa times measured resistance', () => {
+  const result = calculateVES({ array: 'Wenner alpha', spacing: 5, resistance: 10 });
+  assert.ok(Math.abs(result.apparentResistivity - 100 * Math.PI) < 1e-10);
+  assert.equal(result.array, 'Wenner alpha');
+});
+test('Wenner alpha validation requires positive, increasing electrode spacing', () => {
+  assert.throws(() => validateVES([{ spacing: 0, resistance: 10 }], 'Wenner alpha'));
+  assert.throws(() => validateVES([
+    { spacing: 5, resistance: 10 }, { spacing: 5, resistance: 12 }
+  ], 'Wenner alpha'), /strictly increasing/);
 });
