@@ -11,9 +11,9 @@ export function pearsonCorrelation(xs,ys){if(!Array.isArray(xs)||!Array.isArray(
 // Preliminary shape classification of apparent resistivity values. This is not
 // a substitute for layered-earth inversion or geological interpretation.
 export function classifyVESCurve(rows) {
-  const valid = (rows || []).filter(r => Number.isFinite(Number(r.ab2)) &&
-    Number(r.ab2) > 0 && Number.isFinite(Number(r.apparentResistivity)) &&
-    Number(r.apparentResistivity) > 0).sort((a,b) => Number(a.ab2)-Number(b.ab2));
+  const valid = (rows || []).filter(r => Number.isFinite(Number(r.ab2 ?? r.spacing)) &&
+    Number(r.ab2 ?? r.spacing) > 0 && Number.isFinite(Number(r.apparentResistivity)) &&
+    Number(r.apparentResistivity) > 0).sort((a,b) => Number(a.ab2 ?? a.spacing)-Number(b.ab2 ?? b.spacing));
   if (valid.length < 3) return { code: null, label: 'Insufficient data', description: 'At least three valid readings are required.' };
   const first = Math.sign(Number(valid[1].apparentResistivity)-Number(valid[0].apparentResistivity));
   const second = Math.sign(Number(valid[2].apparentResistivity)-Number(valid[1].apparentResistivity));
