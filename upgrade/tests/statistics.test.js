@@ -1,12 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {standardizeMatrix,correlationMatrix,linearRegression,principalComponents,kMeans} from '../src/engine/statistics.js';
-const data=[[1,2,5],[2,4,4],[3,6,3],[4,8,2]];
-test('standardizes numeric columns using sample standard deviation',()=>{const r=standardizeMatrix(data);assert.ok(Math.abs(r.values.reduce((s,x)=>s+x[0],0))<1e-10);assert.ok(Math.abs(r.standardDeviations[0]-Math.sqrt(5/3))<1e-10);});
-test('correlation matrix identifies perfectly correlated parameters',()=>{const r=correlationMatrix(data);assert.ok(Math.abs(r[0][1]-1)<1e-10);assert.ok(Math.abs(r[0][2]+1)<1e-10);});
-test('linear regression returns slope intercept and R squared',()=>{const r=linearRegression([1,2,3,4],[3,5,7,9]);assert.equal(r.slope,2);assert.equal(r.intercept,1);assert.equal(r.rSquared,1);});
-test('PCA returns two component scores and explained variance',()=>{const r=principalComponents(data);assert.equal(r.scores.length,4);assert.equal(r.scores[0].length,2);assert.ok(r.explainedVariance[0]>=r.explainedVariance[1]);});
-test('k-means assigns each sample to a valid cluster',()=>{const r=kMeans([[0,0],[.1,.1],[10,10],[10.1,10.1]],2);assert.equal(r.labels.length,4);assert.ok(r.labels.every(x=>x===0||x===1));assert.ok(r.withinClusterSumSquares>=0);});
-test('PCA and clustering reject missing values rather than zero filling',()=>{assert.throws(()=>principalComponents([[1,2],[2,null],[3,4]]),/complete numeric sample matrix/);assert.throws(()=>kMeans([[1,2],[2,''],[3,4]],2),/complete numeric sample matrix/);});
-\ntest('correlation is undefined when a parameter has zero variance',()=>{const r=correlationMatrix([[1,5],[2,5],[3,5]]);assert.equal(r[1][1],null);assert.equal(r[0][1],null);});\n
-test('correlation is undefined when a parameter has zero variance',()=>{const r=correlationMatrix([[1,5],[2,5],[3,5]]);assert.equal(r[1][1],null);assert.equal(r[0][1],null);});
+import { standardizeMatrix, correlationMatrix, linearRegression, principalComponents, kMeans } from '../src/engine/statistics.js';
+const data = [[1,2,5],[2,4,4],[3,6,3],[4,8,2]];
+test('standardizes numeric columns using sample standard deviation', () => { const r=standardizeMatrix(data); assert.ok(Math.abs(r.values.reduce((s,x)=>s+x[0],0))<1e-10); assert.ok(Math.abs(r.standardDeviations[0]-Math.sqrt(5/3))<1e-10); });
+test('correlation matrix identifies perfectly correlated parameters', () => { const r=correlationMatrix(data); assert.ok(Math.abs(r[0][1]-1)<1e-10); assert.ok(Math.abs(r[0][2]+1)<1e-10); });
+test('linear regression returns slope intercept and R squared', () => { const r=linearRegression([1,2,3,4],[3,5,7,9]); assert.equal(r.slope,2); assert.equal(r.intercept,1); assert.equal(r.rSquared,1); });
+test('PCA returns two component scores and explained variance', () => { const r=principalComponents(data); assert.equal(r.scores.length,4); assert.equal(r.scores[0].length,2); assert.ok(r.explainedVariance[0]>=r.explainedVariance[1]); });
+test('k-means assigns each sample to a valid cluster', () => { const r=kMeans([[0,0],[.1,.1],[10,10],[10.1,10.1]],2); assert.equal(r.labels.length,4); assert.ok(r.labels.every(x=>x===0||x===1)); assert.ok(r.withinClusterSumSquares>=0); });
+test('PCA and clustering reject missing values rather than zero filling', () => { assert.throws(()=>principalComponents([[1,2],[2,null],[3,4]]),/complete numeric sample matrix/); assert.throws(()=>kMeans([[1,2],[2,''],[3,4]],2),/complete numeric sample matrix/); });
+test('correlation is undefined when a parameter has zero variance', () => { const r=correlationMatrix([[1,5],[2,5],[3,5]]); assert.equal(r[1][1],null); assert.equal(r[0][1],null); });
