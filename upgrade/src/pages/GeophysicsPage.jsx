@@ -49,7 +49,7 @@ export default function GeophysicsPage() {
     setReadings(old => old.map((row, index) => index === i ? { ...row, [key]: value } : row));
   }
   function rowPreview(row) {
-    if (row.ab2 === '' || row.mn2 === '' || row.resistance === '') return null;
+    if (meta.array === 'Wenner alpha' ? (row.spacing === '' || row.resistance === '') : (row.ab2 === '' || row.mn2 === '' || row.resistance === '')) return null;
     try {
       return calculateVES({ ...row, array: meta.array });
     } catch {
@@ -151,7 +151,7 @@ export default function GeophysicsPage() {
   return <div className="page">
     <p className="eyebrow">INTEGRATED GEOPHYSICAL DATA</p>
     <h1>VES &amp; ERT workspace</h1>
-    <p className="muted">Record field measurements, calculate Schlumberger apparent resistivity, and visualise imported ERT inversion points. Raw observations and interpreted models are stored separately from water-quality samples.</p>
+    <p className="muted">Record field measurements, calculate Wenner alpha and Schlumberger apparent resistivity, and visualise imported ERT inversion points. Raw observations and interpreted models are stored separately from water-quality samples.</p>
     <section style={panel}>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button onClick={() => setTab('VES')} className={tab === 'VES' ? 'primary' : ''}>VES soundings</button>
@@ -285,15 +285,15 @@ export default function GeophysicsPage() {
 }
 
 function VESPlot({ record }) {
-  const points = record.readings.filter(row => row.ab2 > 0 && row.apparentResistivity > 0);
-  const maxX = Math.max(1, ...points.map(point => point.ab2));
+  const points = record.readings.filter(row => (row.ab2 ?? row.spacing) > 0 && row.apparentResistivity > 0);
+  const maxX = Math.max(1, ...points.map(point => point.ab2 ?? point.spacing));
   const maxY = Math.max(1, ...points.map(point => point.apparentResistivity));
   return <section>
-    <h2>VES sounding curve — {record.stationId || 'Unlabelled sounding'}</h2>
+    <h2>{record.method || 'VES'} sounding curve — {record.stationId || 'Unlabelled sounding'}</h2>
     <svg viewBox="0 0 720 300" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
       <path d="M55 15V255H700" fill="none" stroke="#64748b" />
       {points.map((point, index) => <g key={index}>
-        <circle cx={55 + point.ab2 / maxX * 630} cy={255 - point.apparentResistivity / maxY * 220} r="4" fill="#2563eb" />
+        <circle cx={55 + (point.ab2 ?? point.spacing) / maxX * 630} cy={255 - point.apparentResistivity / maxY * 220} r="4" fill="#2563eb" />
         <title>AB/2 {point.ab2} m; apparent resistivity {point.apparentResistivity.toFixed(2)} Ωm</title>
       </g>)}
     </svg>
