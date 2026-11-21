@@ -28,7 +28,8 @@ export function calculateHydrochemistry(sample) {
   const anions=sum(meq,['hco3','co3','cl','so4'])+(meq.no3??0);
   if(cations<=0 || anions<=0) throw new Error('At least one measured major cation and one measured major anion are required.');
   const cationPct={ca:pct(meq.ca,cations),mg:pct(meq.mg,cations),naK:pct(meq.na+meq.k,cations)};
-  const anionPct={hco3Co3:pct(meq.hco3+meq.co3,anions),so4:pct(meq.so4,anions),clNo3:pct(meq.cl+(meq.no3??0),anions)};
+  const diagramAnions=meq.hco3+meq.co3+meq.cl+meq.so4;
+  const anionPct={hco3Co3:pct(meq.hco3+meq.co3,diagramAnions),so4:pct(meq.so4,diagramAnions),cl:pct(meq.cl,diagramAnions)};
   const balanceError=(cations-anions)/(cations+anions)*100;
   const totalDissolvedIons=Object.keys(IONS).reduce((v,k)=>v+(finite(sample[k])?Number(sample[k]):0),0);
   const piperPoint=(parts)=>({x:parts[1]*0.5/100+parts[2]*1/100,y:parts[1]*Math.sqrt(3)/2/100});
@@ -46,8 +47,8 @@ export function calculateHydrochemistry(sample) {
   const chlorideBicarbonate=meq.cl+meq.hco3+meq.co3>0?meq.cl/(meq.cl+meq.hco3+meq.co3):null;
   const bicarbonateCalcium=pct(meq.hco3+meq.co3,cations+anions);
   const alkalineEarths=pct(meq.ca+meq.mg,cations);
-  const strongAcids=pct(meq.cl+meq.so4+(meq.no3??0),anions);
-  const weakAcids=pct(meq.hco3+meq.co3,anions);
+  const strongAcids=pct(meq.cl+meq.so4,diagramAnions);
+  const weakAcids=pct(meq.hco3+meq.co3,diagramAnions);
   return {
     meqL:meq,totalCationsMeqL:cations,totalAnionsMeqL:anions,chargeBalanceErrorPercent:balanceError,
     cationPercent: cationPct, anionPercent: anionPct, piper:{cation:cp,anion:ap,facies},
