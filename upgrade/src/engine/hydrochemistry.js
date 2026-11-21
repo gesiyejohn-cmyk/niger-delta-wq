@@ -52,7 +52,7 @@ export function calculateHydrochemistry(sample) {
   return {
     meqL:meq,totalCationsMeqL:cations,totalAnionsMeqL:anions,chargeBalanceErrorPercent:balanceError,
     cationPercent: cationPct, anionPercent: anionPct, piper:{cation:cp,anion:ap,facies},
-    durovs:{cation: cationPct, anion: anionPct},
+    durovs:{cation: cationPct, anion: anionPct, central:{x:(meq.hco3+meq.co3+meq.so4/2)/diagramAnions,y:(meq.ca+meq.mg/2)/cations}},
     schoeller:Object.keys(IONS).map(key=>({key,name:IONS[key].name,meqL:meq[key]})),
     gibbs:{naCaRatio:sodiumCalcium,clHco3Ratio:chlorideBicarbonate,tdsMgL:totalDissolvedIons},
     chadha:{x:alkalineEarths==null?null:alkalineEarths-pct(meq.na+meq.k,cations),y:weakAcids==null?null:weakAcids-strongAcids},
