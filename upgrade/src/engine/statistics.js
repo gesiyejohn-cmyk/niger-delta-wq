@@ -8,7 +8,8 @@ export function standardizeMatrix(matrix){
 }
 export function correlationMatrix(matrix){
  const z=standardizeMatrix(matrix).values,cols=z[0].length;
- return Array.from({length:cols},(_,i)=>Array.from({length:cols},(_,j)=>z.reduce((s,r)=>s+r[i]*r[j],0)/(z.length-1)));
+ const sd=standardizeMatrix(matrix).standardDeviations;
+ return Array.from({length:cols},(_,i)=>Array.from({length:cols},(_,j)=>sd[i]===0||sd[j]===0?null:z.reduce((s,r)=>s+r[i]*r[j],0)/(z.length-1)));
 }
 export function linearRegression(xs,ys){
  const pairs=xs.map((x,i)=>[x,ys[i]]).filter(([x,y])=>valid(x)&&valid(y)).map(([x,y])=>[Number(x),Number(y)]);
