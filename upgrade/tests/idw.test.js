@@ -101,3 +101,16 @@ test('IDW CSV export has aligned parameter, value, unit and neighbour columns', 
   assert.deepEqual(rows[0], ['latitude_dd', 'longitude_dd', 'parameter', 'value', 'unit', 'neighbours_used']);
   assert.deepEqual(rows[1], ['5', '6', 'tds', '275', 'mg/L', '8']);
 });
+
+import { SYNTHETIC_IDW_TEST_SAMPLES, formatSyntheticIDWTestCSV } from '../src/engine/idw.js';
+
+test('synthetic IDW test CSV has eight clearly labelled records and stable coordinate/value columns', () => {
+  const csv = formatSyntheticIDWTestCSV();
+  const rows = csv.trim().split(String.fromCharCode(13,10));
+  assert.equal(rows.length, 9);
+  assert.equal(rows[0], '"sample_id","latitude_dd","longitude_dd","tds_mg_l"');
+  assert.equal(SYNTHETIC_IDW_TEST_SAMPLES.length, 8);
+  assert.deepEqual(SYNTHETIC_IDW_TEST_SAMPLES.map(row => row.tds_mg_l).sort((a,b)=>a-b), [190,225,260,275,315,335,390,460]);
+  assert.ok(rows[1].includes('"SYN-01"'));
+  assert.ok(rows.every((row,index)=>index===0||row.split(',').length===4));
+});
