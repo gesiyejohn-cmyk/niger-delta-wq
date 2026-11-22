@@ -34,13 +34,16 @@ test('eight-sample Niger Delta TDS dataset produces a bounded in-hull IDW test s
  assert.equal(r.range.min,Math.min(...r.cells.map(c=>c.value)));
  assert.equal(r.range.max,Math.max(...r.cells.map(c=>c.value)));
 });
-test('spatial analysis exposes both water-quality and hydrochemistry records',()=>{
+test('spatial analysis wires the NDWQ record adapter and hydrochemistry source selector',()=>{
  const source=readFileSync(new URL('../src/pages/SpatialAnalysisPage.jsx',import.meta.url),'utf8');
+ const engine=readFileSync(new URL('../src/engine/idw.js',import.meta.url),'utf8');
  assert.match(source,/listHydrochemistrySamples/);
- assert.match(source,/s\?\.params\?\.\[k\]/);
- assert.match(source,/const chemistryPoints=/);
+ assert.match(source,/collectIDWSamples/);
+ assert.match(source,/assertUniqueIDWCoordinates/);
+ assert.match(source,/CHEMISTRY_IDW_PARAMETERS/);
  assert.match(source,/value=\{sourceMode\}/);
- 
+ assert.match(engine,/sample\?\.params\?\.\[parameter\]/);
+ assert.match(engine,/share the same coordinates/);
 });
 
 
