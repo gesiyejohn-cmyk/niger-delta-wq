@@ -12,3 +12,29 @@ test('Durov central square coordinates project the normalized cation and anion g
 
 test('Piper coordinates remain finite and chloride facies uses the chloride group',()=>{const r=calculateHydrochemistry(sample);assert.ok(Number.isFinite(r.piper.anion.x));assert.ok(Number.isFinite(r.piper.anion.y));assert.ok(Number.isFinite(r.piper.cation.x));assert.ok(Number.isFinite(r.piper.cation.y));assert.equal(r.classification.dominantAnion,'bicarbonate-carbonate');assert.ok(!r.classification.facies.includes('undefined'));});
 test('Gibbs sodium ratio uses Na divided by Na plus Ca, excluding potassium',()=>{const r=calculateHydrochemistry(sample);assert.ok(Math.abs(r.gibbs.naCaRatio-(1/(1+2)))<1e-9);});
+
+test('eight balanced synthetic Niger Delta chemistry samples retain charge balance and defined facies',()=>{
+ const eq={ca:20.039,mg:12.1525,na:22.9898,k:39.0983,hco3:61.0168,co3:30.004,cl:35.453,so4:48.03,no3:62.0049};
+ const rows=[
+  ['SYN-01',[1.20,.80,1.50,.10],[2.70,.10,.60,.20]],
+  ['SYN-02',[1.40,.90,1.70,.10],[3.00,.10,.70,.30]],
+  ['SYN-03',[1.00,.70,1.30,.10],[2.30,.10,.50,.20]],
+  ['SYN-04',[1.60,1.00,2.00,.10],[3.30,.10,1.00,.30]],
+  ['SYN-05',[1.10,.80,1.40,.10],[2.50,.10,.60,.20]],
+  ['SYN-06',[1.80,1.10,2.20,.10],[3.60,.10,1.20,.30]],
+  ['SYN-07',[.90,.60,1.20,.10],[2.10,.10,.40,.20]],
+  ['SYN-08',[1.30,.85,1.60,.10],[2.80,.10,.75,.20]]
+ ];
+ const c=['ca','mg','na','k'],a=['hco3','co3','cl','so4'];
+ for(const[id,cv,av]of rows){
+  const input={sampleId:id};
+  c.forEach((k,i)=>input[k]=cv[i]*eq[k]);
+  a.forEach((k,i)=>input[k]=av[i]*eq[k]);
+  input.no3=0;
+  const r=calculateHydrochemistry(input);
+  assert.ok(Math.abs(r.totalCationsMeqL-3.6)<1e-9,id+' cation total');
+  assert.ok(Math.abs(r.totalAnionsMeqL-3.6)<1e-9,id+' anion total');
+  assert.ok(Math.abs(r.chargeBalanceErrorPercent)<1e-9,id+' charge balance');
+  assert.ok(r.classification.facies&&!r.classification.facies.includes('undefined'),id+' facies');
+ }
+});
