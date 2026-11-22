@@ -50,9 +50,9 @@ test('hydrochemistry CSV clearly labels total cations and total anions and expor
  assert.match(header,/Calcium \(meq\/L\)/);
  const headers=header.split(',').map(cell=>cell.slice(1,-1));
  const data=csv.split(String.fromCharCode(13,10))[1].split(',').map(cell=>cell.slice(1,-1));
- assert.equal(data[headers.indexOf('Total Cations (meq/L)')],'"6"');
- assert.equal(data[headers.indexOf('Total Anions (meq/L)')],'"4"');
- assert.equal(data[headers.indexOf('Charge Balance Error (%)')],'"20"');
+ assert.equal(data[headers.indexOf('Total Cations (meq/L)')],'6');
+ assert.equal(data[headers.indexOf('Total Anions (meq/L)')],'4');
+ assert.equal(data[headers.indexOf('Charge Balance Error (%)')],'20');
 });
 
 test('hydrochemistry CSV preserves unmeasured nitrate as blank and quotes station metadata', async () => {
