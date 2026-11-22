@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { getDB } from '../src/storage/db.js';
 import { saveVES, listVES, saveERT, getERTSource } from '../src/storage/geophysics.js';
 import { createDatabaseBackup, restoreDatabaseBackup } from '../src/storage/backup.js';
+import { validateCoordinatePair } from '../src/engine/coordinates.js';
 
 const STORE_NAMES = [
   'samples', 'settings', 'syncQueue', 'ves', 'vesInterpretations',
@@ -21,30 +22,26 @@ test('canonical WGS84 coordinates and original DD/DMS/DDM entries survive geophy
   await clearAllStores(db);
 
   const vesCoordinates = {
-    latitude: 4.92,
-    longitude: 6.26,
-    coordinateFormat: 'DMS',
-    coordinateOriginal: {
+    ...validateCoordinatePair({
       latitude: '4 55 12',
       longitude: '6 15 36',
+      format: 'DMS',
       latitudeHemisphere: 'N',
       longitudeHemisphere: 'E'
-    },
+    }),
     coordinateDatum: 'WGS84',
     coordinateCRS: 'Geographic (WGS84)'
   };
   const ertCoordinates = {
-    latitude: -4.92,
-    longitude: -6.26,
-    coordinateFormat: 'DDM',
-    coordinateOriginal: {
-      latitude: "4 55.2000",
-      longitude: "6 15.6000",
+    ...validateCoordinatePair({
+      latitude: '4 55.2000',
+      longitude: '6 15.6000',
+      format: 'DDM',
       latitudeHemisphere: 'S',
       longitudeHemisphere: 'W'
-    },
+    }),
     coordinateDatum: 'WGS84',
-    coordinateCRS: 'UTM Zone 32N (WGS84)'
+    coordinateCRS: 'UTM Zone 32S (WGS84)'
   };
 
   await saveVES({
@@ -78,6 +75,7 @@ test('canonical WGS84 coordinates and original DD/DMS/DDM entries survive geophy
     },
     coordinateDatum: 'WGS84',
     coordinateCRS: 'Geographic (WGS84)',
+    coordinateStorageCRS: 'EPSG:4326',
     nitrate: null
   });
 
@@ -87,10 +85,13 @@ test('canonical WGS84 coordinates and original DD/DMS/DDM entries survive geophy
   assert.equal(savedVES.longitude, 6.26);
   assert.equal(savedVES.coordinateOriginal.latitude, '4 55 12');
   assert.equal(savedVES.coordinateFormat, 'DMS');
+  assert.equal(savedVES.coordinateStorageCRS, 'EPSG:4326');
   assert.equal(savedERT.latitude, -4.92);
   assert.equal(savedERT.longitude, -6.26);
   assert.equal(savedERT.coordinateOriginal.longitudeHemisphere, 'W');
   assert.equal(savedERT.coordinateFormat, 'DDM');
+  assert.equal(savedERT.coordinateStorageCRS, 'EPSG:4326');
+  assert.equal(savedERT.coordinateCRS, 'UTM Zone 32S (WGS84)');
   assert.equal((await getERTSource('coord-ert-01')).content, 'x,depth,resistivity\n0,1,75');
 
   const backup = await createDatabaseBackup();
@@ -105,14 +106,17 @@ test('canonical WGS84 coordinates and original DD/DMS/DDM entries survive geophy
   assert.equal(restoredVES.longitude, 6.26);
   assert.equal(restoredVES.coordinateOriginal.latitude, '4 55 12');
   assert.equal(restoredVES.coordinateDatum, 'WGS84');
+  assert.equal(restoredVES.coordinateStorageCRS, 'EPSG:4326');
   assert.equal(restoredERT.latitude, -4.92);
   assert.equal(restoredERT.longitude, -6.26);
   assert.equal(restoredERT.coordinateOriginal.longitude, '6 15.6000');
-  assert.equal(restoredERT.coordinateCRS, 'UTM Zone 32N (WGS84)');
+  assert.equal(restoredERT.coordinateCRS, 'UTM Zone 32S (WGS84)');
+  assert.equal(restoredERT.coordinateStorageCRS, 'EPSG:4326');
   assert.equal((await getERTSource('coord-ert-01')).fileName, 'ert-coordinate-source.csv');
   assert.equal(restoredSample.latitude, 4.92);
   assert.equal(restoredSample.longitude, 6.26);
   assert.equal(restoredSample.coordinateFormat, 'DDM');
   assert.equal(restoredSample.coordinateOriginal.longitude, '6 15.6000');
+  assert.equal(restoredSample.coordinateStorageCRS, 'EPSG:4326');
   assert.equal(restoredSample.nitrate, null);
 });

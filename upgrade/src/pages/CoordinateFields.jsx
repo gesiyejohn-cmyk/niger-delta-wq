@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { coordinateToDecimal, decimalToCoordinate, decimalToUTM, getStandardUTMZone, convertCoordinatePairFormat } from '../engine/coordinates.js';
+import { coordinateToDecimal, decimalToCoordinate, decimalToUTM, getStandardUTMZone, convertCoordinatePairFormat, validateUTMDisplayCRS } from '../engine/coordinates.js';
 
 const field = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
 
@@ -33,12 +33,16 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
   let utm = null;
   let standardZone = null;
   let selectedZone = null;
+  let utmError = '';
   if (converted && value.crs.startsWith('UTM Zone')) {
-    selectedZone = Number(value.crs.match(/Zone (\d+)/)?.[1]);
     try {
+      selectedZone = validateUTMDisplayCRS(converted.latitude, value.crs);
       utm = decimalToUTM(converted.latitude, converted.longitude, selectedZone);
       standardZone = getStandardUTMZone(converted.latitude, converted.longitude);
-    } catch { utm = null; }
+    } catch (error) {
+      utm = null;
+      utmError = error instanceof Error ? error.message : 'The selected UTM reference system is invalid.';
+    }
   }
   const set = (key, next) => {
     setFormatMessage('');
@@ -129,7 +133,8 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
         </select>
       </label>
     </div>
-    {converted && <><p className="muted">Canonical WGS84 decimal degrees: {converted.latitude.toFixed(8)}°, {converted.longitude.toFixed(8)}°</p>{utm && <p className="muted">Derived {utm.zone}{utm.hemisphere} UTM (EPSG:{utm.epsg}): Easting {utm.easting.toFixed(3)} m · Northing {utm.northing.toFixed(3)} m</p>}</>}
+    {converted && <><p className="muted">Canonical WGS84 decimal degrees (EPSG:4326): {converted.latitude.toFixed(8)}°, {converted.longitude.toFixed(8)}°</p>{utm && <p className="muted">Derived {utm.zone}{utm.hemisphere} UTM (EPSG:{utm.epsg}): Easting {utm.easting.toFixed(3)} m · Northing {utm.northing.toFixed(3)} m</p>}</>}
+    {utmError && <p className="error" role="alert">{utmError}</p>}
     {utm && standardZone !== null && selectedZone !== standardZone && <p className="muted" role="status">The selected UTM Zone {selectedZone} differs from the standard zone {standardZone} for this location. Confirm the intended coordinate reference system before using or exporting these values. Adjacent-zone or custom-zone projections may still be intentional.</p>}
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
       <label>Datum
@@ -137,14 +142,16 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
           <option value="WGS84">WGS 84</option>
         </select>
       </label>
-      <label>Coordinate reference system
+      <label>Derived display CRS
         <select style={field} value={value.crs} onChange={event => set('crs', event.target.value)}>
           <option value="Geographic (WGS84)">Geographic (WGS84)</option>
           <option value="UTM Zone 31N (WGS84)">UTM Zone 31N (WGS84)</option>
+          <option value="UTM Zone 31S (WGS84)">UTM Zone 31S (WGS84)</option>
           <option value="UTM Zone 32N (WGS84)">UTM Zone 32N (WGS84)</option>
+          <option value="UTM Zone 32S (WGS84)">UTM Zone 32S (WGS84)</option>
         </select>
       </label>
     </div>
-    <p className="muted">Enter coordinates in the selected DD, DMS or DDM geographic format. For DMS and DDM, enter whole degrees followed by minutes (and seconds for DMS); choose N/S/E/W with the separate hemisphere selectors rather than typing hemisphere letters into the coordinate fields. Values are stored in WGS84 decimal degrees and the original entry is retained. When a UTM zone is selected, WGS84 UTM coordinates are calculated for display; the geographic decimal-degree values remain the canonical stored coordinates.</p>
+    <p className="muted">Enter coordinates in the selected DD, DMS or DDM geographic format. For DMS and DDM, enter whole degrees followed by minutes (and seconds for DMS); choose N/S/E/W with the separate hemisphere selectors rather than typing hemisphere letters into the coordinate fields. Canonical latitude/longitude values are stored as WGS84 geographic decimal degrees (EPSG:4326), and the original entry is retained. The selection below controls only the derived display CRS; when UTM is selected, its zone and N/S hemisphere must match the location. The selected display CRS is retained separately from the canonical storage CRS.</p>
   </div>;
 }

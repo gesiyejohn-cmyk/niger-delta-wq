@@ -1,5 +1,7 @@
 const finite = value => value !== '' && value != null && Number.isFinite(Number(value));
 
+export const WGS84_GEOGRAPHIC_CRS = 'EPSG:4326';
+
 function parts(value) {
   if (typeof value === 'number') return [value];
   const raw = String(value).trim();
@@ -78,6 +80,19 @@ export function getStandardUTMZone(latitude, longitude) {
   return Math.min(60, Math.max(1, Math.floor((lon + 180) / 6) + 1));
 }
 
+export function validateUTMDisplayCRS(latitude, crs) {
+  const match = /^UTM Zone ([1-9]|[1-5]\d|60)([NS]) \(WGS84\)$/.exec(String(crs || ''));
+  const lat = Number(latitude);
+  if (!match || !Number.isFinite(lat) || lat < -80 || lat > 84) {
+    throw new Error('Choose a valid WGS84 UTM zone and latitude within the UTM range.');
+  }
+  const expectedHemisphere = lat < 0 ? 'S' : 'N';
+  if (match[2] !== expectedHemisphere) {
+    throw new Error('Selected UTM hemisphere ' + match[2] + ' does not match latitude hemisphere ' + expectedHemisphere + '.');
+  }
+  return Number(match[1]);
+}
+
 export function decimalToUTM(latitude, longitude, requestedZone) {
   const lat = Number(latitude), lon = Number(longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -80 || lat > 84 || lon < -180 || lon > 180) {
@@ -144,6 +159,7 @@ export function validateCoordinatePair({ latitude, longitude, format = 'DD', lat
     latitude: coordinateToDecimal(latitude, format, latitudeHemisphere, 'latitude'),
     longitude: coordinateToDecimal(longitude, format, longitudeHemisphere, 'longitude'),
     coordinateFormat: format,
+    coordinateStorageCRS: WGS84_GEOGRAPHIC_CRS,
     coordinateOriginal: { latitude: String(latitude), longitude: String(longitude), latitudeHemisphere, longitudeHemisphere }
   };
 }
