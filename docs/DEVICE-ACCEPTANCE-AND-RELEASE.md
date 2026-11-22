@@ -482,3 +482,7 @@ Artifacts from run #330:
 - Source `ndwq-integrated-source`, ID `14760963912`, 167,779 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45040738017/artifacts/14760963912).
 
 The documentation/test-only follow-up does not alter coordinate conversion, WGS84 canonical coordinate storage, IndexedDB schema/migrations, or backup/restore code. Pull requests [#2](https://github.com/gesiyejohn-cmyk/niger-delta-wq/pull/2) and [#6](https://github.com/gesiyejohn-cmyk/niger-delta-wq/pull/6) remain open drafts and have not been merged. The Android artifact is debug-signed and emulator-tested only; physical-device acceptance, production signing, existing-installation update compatibility, real-device backup/restore, Windows installation/runtime and scientific calibration/sign-off remain outstanding.
+
+## IDW dataset regression-test correction — 22 November 2026
+
+The first CI attempt on commit `be3d7042c1ca9fcfb97e84dade9b954bcd9614c4` ran 192 tests and found one failure in the newly added UI-source assertion: the test regex was over-escaped and looked for a backslash before the filename extension. The application download filename itself was correct. The assertion now uses a literal substring check; the synthetic fixture validation and the application code are unchanged. The exact corrected commit is being revalidated by a new full workflow run.

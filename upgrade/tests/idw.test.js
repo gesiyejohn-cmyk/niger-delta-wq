@@ -131,6 +131,6 @@ test('synthetic IDW fixture has unique WGS84 decimal-degree locations and finite
 test('spatial analysis exposes the synthetic CSV download and honest manual-entry guidance', () => {
   const source = readFileSync(new URL('../src/pages/SpatialAnalysisPage.jsx', import.meta.url), 'utf8');
   assert.match(source, /Download synthetic test CSV/);
-  assert.match(source, /ndwq-synthetic-idw-test-data\\.csv/);
+  assert.ok(source.includes('ndwq-synthetic-idw-test-data.csv'));
   assert.match(source, /create eight separate water-quality records manually/);
 });
