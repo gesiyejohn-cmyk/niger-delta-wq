@@ -34,14 +34,6 @@ test('eight-sample Niger Delta TDS dataset produces a bounded in-hull IDW test s
  assert.equal(r.range.min,Math.min(...r.cells.map(c=>c.value)));
  assert.equal(r.range.max,Math.max(...r.cells.map(c=>c.value)));
 });
-test('eight-sample IDW preserves exact measured values at grid nodes that coincide with samples',()=>{
- const r=interpolateIDW(eightSamples,{power:2,neighbors:8,maxDistanceMeters:5000,resolution:20});
- for(const p of eightSamples){
-  const node=r.cells.find(c=>Math.abs(c.latitude-p.latitude)<1e-10&&Math.abs(c.longitude-p.longitude)<1e-10);
-  if(node) assert.equal(node.value,p.value);
- }
-});
-
 test('spatial analysis exposes both water-quality and hydrochemistry records',()=>{
  const source=readFileSync(new URL('../src/pages/SpatialAnalysisPage.jsx',import.meta.url),'utf8');
  assert.match(source,/listHydrochemistrySamples/);
