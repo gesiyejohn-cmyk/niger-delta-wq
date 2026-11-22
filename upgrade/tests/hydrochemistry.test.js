@@ -60,8 +60,8 @@ test('hydrochemistry CSV preserves unmeasured nitrate as blank and quotes statio
  const csv = buildHydrochemistryCSV([{...sample,sampleId:'S1'}]);
  const cells=csv.split(String.fromCharCode(13,10))[1].split(',').map(cell=>cell.slice(1,-1));
  const header=csv.split(String.fromCharCode(13,10))[0].split(',').map(cell=>cell.slice(1,-1));
- assert.equal(cells[header.indexOf('Nitrate (mg/L)')],'""');
- assert.equal(cells[header.indexOf('Nitrate (meq/L)')],'""');
+ assert.equal(cells[header.indexOf('Nitrate (mg/L)')], '');
+ assert.equal(cells[header.indexOf('Nitrate (meq/L)')], '');
 });
 
 test('hydrochemistry CSV neutralises spreadsheet formula-like sample IDs', async () => {
