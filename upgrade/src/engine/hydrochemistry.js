@@ -96,7 +96,8 @@ export function buildHydrochemistryCSV(samples) {
     'Charge Balance Error (%)','Dominant Cation','Dominant Anion','Hydrochemical Facies'
   ];
   const rows = samples.map(sample => {
-    // Recalculate from the current laboratory fields; cached results may be stale after edits/imports.\n    const result = calculateHydrochemistry(sample);
+    // Recalculate from the current laboratory fields; cached results may be stale after edits/imports.
+    const result = calculateHydrochemistry(sample);
     return [
       sample.sampleId, sample.date, sample.latitude, sample.longitude,
       sample.coordinateFormat, sample.coordinateOriginal?.latitude,
