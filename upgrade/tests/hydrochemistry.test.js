@@ -48,8 +48,8 @@ test('hydrochemistry CSV clearly labels total cations and total anions and expor
  assert.match(header,/Total Anions \(meq\/L\)/);
  assert.match(header,/Calcium \(mg\/L\)/);
  assert.match(header,/Calcium \(meq\/L\)/);
- const headers=header.split(',');
- const data=csv.split(String.fromCharCode(13,10))[1].split(',');
+ const headers=header.split(',').map(cell=>cell.slice(1,-1));
+ const data=csv.split(String.fromCharCode(13,10))[1].split(',').map(cell=>cell.slice(1,-1));
  assert.equal(data[headers.indexOf('Total Cations (meq/L)')],'"6"');
  assert.equal(data[headers.indexOf('Total Anions (meq/L)')],'"4"');
  assert.equal(data[headers.indexOf('Charge Balance Error (%)')],'"20"');
@@ -59,8 +59,8 @@ test('hydrochemistry CSV preserves unmeasured nitrate as blank and quotes statio
  const { buildHydrochemistryCSV } = await import('../src/engine/hydrochemistry.js');
  const csv = buildHydrochemistryCSV([{...sample,sampleId:'S,"02"'}]);
  assert.match(csv,/"S,""02"""/);
- const cells=csv.split(String.fromCharCode(13,10))[1].split(',');
- const header=csv.split(String.fromCharCode(13,10))[0].split(',');
+ const cells=csv.split(String.fromCharCode(13,10))[1].split(',').map(cell=>cell.slice(1,-1));
+ const header=csv.split(String.fromCharCode(13,10))[0].split(',').map(cell=>cell.slice(1,-1));
  assert.equal(cells[header.indexOf('Nitrate (mg/L)')],'""');
  assert.equal(cells[header.indexOf('Nitrate (meq/L)')],'""');
 });
