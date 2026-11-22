@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { calculateHydrochemistry, validateHydrochemistrySample } from '../engine/hydrochemistry.js';
 import { saveHydrochemistrySample, listHydrochemistrySamples, deleteHydrochemistrySample } from '../storage/hydrochemistry.js';
 import CoordinateFields from './CoordinateFields.jsx';
@@ -11,7 +11,18 @@ const box={background:'#fff',border:'1px solid #dbe3ea',borderRadius:10,padding:
 const field={width:'100%',boxSizing:'border-box',padding:8,border:'1px solid #cbd5e1',borderRadius:6};
 const palette=['#2563eb','#dc2626','#0f766e','#9333ea','#d97706','#0891b2','#be123c','#4d7c0f'];
 function trianglePoint(parts,ox,oy,scale){return{x:ox+(parts[1]*.5+parts[2])*scale/100,y:oy+parts[1]*Math.sqrt(3)/2*scale/100};}
-function ChartFrame({title,children,description}){return <section style={box}><h2>{title}</h2>{description&&<p className="muted">{description}</p>}{children}</section>}
+function ChartFrame({title,children,description}){
+ const [zoom,setZoom]=useState(1),[offset,setOffset]=useState({x:0,y:0}),drag=useRef(null);
+ function startPan(e){if(zoom<=1)return;drag.current={x:e.clientX,y:e.clientY,ox:offset.x,oy:offset.y};e.currentTarget.setPointerCapture?.(e.pointerId);}
+ function movePan(e){if(!drag.current)return;setOffset({x:drag.current.ox+e.clientX-drag.current.x,y:drag.current.oy+e.clientY-drag.current.y});}
+ function stopPan(){drag.current=null;}
+ function resetView(){setZoom(1);setOffset({x:0,y:0});}
+ return <section style={box}><h2>{title}</h2>{description&&<p className="muted">{description}</p>}
+ <div className="actions" style={{margin:'8px 0'}}><button type="button" onClick={()=>setZoom(v=>Math.min(3,v+.25))} disabled={zoom>=3}>Zoom in</button><button type="button" onClick={()=>setZoom(v=>Math.max(1,v-.25))} disabled={zoom<=1}>Zoom out</button><button type="button" onClick={resetView} disabled={zoom===1&&offset.x===0&&offset.y===0}>Reset view</button><span className="muted">Zoom {Math.round(zoom*100)}% · Drag chart to pan</span></div>
+ <div onPointerDown={startPan} onPointerMove={movePan} onPointerUp={stopPan} onPointerCancel={stopPan} onLostPointerCapture={stopPan} style={{overflow:'hidden',position:'relative',touchAction:zoom>1?'none':'pan-y',cursor:zoom>1?'grab':'default',maxWidth:'100%'}}>
+ <div style={{transform:`translate(${offset.x}px,${offset.y}px) scale(${zoom})`,transformOrigin:'center center',width:'100%'}}>{children}</div>
+ </div></section>
+}
 export default function HydrochemistryPage(){
  const [samples,setSamples]=useState([]),[draft,setDraft]=useState(blank()),[coordinates,setCoordinates]=useState(blankCoordinates()),[message,setMessage]=useState(''),[error,setError]=useState(''),[selected,setSelected]=useState([]),[exportUrl,setExportUrl]=useState('');
  async function refresh(){try{const records=await listHydrochemistrySamples();setSamples(records);setSelected(records.map(item=>item.id));}catch(e){setError('Could not load hydrochemistry records: '+e.message);}}
