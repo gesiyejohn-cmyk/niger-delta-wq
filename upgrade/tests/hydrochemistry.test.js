@@ -32,8 +32,8 @@ test('eight balanced synthetic Niger Delta chemistry samples retain charge balan
   a.forEach((k,i)=>input[k]=av[i]*eq[k]);
   input.no3=0;
   const r=calculateHydrochemistry(input);
-  assert.ok(Math.abs(r.totalCationsMeqL-3.6)<1e-9,id+' cation total');
-  assert.ok(Math.abs(r.totalAnionsMeqL-3.6)<1e-9,id+' anion total');
+  assert.ok(Math.abs(r.totalCationsMeqL-cv.reduce((sum,v)=>sum+v,0))<1e-9,id+' cation total');
+  assert.ok(Math.abs(r.totalAnionsMeqL-av.reduce((sum,v)=>sum+v,0))<1e-9,id+' anion total');
   assert.ok(Math.abs(r.chargeBalanceErrorPercent)<1e-9,id+' charge balance');
   assert.ok(r.classification.facies&&!r.classification.facies.includes('undefined'),id+' facies');
  }
