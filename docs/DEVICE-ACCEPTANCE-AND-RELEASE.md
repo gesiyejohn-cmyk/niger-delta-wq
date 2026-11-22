@@ -461,3 +461,8 @@ Artifacts from run #45035959581 are available (uploaded ZIP sizes):
 - Source `ndwq-integrated-source`, ID `14759852288`, 166,517 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45035959581/artifacts/14759852288).
 
 The Android artifact is a CI debug build, not a production-signed update. The emulator check is not physical-phone acceptance, and this run does not establish signing compatibility with the app already installed on the user's phone. Keep the existing no-uninstall/no-clear-data gate. Windows installation/runtime on a real PC, public web deployment/browser acceptance, device backup/restore and scientific calibration/sign-off remain outstanding.
+
+
+## Synthetic IDW test dataset delivery — 22 November 2026
+
+The spatial-analysis page now provides a **Download synthetic test CSV** action. It exports eight fabricated test records with the fields `sample_id`, `latitude_dd`, `longitude_dd`, and `tds_mg_l`; the records span 190–460 mg/L TDS and are intended only for software workflow checks. The CSV is explicitly labelled synthetic in the page instructions. Where the current app build has no CSV sample-import control, users must create eight separate water-quality records manually from the downloaded CSV; do not assume direct CSV import is available. Regression coverage verifies the eight-row dataset, exact header, four-column alignment and expected TDS range. This dataset is not field evidence and must not be used for environmental conclusions.
