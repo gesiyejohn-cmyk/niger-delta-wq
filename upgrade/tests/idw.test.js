@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {interpolateIDW,convexHull,pointInPolygon} from '../src/engine/idw.js';
+import {interpolateIDW,convexHull,pointInPolygon,collectIDWSamples,assertUniqueIDWCoordinates,formatIDWGridCSV} from '../src/engine/idw.js';
 const triangle=[{id:'A',latitude:5,longitude:6,value:10},{id:'B',latitude:5,longitude:6.1,value:20},{id:'C',latitude:5.1,longitude:6,value:30}];
 test('IDW generates cells only inside the sample convex hull',()=>{const r=interpolateIDW(triangle,{resolution:10,maxDistanceMeters:20000,neighbors:3});assert.ok(r.cells.length>3);assert.ok(r.cells.every(c=>pointInPolygon(c,r.hull)));assert.equal(r.sampleCount,3);});
 test('IDW uses exact sample values at sample coordinates',()=>{const r=interpolateIDW(triangle,{resolution:10,maxDistanceMeters:20000,neighbors:3});const a=r.cells.find(c=>Math.abs(c.latitude-5)<1e-9&&Math.abs(c.longitude-6)<1e-9);assert.equal(a.value,10);});
@@ -41,4 +41,49 @@ test('spatial analysis exposes both water-quality and hydrochemistry records',()
  assert.match(source,/const chemistryPoints=/);
  assert.match(source,/value=\{sourceMode\}/);
  assert.match(source,/share the same coordinates/);
+});
+
+
+const integrationSamples = eightSamples.map(sample => ({
+  id: sample.id,
+  meta: { sampleCode: sample.id, latitude: String(sample.latitude), longitude: String(sample.longitude) },
+  params: { tds: { value: sample.value, unit: 'mg/L', canonical: sample.value, canonicalUnit: 'mg/L' } }
+}));
+
+test('NDWQ water-quality record shape supplies all eight measured TDS samples to IDW', () => {
+  const { waterQualityPoints, ready } = collectIDWSamples({ waterQualitySamples: integrationSamples, parameter: 'tds' });
+  assert.equal(waterQualityPoints.length, 8);
+  assert.equal(ready.length, 8);
+  const r = interpolateIDW(ready, { power: 2, neighbors: 8, maxDistanceMeters: 5000, resolution: 20 });
+  assert.equal(r.sampleCount, 8);
+  assert.ok(r.cells.length > 0);
+  assert.ok(r.cells.every(cell => cell.value >= 190 && cell.value <= 460));
+});
+
+test('IDW source adapter excludes blank and boolean coordinates or measurements', () => {
+  const samples = [
+    { id: 'blank', meta: { latitude: ' ', longitude: '6.1' }, params: { tds: { canonical: 200 } } },
+    { id: 'bool', meta: { latitude: true, longitude: 6.1 }, params: { tds: { canonical: 200 } } },
+    { id: 'missing', meta: { latitude: 5, longitude: 6.1 }, params: { tds: { canonical: ' ' } } }
+  ];
+  assert.equal(collectIDWSamples({ waterQualitySamples: samples, parameter: 'tds' }).ready.length, 0);
+});
+
+test('IDW hydrochemistry source supports measured ions but never invents TDS', () => {
+  const chemistry = [{ id: 'C1', sampleId: 'C1', latitude: 5, longitude: 6, ca: 25, tds: 400 }];
+  assert.equal(collectIDWSamples({ hydrochemistrySamples: chemistry, sourceMode: 'hydrochemistry', parameter: 'ca' }).ready[0].value, 25);
+  assert.equal(collectIDWSamples({ hydrochemistrySamples: chemistry, sourceMode: 'hydrochemistry', parameter: 'tds' }).ready.length, 0);
+});
+
+test('IDW duplicate coordinate guard rejects repeated station locations', () => {
+  assert.throws(() => assertUniqueIDWCoordinates([
+    { latitude: 5, longitude: 6 }, { latitude: 5.000000001, longitude: 6 }
+  ]), /share the same coordinates/);
+});
+
+test('IDW CSV export has aligned parameter, value, unit and neighbour columns', () => {
+  const csv = formatIDWGridCSV({ cells: [{ latitude: 5, longitude: 6, value: 275, neighboursUsed: 8 }] }, 'tds', 'mg/L');
+  const rows = csv.split(String.fromCharCode(13,10)).map(row => row.split(',').map(cell => cell.slice(1, -1)));
+  assert.deepEqual(rows[0], ['latitude_dd', 'longitude_dd', 'parameter', 'value', 'unit', 'neighbours_used']);
+  assert.deepEqual(rows[1], ['5', '6', 'tds', '275', 'mg/L', '8']);
 });

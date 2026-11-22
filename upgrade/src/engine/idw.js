@@ -27,3 +27,73 @@ export function interpolateIDW(points,{power=2,neighbors=8,maxDistanceMeters=500
  if(cells.length<3)throw new Error('Too few grid cells meet the convex-hull, neighbour-count and maximum-distance rules. Increase maximum distance or add samples; do not extrapolate beyond the sampled area.');
  return{cells,hull,sampleCount:validPoints.length,gridResolution:resolution,insideHullCells:inside,skippedCells:skipped,coveragePercent:inside?cells.length/inside*100:0,power,neighbours:neighbors,maxDistanceMeters,range:{min:Math.min(...cells.map(c=>c.value)),max:Math.max(...cells.map(c=>c.value))},method:'Inverse distance weighting (IDW), within sample convex hull'};
 }
+
+
+const CHEMISTRY_IDW_PARAMETERS = new Set(['ca','mg','na','k','hco3','co3','cl','so4','no3']);
+const isMeasuredNumber = value => value != null &&
+  !(typeof value === 'string' && value.trim() === '') &&
+  typeof value !== 'boolean' &&
+  (typeof value === 'number' || typeof value === 'string') &&
+  Number.isFinite(Number(value));
+
+function waterQualityMeasurement(sample, parameter) {
+  const measurement = sample?.parameters?.[parameter] ?? sample?.params?.[parameter];
+  if (measurement && typeof measurement === 'object') {
+    if (Object.prototype.hasOwnProperty.call(measurement, 'canonical')) return measurement.canonical;
+    if (Object.prototype.hasOwnProperty.call(measurement, 'value')) return measurement.value;
+  }
+  return measurement;
+}
+
+/** Convert NDWQ water-quality and hydrochemistry records into measured IDW points. */
+export function collectIDWSamples({
+  waterQualitySamples = [], hydrochemistrySamples = [],
+  sourceMode = 'combined', parameter = 'tds'
+} = {}) {
+  const waterQualityPoints = waterQualitySamples
+    .filter(sample => isMeasuredNumber(sample?.meta?.latitude ?? sample?.latitude) &&
+      isMeasuredNumber(sample?.meta?.longitude ?? sample?.longitude) &&
+      isMeasuredNumber(waterQualityMeasurement(sample, parameter)))
+    .map(sample => ({
+      id: sample.id,
+      sampleCode: sample.meta?.sampleCode ?? sample.sampleCode ?? sample.id,
+      latitude: Number(sample.meta?.latitude ?? sample.latitude),
+      longitude: Number(sample.meta?.longitude ?? sample.longitude),
+      value: Number(waterQualityMeasurement(sample, parameter)),
+      source: 'Water-quality'
+    }));
+  const chemistryPoints = CHEMISTRY_IDW_PARAMETERS.has(parameter)
+    ? hydrochemistrySamples
+      .filter(sample => isMeasuredNumber(sample?.latitude) &&
+        isMeasuredNumber(sample?.longitude) && isMeasuredNumber(sample?.[parameter]))
+      .map(sample => ({
+        id: sample.id, sampleCode: sample.sampleId || sample.id,
+        latitude: Number(sample.latitude), longitude: Number(sample.longitude),
+        value: Number(sample[parameter]), source: 'Hydrochemistry'
+      }))
+    : [];
+  const ready = sourceMode === 'water-quality' ? waterQualityPoints
+    : sourceMode === 'hydrochemistry' ? chemistryPoints
+      : [...waterQualityPoints, ...chemistryPoints];
+  return { waterQualityPoints, chemistryPoints, ready };
+}
+
+export function assertUniqueIDWCoordinates(points) {
+  const seen = new Set();
+  for (const point of points || []) {
+    const key = Number(point.latitude).toFixed(8) + ',' + Number(point.longitude).toFixed(8);
+    if (seen.has(key)) throw new Error('Two or more selected records share the same coordinates. Choose one data source or resolve duplicate/repeated station locations before interpolation.');
+    seen.add(key);
+  }
+  return points;
+}
+
+export function formatIDWGridCSV(result, parameter, unit = '') {
+  if (!result || !Array.isArray(result.cells) || !result.cells.length) throw new Error('Generate a valid IDW grid before exporting CSV.');
+  const quote = value => '"' + String(value ?? '').replace(/"/g, '""') + '"';
+  const rows = [
+    ['latitude_dd','longitude_dd','parameter','value','unit','neighbours_used'],
+    ...result.cells.map(cell => [cell.latitude,cell.longitude,parameter,cell.value,unit,cell.neighboursUsed])
+  ];
+  return rows.map(row => row.map(quote).join(',')).join(String.fromCharCode(13,10));
+}
