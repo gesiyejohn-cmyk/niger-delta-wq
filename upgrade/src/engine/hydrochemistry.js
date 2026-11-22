@@ -77,7 +77,7 @@ const HYDROCHEMISTRY_ION_FIELDS = Object.keys(IONS);
 function csvCell(value) {
   let text = value == null ? '' : String(value);
   // Prevent spreadsheet formula execution from imported/user-entered text.
-  if (/^[\\s]*[=+@-]/.test(text)) text = "'" + text;
+  if (typeof value === 'string' && /^[\\s]*[=+@-]/.test(text)) text = "'" + text;
   return '"' + text.replace(/"/g, '""') + '"';
 }
 
@@ -96,7 +96,7 @@ export function buildHydrochemistryCSV(samples) {
     'Charge Balance Error (%)','Dominant Cation','Dominant Anion','Hydrochemical Facies'
   ];
   const rows = samples.map(sample => {
-    const result = sample.calculation || calculateHydrochemistry(sample);
+    // Recalculate from the current laboratory fields; cached results may be stale after edits/imports.\n    const result = calculateHydrochemistry(sample);
     return [
       sample.sampleId, sample.date, sample.latitude, sample.longitude,
       sample.coordinateFormat, sample.coordinateOriginal?.latitude,
