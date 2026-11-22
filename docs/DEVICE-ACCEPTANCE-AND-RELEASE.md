@@ -417,3 +417,16 @@ The specifically requested earlier [run #43762079209](https://github.com/gesiyej
 This is a same-commit three-platform CI pass and emulator launch smoke test, not production or device acceptance. The web build artifact has **not** been deployed to an accessible public URL. The Windows installer has **not** been installed/runtime-tested on a real Windows computer. Android physical-device first-screen/core-workflow acceptance, a recoverable backup/restore against actual device data, production signing, and compatibility with the currently installed app remain unverified. Do not uninstall, clear app data or install the debug APK over an existing phone installation based on this CI result.
 
 Retain the scientific limitations: ERT inversion is not implemented; imported inversion results and interpolation are not a field-data inversion; DRASTIC bands require local hydrogeological justification; WQI alone does not establish potability. Scientific reference/calibration review and formal sign-off remain outstanding.
+
+
+## Spatial IDW integration and chart navigation updates — 22 November 2026
+
+The spatial analysis page now uses a shared IDW record adapter for the two NDWQ storage shapes. Water-quality records are read from their nested `meta` coordinates and `params` / `parameters` measurement objects, using the canonical measurement where available. Dedicated hydrochemistry records are read from their top-level coordinates and major-ion mg/L fields. TDS is sourced only from an explicitly measured water-quality TDS parameter; it is not inferred from the sum of major ions. Blank/whitespace values and boolean values are excluded rather than coerced to zero.
+
+The interpolation action rejects repeated selected station coordinates before running IDW. The IDW grid CSV now uses aligned fields: latitude_dd, longitude_dd, parameter, value, unit and neighbours_used. An eight-location synthetic Niger Delta TDS fixture exercises the stored sample shape, interpolation inside the sample convex hull, value bounds and coverage reporting. It is a software acceptance fixture, not field-measured groundwater data.
+
+Hydrochemistry diagrams already provide zoom, pan and reset controls. The five water-quality analytics charts now use the same zoom-in, zoom-out, drag-to-pan and reset interaction, with bounded zoom scaling.
+
+The last fully verified multi-platform run before these changes is [run #44973142927](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44973142927), on commit `f76381316d418e34ddbc980c92434d3cd47e61ab`: 174 tests passed, the web production build passed, and Android and Windows CI jobs passed. The IDW adapter/CSV and analytics chart-navigation commits made after that run have not yet been covered by a CI run on their exact commit. Treat the new changes as pending CI until a workflow validates the updated head.
+
+These checks do not replace testing with the user's actual eight-sample dataset, a physical Android device, a real Windows installation, or independent hydrogeological review.
