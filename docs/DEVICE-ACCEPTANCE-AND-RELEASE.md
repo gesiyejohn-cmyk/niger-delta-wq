@@ -430,3 +430,10 @@ Hydrochemistry diagrams already provide zoom, pan and reset controls. The five w
 The last fully verified multi-platform run before these changes is [run #44973142927](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44973142927), on commit `f76381316d418e34ddbc980c92434d3cd47e61ab`: 174 tests passed, the web production build passed, and Android and Windows CI jobs passed. The IDW adapter/CSV and analytics chart-navigation commits made after that run have not yet been covered by a CI run on their exact commit. Treat the new changes as pending CI until a workflow validates the updated head.
 
 These checks do not replace testing with the user's actual eight-sample dataset, a physical Android device, a real Windows installation, or independent hydrogeological review.
+
+
+## Hydrochemistry CSV export — 22 November 2026
+
+The hydrochemistry export now initiates a direct CSV download rather than creating an intermediate download link that the user must tap separately. The export includes explicitly named Total Cations (meq/L), Total Anions (meq/L), charge-balance error, major-ion laboratory concentrations (mg/L), calculated equivalents (meq/L), facies and coordinate metadata. Unmeasured ions remain blank. Text fields are CSV-quoted and formula-like values are neutralised for spreadsheet safety. Regression tests cover totals, units, blank nitrate, quoted identifiers, formula-like identifiers and empty-export handling.
+
+Automated CI is required on the exact commit before this export is considered verified in the integrated build. The previous fully passing multi-platform CI run is #313 on commit `8fa662806d5d7fa8a9c9bdcace275260a9277726` (181 tests passed; web build, Android emulator smoke test and Windows build passed).

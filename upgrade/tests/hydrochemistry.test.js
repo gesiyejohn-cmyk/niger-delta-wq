@@ -38,3 +38,37 @@ test('eight balanced synthetic Niger Delta chemistry samples retain charge balan
   assert.ok(r.classification.facies&&!r.classification.facies.includes('undefined'),id+' facies');
  }
 });
+
+
+test('hydrochemistry CSV clearly labels total cations and total anions and exports mg/L and meq/L', async () => {
+ const { buildHydrochemistryCSV } = await import('../src/engine/hydrochemistry.js');
+ const csv = buildHydrochemistryCSV([{...sample,date:'2026-11-22',latitude:4.97,longitude:6.1,coordinateDatum:'WGS84'}]);
+ const header = csv.split(String.fromCharCode(13,10))[0];
+ assert.match(header,/Total Cations \(meq\/L\)/);
+ assert.match(header,/Total Anions \(meq\/L\)/);
+ assert.match(header,/Calcium \(mg\/L\)/);
+ assert.match(header,/Calcium \(meq\/L\)/);
+ const data = csv.split(String.fromCharCode(13,10))[1];
+ assert.match(data,/,6,4,20,/);
+});
+
+test('hydrochemistry CSV preserves unmeasured nitrate as blank and quotes station metadata', async () => {
+ const { buildHydrochemistryCSV } = await import('../src/engine/hydrochemistry.js');
+ const csv = buildHydrochemistryCSV([{...sample,sampleId:'S,"02"'}]);
+ assert.match(csv,/"S,""02"""/);
+ const cells=csv.split(String.fromCharCode(13,10))[1].split(',');
+ const header=csv.split(String.fromCharCode(13,10))[0].split(',');
+ assert.equal(cells[header.indexOf('Nitrate (mg/L)')],'""');
+ assert.equal(cells[header.indexOf('Nitrate (meq/L)')],'""');
+});
+
+test('hydrochemistry CSV neutralises spreadsheet formula-like sample IDs', async () => {
+ const { buildHydrochemistryCSV } = await import('../src/engine/hydrochemistry.js');
+ const csv=buildHydrochemistryCSV([{...sample,sampleId:'=HYPERLINK("https://example.invalid","open")'}]);
+ assert.match(csv,/'=HYPERLINK/);
+});
+
+test('hydrochemistry CSV refuses an empty export', async () => {
+ const { buildHydrochemistryCSV } = await import('../src/engine/hydrochemistry.js');
+ assert.throws(()=>buildHydrochemistryCSV([]),/at least one hydrochemistry sample/i);
+});

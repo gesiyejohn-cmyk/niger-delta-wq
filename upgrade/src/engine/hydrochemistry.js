@@ -71,3 +71,47 @@ export function validateHydrochemistrySample(sample) {
   const result=calculateHydrochemistry(clean);
   return {...clean,calculation:result};
 }
+
+
+const HYDROCHEMISTRY_ION_FIELDS = Object.keys(IONS);
+function csvCell(value) {
+  let text = value == null ? '' : String(value);
+  // Prevent spreadsheet formula execution from imported/user-entered text.
+  if (/^[\\s]*[=+@-]/.test(text)) text = "'" + text;
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+
+/** Export saved laboratory chemistry, calculated charge totals and facies as an auditable CSV. */
+export function buildHydrochemistryCSV(samples) {
+  if (!Array.isArray(samples) || samples.length === 0) {
+    throw new Error('Save at least one hydrochemistry sample before exporting.');
+  }
+  const headers = [
+    'Sample ID','Collection date','Latitude (DD)','Longitude (DD)',
+    'Coordinate format','Original latitude','Original longitude',
+    'Latitude hemisphere','Longitude hemisphere','Coordinate datum','Coordinate CRS',
+    ...HYDROCHEMISTRY_ION_FIELDS.map(key => IONS[key].name + ' (mg/L)'),
+    ...HYDROCHEMISTRY_ION_FIELDS.map(key => IONS[key].name + ' (meq/L)'),
+    'Total Cations (meq/L)','Total Anions (meq/L)',
+    'Charge Balance Error (%)','Dominant Cation','Dominant Anion','Hydrochemical Facies'
+  ];
+  const rows = samples.map(sample => {
+    const result = sample.calculation || calculateHydrochemistry(sample);
+    return [
+      sample.sampleId, sample.date, sample.latitude, sample.longitude,
+      sample.coordinateFormat, sample.coordinateOriginal?.latitude,
+      sample.coordinateOriginal?.longitude,
+      sample.coordinateOriginal?.latitudeHemisphere,
+      sample.coordinateOriginal?.longitudeHemisphere,
+      sample.coordinateDatum, sample.coordinateCRS,
+      ...HYDROCHEMISTRY_ION_FIELDS.map(key => sample[key]),
+      ...HYDROCHEMISTRY_ION_FIELDS.map(key => result.meqL[key]),
+      result.totalCationsMeqL, result.totalAnionsMeqL,
+      result.chargeBalanceErrorPercent,
+      result.classification?.dominantCation,
+      result.classification?.dominantAnion,
+      result.classification?.facies
+    ];
+  });
+  return [headers, ...rows].map(row => row.map(csvCell).join(',')).join(String.fromCharCode(13,10));
+}
