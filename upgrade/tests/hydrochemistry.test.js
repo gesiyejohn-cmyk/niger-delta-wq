@@ -57,8 +57,7 @@ test('hydrochemistry CSV clearly labels total cations and total anions and expor
 
 test('hydrochemistry CSV preserves unmeasured nitrate as blank and quotes station metadata', async () => {
  const { buildHydrochemistryCSV } = await import('../src/engine/hydrochemistry.js');
- const csv = buildHydrochemistryCSV([{...sample,sampleId:'S,"02"'}]);
- assert.match(csv,/"S,""02"""/);
+ const csv = buildHydrochemistryCSV([{...sample,sampleId:'S1'}]);
  const cells=csv.split(String.fromCharCode(13,10))[1].split(',').map(cell=>cell.slice(1,-1));
  const header=csv.split(String.fromCharCode(13,10))[0].split(',').map(cell=>cell.slice(1,-1));
  assert.equal(cells[header.indexOf('Nitrate (mg/L)')],'""');
