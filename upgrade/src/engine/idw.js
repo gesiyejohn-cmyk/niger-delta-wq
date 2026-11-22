@@ -97,3 +97,26 @@ export function formatIDWGridCSV(result, parameter, unit = '') {
   ];
   return rows.map(row => row.map(quote).join(',')).join(String.fromCharCode(13,10));
 }
+
+/** Clearly synthetic fixture for users to validate the IDW workflow; never field data. */
+export const SYNTHETIC_IDW_TEST_SAMPLES = [
+  { sample_id: 'SYN-01', latitude_dd: 4.9700, longitude_dd: 6.1000, tds_mg_l: 260 },
+  { sample_id: 'SYN-02', latitude_dd: 4.9720, longitude_dd: 6.1040, tds_mg_l: 315 },
+  { sample_id: 'SYN-03', latitude_dd: 4.9750, longitude_dd: 6.0980, tds_mg_l: 225 },
+  { sample_id: 'SYN-04', latitude_dd: 4.9780, longitude_dd: 6.1060, tds_mg_l: 390 },
+  { sample_id: 'SYN-05', latitude_dd: 4.9660, longitude_dd: 6.1080, tds_mg_l: 275 },
+  { sample_id: 'SYN-06', latitude_dd: 4.9800, longitude_dd: 6.0950, tds_mg_l: 460 },
+  { sample_id: 'SYN-07', latitude_dd: 4.9630, longitude_dd: 6.0970, tds_mg_l: 190 },
+  { sample_id: 'SYN-08', latitude_dd: 4.9740, longitude_dd: 6.1120, tds_mg_l: 335 }
+];
+
+export function formatSyntheticIDWTestCSV() {
+  const headers = ['sample_id', 'latitude_dd', 'longitude_dd', 'tds_mg_l'];
+  const quote = value => '"' + String(value).replace(/"/g, '""') + '"';
+  return [
+    headers.map(quote).join(','),
+    ...SYNTHETIC_IDW_TEST_SAMPLES.map(sample =>
+      headers.map(key => quote(sample[key])).join(',')
+    )
+  ].join(String.fromCharCode(13, 10)) + String.fromCharCode(13, 10);
+}
