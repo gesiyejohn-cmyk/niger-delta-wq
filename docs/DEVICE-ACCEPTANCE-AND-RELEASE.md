@@ -466,3 +466,19 @@ The Android artifact is a CI debug build, not a production-signed update. The em
 ## Synthetic IDW test dataset delivery — 22 November 2026
 
 The spatial-analysis page now provides a **Download synthetic test CSV** action. It exports eight fabricated test records with the fields `sample_id`, `latitude_dd`, `longitude_dd`, and `tds_mg_l`; the records span 190–460 mg/L TDS and are intended only for software workflow checks. The CSV is explicitly labelled synthetic in the page instructions. Where the current app build has no CSV sample-import control, users must create eight separate water-quality records manually from the downloaded CSV; do not assume direct CSV import is available. Regression coverage verifies the eight-row dataset, exact header, four-column alignment and expected TDS range. This dataset is not field evidence and must not be used for environmental conclusions.
+
+## Synthetic IDW dataset documentation and exact-head CI verification — 22 November 2026
+
+A repository guide now documents the eight-row fabricated TDS test dataset, its WGS84 decimal-degree columns, manual sample-entry procedure, recommended IDW settings, acceptance checks and troubleshooting. A direct CSV-to-sample import control is not present in the current Spatial Analysis page, so the guide does not claim that the CSV can be imported automatically.
+
+The synthetic test fixture now has additional regression coverage for unique sample identifiers, unique coordinate pairs, valid latitude/longitude ranges, finite non-negative measured TDS values, the visible download action, its deterministic filename and the manual-entry guidance. The UI-to-engine neighbour mapping remains covered by the existing regression test: the page passes its `neighbours` state to the engine's `neighbors` option.
+
+The prior source commit `98692c114327ab91d63f3c11ac6edbbebca8a55b` was verified by [Actions run #330](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45040738017): all three jobs passed. The web/scientific test job reported **190 tests passed, 0 failed**, and the production web build passed. Android built the original-identity debug APK, completed the API 35 emulator install/launch smoke test and built the isolated preview APK. Windows built and uploaded the desktop installer.
+
+Artifacts from run #330:
+- Android `ndwq-integrated-android-debug-apk`, ID `14761049445`, 8,142,506 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45040738017/artifacts/14761049445).
+- Windows `ndwq-integrated-windows-desktop`, ID `14762006539`, 95,606,953 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45040738017/artifacts/14762006539).
+- Web `ndwq-integrated-web`, ID `14760664848`, 326,400 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45040738017/artifacts/14760664848).
+- Source `ndwq-integrated-source`, ID `14760963912`, 167,779 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45040738017/artifacts/14760963912).
+
+The documentation/test-only follow-up does not alter coordinate conversion, WGS84 canonical coordinate storage, IndexedDB schema/migrations, or backup/restore code. Pull requests [#2](https://github.com/gesiyejohn-cmyk/niger-delta-wq/pull/2) and [#6](https://github.com/gesiyejohn-cmyk/niger-delta-wq/pull/6) remain open drafts and have not been merged. The Android artifact is debug-signed and emulator-tested only; physical-device acceptance, production signing, existing-installation update compatibility, real-device backup/restore, Windows installation/runtime and scientific calibration/sign-off remain outstanding.

@@ -114,3 +114,23 @@ test('synthetic IDW test CSV has eight clearly labelled records and stable coord
   assert.ok(rows[1].includes('"SYN-01"'));
   assert.ok(rows.every((row,index)=>index===0||row.split(',').length===4));
 });
+
+
+test('synthetic IDW fixture has unique WGS84 decimal-degree locations and finite measured TDS values', () => {
+  const ids = SYNTHETIC_IDW_TEST_SAMPLES.map(sample => sample.sample_id);
+  const coordinates = SYNTHETIC_IDW_TEST_SAMPLES.map(sample => `${sample.latitude_dd},${sample.longitude_dd}`);
+  assert.equal(new Set(ids).size, 8);
+  assert.equal(new Set(coordinates).size, 8);
+  assert.ok(SYNTHETIC_IDW_TEST_SAMPLES.every(sample =>
+    Number.isFinite(sample.latitude_dd) && Math.abs(sample.latitude_dd) <= 90 &&
+    Number.isFinite(sample.longitude_dd) && Math.abs(sample.longitude_dd) <= 180 &&
+    Number.isFinite(sample.tds_mg_l) && sample.tds_mg_l >= 0
+  ));
+});
+
+test('spatial analysis exposes the synthetic CSV download and honest manual-entry guidance', () => {
+  const source = readFileSync(new URL('../src/pages/SpatialAnalysisPage.jsx', import.meta.url), 'utf8');
+  assert.match(source, /Download synthetic test CSV/);
+  assert.match(source, /ndwq-synthetic-idw-test-data\\.csv/);
+  assert.match(source, /create eight separate water-quality records manually/);
+});
