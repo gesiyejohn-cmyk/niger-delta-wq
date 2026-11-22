@@ -41,3 +41,12 @@ test('eight-sample IDW preserves exact measured values at grid nodes that coinci
   if(node) assert.equal(node.value,p.value);
  }
 });
+
+test('spatial analysis exposes both water-quality and hydrochemistry records',()=>{
+ const source=readFileSync(new URL('../src/pages/SpatialAnalysisPage.jsx',import.meta.url),'utf8');
+ assert.match(source,/listHydrochemistrySamples/);
+ assert.match(source,/s\?\.params\?\.\[k\]/);
+ assert.match(source,/const chemistryPoints=/);
+ assert.match(source,/value=\{sourceMode\}/);
+ assert.match(source,/share the same coordinates/);
+});
