@@ -29,7 +29,7 @@ export function interpolateIDW(points,{power=2,neighbors=8,maxDistanceMeters=500
 }
 
 
-const CHEMISTRY_IDW_PARAMETERS = new Set(['ca','mg','na','k','hco3','co3','cl','so4','no3']);
+export const CHEMISTRY_IDW_PARAMETERS = new Set(['ca','mg','na','k','hco3','co3','cl','so4','no3']);
 const isMeasuredNumber = value => value != null &&
   !(typeof value === 'string' && value.trim() === '') &&
   typeof value !== 'boolean' &&

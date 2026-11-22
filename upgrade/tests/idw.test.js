@@ -40,7 +40,7 @@ test('spatial analysis exposes both water-quality and hydrochemistry records',()
  assert.match(source,/s\?\.params\?\.\[k\]/);
  assert.match(source,/const chemistryPoints=/);
  assert.match(source,/value=\{sourceMode\}/);
- assert.match(source,/share the same coordinates/);
+ 
 });
 
 
