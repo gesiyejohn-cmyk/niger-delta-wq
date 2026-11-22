@@ -1,11 +1,30 @@
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import {listSamples} from '../storage/samples.js';
 import {descriptiveStats,pearsonCorrelation} from '../engine/geophysics.js';
 import {correlationMatrix,linearRegression,principalComponents,kMeans} from '../engine/statistics.js';
 const fields=[['ph','pH'],['ec','EC (µS/cm)'],['tds','TDS (mg/L)'],['no3','Nitrate (mg/L)'],['fe','Iron (mg/L)'],['mn','Manganese (mg/L)'],['pb','Lead (mg/L)']];
 const finite=v=>v!=null&&!(typeof v==='string'&&v.trim()==='')&&Number.isFinite(Number(v));
 const colours=['#2563eb','#dc2626','#0f766e','#9333ea','#d97706'];
-function Chart({title,description,children}){return <section className="panel" style={{marginTop:16}}><h2>{title}</h2>{description&&<p className="muted">{description}</p>}{children}</section>}
+function Chart({title,description,children}){
+ const [zoom,setZoom]=useState(1),[offset,setOffset]=useState({x:0,y:0}),drag=useRef(null);
+ function startPan(e){if(zoom<=1)return;drag.current={x:e.clientX,y:e.clientY,ox:offset.x,oy:offset.y};e.currentTarget.setPointerCapture?.(e.pointerId);}
+ function movePan(e){if(!drag.current)return;setOffset({x:drag.current.ox+e.clientX-drag.current.x,y:drag.current.oy+e.clientY-drag.current.y});}
+ function stopPan(){drag.current=null;}
+ function resetView(){setZoom(1);setOffset({x:0,y:0});}
+ return <section className="panel" style={{marginTop:16}}>
+  <h2>{title}</h2>{description&&<p className="muted">{description}</p>}
+  <div className="actions" style={{margin:'8px 0'}}>
+   <button type="button" onClick={()=>setZoom(v=>Math.min(3,v+.25))} disabled={zoom>=3}>Zoom in</button>
+   <button type="button" onClick={()=>setZoom(v=>Math.max(1,v-.25))} disabled={zoom<=1}>Zoom out</button>
+   <button type="button" onClick={resetView} disabled={zoom===1&&offset.x===0&&offset.y===0}>Reset view</button>
+   <span className="muted">Zoom {Math.round(zoom*100)}% · Drag chart to pan</span>
+  </div>
+  <div onPointerDown={startPan} onPointerMove={movePan} onPointerUp={stopPan} onPointerCancel={stopPan} onLostPointerCapture={stopPan}
+   style={{overflow:'hidden',position:'relative',touchAction:zoom>1?'none':'pan-y',cursor:zoom>1?'grab':'default',maxWidth:'100%'}}>
+   <div style={{transform:`translate(${offset.x}px,${offset.y}px) scale(${zoom})`,transformOrigin:'center center',width:'100%'}}>{children}</div>
+  </div>
+ </section>;
+}
 export default function AnalyticsPage(){
  const[rows,setRows]=useState([]),[field,setField]=useState('fe'),[xField,setXField]=useState('ec'),[yField,setYField]=useState('tds'),[clusters,setClusters]=useState(3);
  useEffect(()=>{listSamples().then(setRows).catch(()=>setRows([]));},[]);
