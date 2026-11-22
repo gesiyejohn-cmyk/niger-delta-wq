@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { calculateHydrochemistry, validateHydrochemistrySample } from '../src/engine/hydrochemistry.js';
-const sample={sampleId:'S1',ca:40.078,mg:24.305,na:22.9898,k:39.0983,hco3:61.0168,co3:30.004,cl:35.453,so4:48.03};\nfunction parseCSVRow(line) {\n const cells=[]; let value='', quoted=false;\n for(let i=0;i<line.length;i++){ const ch=line[i]; if(quoted){ if(ch==='"'&&line[i+1]==='"'){value+='"';i++;} else if(ch==='"') quoted=false; else value+=ch; } else if(ch==='"') quoted=true; else if(ch===','){cells.push(value);value='';} else value+=ch; }\n cells.push(value); return cells;\n}\n
+const sample={sampleId:'S1',ca:40.078,mg:24.305,na:22.9898,k:39.0983,hco3:61.0168,co3:30.004,cl:35.453,so4:48.03};
+function parseCSVRow(line) {
+ const cells=[]; let value='', quoted=false;
+ for(let i=0;i<line.length;i++){ const ch=line[i]; if(quoted){ if(ch==='"'&&line[i+1]==='"'){value+='"';i++;} else if(ch==='"') quoted=false; else value+=ch; } else if(ch==='"') quoted=true; else if(ch===','){cells.push(value);value='';} else value+=ch; }
+ cells.push(value); return cells;
+}
+
 test('converts major ions from mg/L to meq/L',()=>{const r=calculateHydrochemistry(sample);assert.ok(Math.abs(r.meqL.ca-2)<1e-9);assert.ok(Math.abs(r.meqL.mg-2)<1e-9);assert.ok(Math.abs(r.meqL.na-1)<1e-9);});
 test('calculates cation and anion charge balance from equivalents',()=>{const r=calculateHydrochemistry(sample);assert.equal(r.totalCationsMeqL,6);assert.equal(r.totalAnionsMeqL,4);assert.equal(r.chargeBalanceErrorPercent,20);});
 test('returns normalized cation and anion percentages',()=>{const r=calculateHydrochemistry(sample);assert.ok(Math.abs(r.cationPercent.ca+r.cationPercent.mg+r.cationPercent.naK-100)<1e-9);assert.ok(Math.abs(r.anionPercent.hco3Co3+r.anionPercent.so4+r.anionPercent.cl-100)<1e-9);});
@@ -75,7 +81,8 @@ test('hydrochemistry CSV refuses an empty export', async () => {
  assert.throws(()=>buildHydrochemistryCSV([]),/at least one hydrochemistry sample/i);
 });
 
-\ntest('hydrochemistry CSV recalculates edited laboratory values instead of exporting stale cached results', async () => {
+
+test('hydrochemistry CSV recalculates edited laboratory values instead of exporting stale cached results', async () => {
  const { buildHydrochemistryCSV } = await import('../src/engine/hydrochemistry.js');
  const edited={...sample,ca:80.156,calculation:calculateHydrochemistry(sample)};
  const lines=buildHydrochemistryCSV([edited]).split(String.fromCharCode(13,10));
