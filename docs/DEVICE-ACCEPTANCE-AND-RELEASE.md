@@ -491,3 +491,11 @@ The first CI attempt on commit `be3d7042c1ca9fcfb97e84dade9b954bcd9614c4` ran 19
 ## Android synthetic IDW CSV download fallback — 24 November 2026
 
 A physical-device report identified that tapping the synthetic IDW CSV download control in the Android preview produced no visible response. The source used a browser Blob URL and a programmatically clicked anchor, which is not a dependable file-download path in every Android WebView. The UI has therefore been updated to reveal the generated CSV in a read-only, selectable text area after the action, with Clipboard API and legacy copy-command support plus explicit manual-copy guidance. This is a fallback for retrieving the fixture, not proof that Android's native Downloads folder receives a file. Rebuild and CI verification are required; physical-device acceptance must confirm the CSV is visible, copyable and can be saved as a .csv file before marking this test passed.
+
+
+## 2026-11-24 — vulnerability surface and Android build verification
+
+- Commit baseline: `2e9c4754fbdc454c3eb82942e0115bea6652d356`; workflow run [45291018553](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45291018553) completed successfully across web/scientific tests, Windows desktop build, and Android debug build plus API 35 emulator install/launch and side-by-side preview build.
+- Android artifact: [ndwq-integrated-android-debug-apk](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45291018553/artifacts/14873823394), archive SHA-256 `07b415057f2572dc48205b3edad818575017118348b6f3e715b31c13fbaad4d8`. Physical-device acceptance remains outstanding.
+- Development task started: georeferenced DRASTIC assessment surface using IDW, bounded to the assessment convex hull. The surface is exploratory, uses provisional app screening bands, and must not be described as calibrated risk or contamination probability. Duplicate locations and invalid coordinates/scores are rejected.
+- This new feature requires its own CI run and physical-device acceptance before being treated as verified.
