@@ -432,3 +432,24 @@ The immediately preceding branch-head commit was efb34fbf318c6a60a17e3c929af67c2
 - Windows ndwq-integrated-windows-desktop, ID 14707571758, 95,587,175 bytes; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/44904683689/artifacts/14707571758); expires 5 December 2026 at 12:37:29 UTC.
 
 These are build artifacts and CI/emulator evidence only. The Android APK remains debug-signed; signing compatibility with the installed phone app and production signing are not established. Physical-device acceptance, actual phone backup/restore, Windows installation/runtime, accessible web deployment/browser acceptance and scientific sign-off remain outstanding. PR #2 remains open and draft. No merge, production deployment, release publication or signing-key change was performed.
+
+
+## Missing-coordinate coercion guard and latest same-commit CI — 23 November 2026
+
+Coordinate conversion APIs now reject blank strings, whitespace-only strings, null, undefined, booleans, non-finite numbers and non-numeric types before numeric coercion. This prevents JavaScript conversions such as `Number('')`, `Number(null)` and `Number(false)` from silently creating zero-valued coordinates. The guard covers DD/DMS/DDM parsing, decimal formatting, UTM zone selection and validation, WGS84-to-UTM conversion, and UTM-to-WGS84 conversion. Regression tests exercise missing/invalid inputs across these entry points; existing positive coordinate, hemisphere, UTM round-trip and independent PROJ reference tests remain in place.
+
+The earlier specifically requested [run #43762079209](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43762079209) is complete and failed on its Android launch step after ADB reported a settings-service broken pipe and exit code 224; the Android artifact upload was skipped. The subsequent current-head [run #45022240411](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45022240411), on commit `36e8d36197c086c5950e26be8adedfb767539a4f`, passed all three platform jobs:
+
+- Web/scientific tests: **127 passed, 0 failed**; production web build and artifact upload passed.
+- Android: original-identity debug APK built; API 35 emulator boot, install and launch passed. The logs observed process `2162` and resumed activity `com.nigerdeltawq.mobile/.MainActivity`. The isolated preview package `com.nigerdeltawq.mobile.preview2` also installed and launched.
+- Windows: NSIS installer build and artifact upload passed.
+
+Artifacts from run #45022240411 (GitHub-uploaded ZIP archive sizes):
+
+- Web `ndwq-integrated-web`, ID `14754456786`, **301,735 bytes**, SHA-256 `17e9e48b362ea96d2eeb2bf545cac70bfecf36b204cb5f793fd53264bb865236`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45022240411/artifacts/14754456786); expires **6 December 2026 at 12:26:23 UTC**.
+- Android `ndwq-integrated-android-debug-apk`, ID `14754283113`, **8,081,294 bytes**, SHA-256 `23acb6e81342d1646e90850975dcb757bedeebc94c83145cab49004e4b1f5c87`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45022240411/artifacts/14754283113); expires **6 December 2026 at 12:30:08 UTC**.
+- Windows `ndwq-integrated-windows-desktop`, ID `14753808090`, **95,587,429 bytes**, SHA-256 `490b736351c7fc1198c55b5a26c3e4453e93299c13322edf5b309adfd75a0236`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45022240411/artifacts/14753808090); expires **6 December 2026 at 12:28:02 UTC**.
+
+The original APK metadata confirms package `com.nigerdeltawq.mobile`, label `Niger Delta WQ`, launcher `com.nigerdeltawq.mobile.MainActivity`. Its certificate fingerprint is `281144bed5e4ddb26bcd8473049601a2ed2cf4768a61e313b717f72e605d950f`, with subject `Android Debug`. This remains a CI debug certificate, not a persistent production signing identity; compatibility with the APK already installed on the user's phone is not established. The artifact above is a ZIP containing the APK(s) and metadata, not a direct standalone APK URL.
+
+This CI pass supersedes the failed earlier emulator run for current-branch build evidence, but does not retroactively change that failed run. It does not establish physical-device first-screen/core-workflow acceptance, safe update or backup/restore on actual phone data, Windows installation/runtime on a real PC, public web deployment/browser acceptance, or scientific review/sign-off. PR #2 remains open and draft; no merge, public release, deployment, signing-key change or production signing was performed. Retain the existing scientific limitations: ERT inversion is not implemented, imported inversion/interpolation is not field-data inversion, DRASTIC bands require local justification, and WQI alone does not establish potability.

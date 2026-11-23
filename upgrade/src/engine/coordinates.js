@@ -1,10 +1,25 @@
-const finite = value => value !== '' && value != null && Number.isFinite(Number(value));
+function finiteNumber(value, label) {
+  // Number(''), Number(null) and Number(false) all produce zero. Reject
+  // missing/non-numeric inputs before coercion so absent coordinates can
+  // never become plausible-looking (0, 0) locations.
+  if ((typeof value !== 'number' && typeof value !== 'string')
+    || (typeof value === 'string' && value.trim() === '')) {
+    throw new Error(label + ' must be a finite number.');
+  }
+  const number = typeof value === 'number' ? value : Number(value.trim());
+  if (!Number.isFinite(number)) throw new Error(label + ' must be a finite number.');
+  return number;
+}
 
 export const WGS84_GEOGRAPHIC_CRS = 'EPSG:4326';
 
 function parts(value) {
-  if (typeof value === 'number') return [value];
-  const raw = String(value).trim();
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new Error('Enter a valid coordinate value.');
+    return [value];
+  }
+  if (typeof value !== 'string') throw new Error('Enter a valid coordinate value.');
+  const raw = value.trim();
   if (/[NSEW]/i.test(raw)) throw new Error('Enter numeric coordinate values only; select the hemisphere separately.');
   const text = raw.replace(/[°º'′"″,:;]/g, ' ');
   const values = text.split(/\s+/).filter(Boolean).map(Number);
@@ -37,8 +52,8 @@ export function coordinateToDecimal(value, format = 'DD', hemisphere = 'N', axis
 }
 
 export function decimalToCoordinate(decimal, format = 'DD') {
-  const value = Number(decimal);
-  if (!Number.isFinite(value) || Math.abs(value) > 180) throw new Error('Coordinate must be a finite value within ±180 degrees.');
+  const value = finiteNumber(decimal, 'Coordinate');
+  if (Math.abs(value) > 180) throw new Error('Coordinate must be a finite value within ±180 degrees.');
   const absolute = Math.abs(value);
   if (format === 'DD') return absolute.toFixed(6);
   if (format === 'DDM') {
@@ -65,8 +80,8 @@ const WGS84_E2 = 0.0066943799901413165;
 const UTM_K0 = 0.9996;
 
 export function getStandardUTMZone(latitude, longitude) {
-  const lat = Number(latitude), lon = Number(longitude);
-  if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -80 || lat > 84 || lon < -180 || lon > 180) {
+  const lat = finiteNumber(latitude, 'Latitude'), lon = finiteNumber(longitude, 'Longitude');
+  if (lat < -80 || lat > 84 || lon < -180 || lon > 180) {
     throw new Error('WGS84 coordinates are outside the supported UTM latitude/longitude range.');
   }
   // Standard six-degree longitude bands, with the official Norway and Svalbard exceptions.
@@ -82,8 +97,8 @@ export function getStandardUTMZone(latitude, longitude) {
 
 export function validateUTMDisplayCRS(latitude, crs) {
   const match = /^UTM Zone ([1-9]|[1-5]\d|60)([NS]) \(WGS84\)$/.exec(String(crs || ''));
-  const lat = Number(latitude);
-  if (!match || !Number.isFinite(lat) || lat < -80 || lat > 84) {
+  const lat = finiteNumber(latitude, 'Latitude');
+  if (!match || lat < -80 || lat > 84) {
     throw new Error('Choose a valid WGS84 UTM zone and latitude within the UTM range.');
   }
   const expectedHemisphere = lat < 0 ? 'S' : 'N';
@@ -94,11 +109,11 @@ export function validateUTMDisplayCRS(latitude, crs) {
 }
 
 export function decimalToUTM(latitude, longitude, requestedZone) {
-  const lat = Number(latitude), lon = Number(longitude);
-  if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -80 || lat > 84 || lon < -180 || lon > 180) {
+  const lat = finiteNumber(latitude, 'Latitude'), lon = finiteNumber(longitude, 'Longitude');
+  if (lat < -80 || lat > 84 || lon < -180 || lon > 180) {
     throw new Error('WGS84 coordinates are outside the supported UTM latitude/longitude range.');
   }
-  const zone = requestedZone == null ? getStandardUTMZone(lat, lon) : Number(requestedZone);
+  const zone = requestedZone == null ? getStandardUTMZone(lat, lon) : finiteNumber(requestedZone, 'UTM zone');
   if (!Number.isInteger(zone) || zone < 1 || zone > 60) throw new Error('UTM zone must be an integer from 1 to 60.');
   const phi = lat * Math.PI / 180, lambda = lon * Math.PI / 180;
   const lambda0 = ((zone - 1) * 6 - 180 + 3) * Math.PI / 180;
@@ -117,9 +132,9 @@ export function decimalToUTM(latitude, longitude, requestedZone) {
 }
 
 export function utmToDecimal(easting, northing, zone, hemisphere = 'N') {
-  const e = Number(easting), y0 = Number(northing);
+  const e = finiteNumber(easting, 'UTM easting'), y0 = finiteNumber(northing, 'UTM northing');
   const x = e - 500000;
-  const z = Number(zone), hemi = String(hemisphere).toUpperCase();
+  const z = finiteNumber(zone, 'UTM zone'), hemi = String(hemisphere).toUpperCase();
   // Standard UTM coordinates use an easting between 100,000 and 900,000 m.
   // Reject out-of-grid values rather than returning plausible-looking but invalid locations.
   if (!Number.isFinite(e) || e < 100000 || e > 900000

@@ -148,3 +148,21 @@ test('changing coordinate format rejects invalid partial input instead of reinte
     latitude: '', longitude: '', format: 'DD', nextFormat: 'UTM'
   }), /Choose DD, DMS or DDM/);
 });
+
+
+test('coordinate conversions reject missing and non-finite values instead of coercing them to zero', () => {
+  const missingOrInvalid = ['', '   ', null, undefined, false, NaN, Infinity];
+  for (const value of missingOrInvalid) {
+    assert.throws(() => coordinateToDecimal(value, 'DD', 'N', 'latitude'));
+    assert.throws(() => decimalToCoordinate(value, 'DD'), /finite number/);
+    assert.throws(() => getStandardUTMZone(value, 6.26), /Latitude must be a finite number/);
+    assert.throws(() => getStandardUTMZone(4.92, value), /Longitude must be a finite number/);
+    assert.throws(() => validateUTMDisplayCRS(value, 'UTM Zone 32N (WGS84)'), /Latitude must be a finite number/);
+    assert.throws(() => decimalToUTM(value, 6.26, 32), /Latitude must be a finite number/);
+    assert.throws(() => decimalToUTM(4.92, value, 32), /Longitude must be a finite number/);
+    assert.throws(() => utmToDecimal(500000, value, 32, 'N'), /UTM northing must be a finite number/);
+    assert.throws(() => utmToDecimal(value, 500000, 32, 'N'), /UTM easting must be a finite number/);
+  }
+  assert.throws(() => utmToDecimal(500000, 500000, null, 'N'), /UTM zone must be a finite number/);
+  assert.throws(() => decimalToUTM(4.92, 6.26, ''), /UTM zone must be a finite number/);
+});
