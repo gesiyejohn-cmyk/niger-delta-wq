@@ -134,3 +134,14 @@ test('spatial analysis exposes the synthetic CSV download and honest manual-entr
   assert.ok(source.includes('ndwq-synthetic-idw-test-data.csv'));
   assert.match(source, /create eight separate water-quality records manually/);
 });
+
+
+test('synthetic IDW CSV download has an in-app copyable fallback for Android WebViews', () => {
+  const source = readFileSync(new URL('../src/pages/SpatialAnalysisPage.jsx', import.meta.url), 'utf8');
+  assert.match(source, /Download \/ view synthetic test CSV/);
+  assert.match(source, /Synthetic test CSV/);
+  assert.match(source, /id="ndwq-synthetic-csv"/);
+  assert.match(source, /navigator\.clipboard\?\.writeText/);
+  assert.match(source, /document\.execCommand\('copy'\)/);
+  assert.match(source, /Select and copy the CSV text below/);
+});

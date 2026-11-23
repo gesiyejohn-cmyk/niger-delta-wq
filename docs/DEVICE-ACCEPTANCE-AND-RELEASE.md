@@ -486,3 +486,8 @@ The documentation/test-only follow-up does not alter coordinate conversion, WGS8
 ## IDW dataset regression-test correction — 22 November 2026
 
 The first CI attempt on commit `be3d7042c1ca9fcfb97e84dade9b954bcd9614c4` ran 192 tests and found one failure in the newly added UI-source assertion: the test regex was over-escaped and looked for a backslash before the filename extension. The application download filename itself was correct. The assertion now uses a literal substring check; the synthetic fixture validation and the application code are unchanged. The exact corrected commit is being revalidated by a new full workflow run.
+
+
+## Android synthetic IDW CSV download fallback — 24 November 2026
+
+A physical-device report identified that tapping the synthetic IDW CSV download control in the Android preview produced no visible response. The source used a browser Blob URL and a programmatically clicked anchor, which is not a dependable file-download path in every Android WebView. The UI has therefore been updated to reveal the generated CSV in a read-only, selectable text area after the action, with Clipboard API and legacy copy-command support plus explicit manual-copy guidance. This is a fallback for retrieving the fixture, not proof that Android's native Downloads folder receives a file. Rebuild and CI verification are required; physical-device acceptance must confirm the CSV is visible, copyable and can be saved as a .csv file before marking this test passed.
