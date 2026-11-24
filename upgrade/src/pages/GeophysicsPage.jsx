@@ -330,7 +330,7 @@ function VESPlot({ record }) {
       <text x="375" y="286" textAnchor="middle" fontSize="11" fill="#475569">{spacingLabel} (m)</text>
       {points.map((point, index) => <g key={index}>
         <circle cx={55 + (point.ab2 ?? point.spacing) / maxX * 630} cy={255 - point.apparentResistivity / maxY * 220} r="4" fill="#2563eb" />
-        <title>AB/2 {point.ab2} m; apparent resistivity {point.apparentResistivity.toFixed(2)} Ωm</title>
+        <title>{spacingLabel} {point.ab2 ?? point.spacing} m; apparent resistivity {point.apparentResistivity.toFixed(2)} Ωm</title>
       </g>)}
     </svg>
     </InteractiveChartFrame>
