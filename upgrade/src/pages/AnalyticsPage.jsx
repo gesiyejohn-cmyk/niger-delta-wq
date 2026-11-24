@@ -7,9 +7,9 @@ const finite=v=>v!=null&&!(typeof v==='string'&&v.trim()==='')&&Number.isFinite(
 const colours=['#2563eb','#dc2626','#0f766e','#9333ea','#d97706'];
 function Chart({title,description,children}){
  const [zoom,setZoom]=useState(1),[offset,setOffset]=useState({x:0,y:0}),drag=useRef(null);
- function startPan(e){if(zoom<=1)return;drag.current={x:e.clientX,y:e.clientY,ox:offset.x,oy:offset.y};e.currentTarget.setPointerCapture?.(e.pointerId);}
- function movePan(e){if(!drag.current)return;setOffset({x:drag.current.ox+e.clientX-drag.current.x,y:drag.current.oy+e.clientY-drag.current.y});}
- function stopPan(){drag.current=null;}
+ function startPan(e){if(zoom<=1||e.button!==0||e.isPrimary===false)return;drag.current={pointerId:e.pointerId,x:e.clientX,y:e.clientY,ox:offset.x,oy:offset.y};e.currentTarget.setPointerCapture?.(e.pointerId);}
+ function movePan(e){if(!drag.current||drag.current.pointerId!==e.pointerId)return;setOffset({x:drag.current.ox+e.clientX-drag.current.x,y:drag.current.oy+e.clientY-drag.current.y});}
+ function stopPan(e){if(drag.current&&e?.pointerId!=null&&drag.current.pointerId!==e.pointerId)return;drag.current=null;}
  function resetView(){setZoom(1);setOffset({x:0,y:0});}
  return <section className="panel" style={{marginTop:16}}>
   <h2>{title}</h2>{description&&<p className="muted">{description}</p>}

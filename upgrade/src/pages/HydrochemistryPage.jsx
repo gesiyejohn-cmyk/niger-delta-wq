@@ -13,9 +13,9 @@ const palette=['#2563eb','#dc2626','#0f766e','#9333ea','#d97706','#0891b2','#be1
 function trianglePoint(parts,ox,oy,scale){return{x:ox+(parts[1]*.5+parts[2])*scale/100,y:oy+parts[1]*Math.sqrt(3)/2*scale/100};}
 function ChartFrame({title,children,description}){
  const [zoom,setZoom]=useState(1),[offset,setOffset]=useState({x:0,y:0}),drag=useRef(null);
- function startPan(e){if(zoom<=1)return;drag.current={x:e.clientX,y:e.clientY,ox:offset.x,oy:offset.y};e.currentTarget.setPointerCapture?.(e.pointerId);}
- function movePan(e){if(!drag.current)return;setOffset({x:drag.current.ox+e.clientX-drag.current.x,y:drag.current.oy+e.clientY-drag.current.y});}
- function stopPan(){drag.current=null;}
+ function startPan(e){if(zoom<=1||e.button!==0||e.isPrimary===false)return;drag.current={pointerId:e.pointerId,x:e.clientX,y:e.clientY,ox:offset.x,oy:offset.y};e.currentTarget.setPointerCapture?.(e.pointerId);}
+ function movePan(e){if(!drag.current||drag.current.pointerId!==e.pointerId)return;setOffset({x:drag.current.ox+e.clientX-drag.current.x,y:drag.current.oy+e.clientY-drag.current.y});}
+ function stopPan(e){if(drag.current&&e?.pointerId!=null&&drag.current.pointerId!==e.pointerId)return;drag.current=null;}
  function resetView(){setZoom(1);setOffset({x:0,y:0});}
  return <section style={box}><h2>{title}</h2>{description&&<p className="muted">{description}</p>}
  <div className="actions" style={{margin:'8px 0'}}><button type="button" onClick={()=>setZoom(v=>Math.min(3,v+.25))} disabled={zoom>=3}>Zoom in</button><button type="button" onClick={()=>setZoom(v=>Math.max(1,v-.25))} disabled={zoom<=1}>Zoom out</button><button type="button" onClick={resetView} disabled={zoom===1&&offset.x===0&&offset.y===0}>Reset view</button><span className="muted">Zoom {Math.round(zoom*100)}% · Drag chart to pan</span></div>

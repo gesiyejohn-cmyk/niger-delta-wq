@@ -16,16 +16,19 @@ function InteractiveChartFrame({ title, children }) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const drag = useRef(null);
   function startPan(event) {
-    if (zoom <= 1) return;
-    drag.current = { x: event.clientX, y: event.clientY, ox: offset.x, oy: offset.y };
+    if (zoom <= 1 || event.button !== 0 || event.isPrimary === false) return;
+    drag.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, ox: offset.x, oy: offset.y };
     event.currentTarget.setPointerCapture?.(event.pointerId);
   }
   function movePan(event) {
-    if (!drag.current) return;
+    if (!drag.current || drag.current.pointerId !== event.pointerId) return;
     setOffset({ x: drag.current.ox + event.clientX - drag.current.x,
       y: drag.current.oy + event.clientY - drag.current.y });
   }
-  function stopPan() { drag.current = null; }
+  function stopPan(event) {
+    if (drag.current && event?.pointerId != null && drag.current.pointerId !== event.pointerId) return;
+    drag.current = null;
+  }
   function reset() { setZoom(1); setOffset({ x: 0, y: 0 }); }
   return <section aria-label={title} style={{ margin: '12px 0' }}>
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>

@@ -71,3 +71,17 @@ test('vulnerability map explicitly enables zoom, drag, touch and keyboard naviga
   assert.match(source, /L\.map\(mapElement\.current, \{ zoomControl: true, dragging: true, touchZoom: true, scrollWheelZoom: true, doubleClickZoom: true, keyboard: true \}\)/);
   assert.match(source, /aria-label="Interactive groundwater vulnerability map"/);
 });
+
+
+test('chart pan handlers track the initiating primary pointer and release cleanly', () => {
+  for (const path of ['HydrochemistryPage.jsx', 'AnalyticsPage.jsx', 'GeophysicsPage.jsx']) {
+    const source = readFileSync(new URL('../src/pages/' + path, import.meta.url), 'utf8');
+    assert.match(source, /event?\.?(?:isPrimary)===false|e\.isPrimary===false/);
+    assert.match(source, /pointerId/);
+    assert.match(source, /onLostPointerCapture/);
+  }
+  const ert = readFileSync(new URL('../src/pages/ERTTomogram.jsx', import.meta.url), 'utf8');
+  assert.match(ert, /drag\.pointerId!==event\.pointerId/);
+  assert.match(ert, /onLostPointerCapture=\{\(\)=>setDrag\(null\)\}/);
+  assert.match(ert, /suppressClick\.current=false/);
+});
