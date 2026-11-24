@@ -58,3 +58,16 @@ test('ERT section drag suppresses the synthetic click so panning does not select
   assert.match(source, /if \(suppressClick\.current\) \{[\s\S]*?suppressClick\.current = false;[\s\S]*?return;/);
   assert.match(source, /onClick=\{handleSectionClick\}/);
 });
+
+test('spatial IDW map explicitly enables zoom, drag, touch and keyboard navigation', () => {
+  const source = readFileSync(new URL('../src/pages/SpatialAnalysisPage.jsx', import.meta.url), 'utf8');
+  assert.match(source, /L\.map\(el\.current,\{zoomControl:true,dragging:true,touchZoom:true,scrollWheelZoom:true,doubleClickZoom:true,keyboard:true\}\)/);
+  assert.match(source, /aria-label="Interactive groundwater IDW map"/);
+  assert.match(source, /Map controls: use \+\/− to zoom, drag to pan/);
+});
+
+test('vulnerability map explicitly enables zoom, drag, touch and keyboard navigation', () => {
+  const source = readFileSync(new URL('../src/pages/VulnerabilityPage.jsx', import.meta.url), 'utf8');
+  assert.match(source, /L\.map\(mapElement\.current, \{ zoomControl: true, dragging: true, touchZoom: true, scrollWheelZoom: true, doubleClickZoom: true, keyboard: true \}\)/);
+  assert.match(source, /aria-label="Interactive groundwater vulnerability map"/);
+});
