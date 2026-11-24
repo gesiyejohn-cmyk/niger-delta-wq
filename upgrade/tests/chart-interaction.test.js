@@ -85,3 +85,10 @@ test('chart pan handlers track the initiating primary pointer and release cleanl
   assert.match(ert, /onLostPointerCapture=\{\(\)=>setDrag\(null\)\}/);
   assert.match(ert, /suppressClick\.current=false/);
 });
+
+
+test('analytics correlation heatmap safely renders undefined correlations for zero-variance parameters', () => {
+  const source = readFileSync(new URL('../src/pages/AnalyticsPage.jsx', import.meta.url), 'utf8');
+  assert.match(source, /title=\{v==null\?'Undefined: zero variance or insufficient paired data':v\.toFixed\(3\)\}/);
+  assert.match(source, /v==null\?'—':v\.toFixed\(2\)/);
+});
