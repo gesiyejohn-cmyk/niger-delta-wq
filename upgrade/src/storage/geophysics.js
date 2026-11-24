@@ -146,7 +146,7 @@ export async function saveERTInterpretation(ertModelId, interpretation) {
   const tx = db.transaction(['ert', 'ertInterpretations'], 'readwrite');
   const model = await tx.objectStore('ert').get(ertModelId);
   if (!model) {
-    tx.abort();
+    await tx.done;
     throw new Error('The selected raw ERT model no longer exists.');
   }
   const saved = {
