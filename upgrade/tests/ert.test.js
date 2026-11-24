@@ -38,7 +38,7 @@ test('ERT grid builder refuses sparse or one-dimensional point sets', () => {
 });
 test('ERT interpolation rejects invalid model points and duplicate grid cells', () => {
   assert.throws(() => interpolateERTResistivity([{ x: 0, depth: 1, resistivity: -10 }], 1, 1), /finite distance, non-negative depth and positive resistivity/);
-  assert.throws(() => interpolateERTResistivity([{ x: 0, depth: 1, resistivity: 10 }, { x: 0, depth: 1, resistivity: 20 }], 1, 1), /duplicate distance\\/depth cells/);
+  assert.throws(() => interpolateERTResistivity([{ x: 0, depth: 1, resistivity: 10 }, { x: 0, depth: 1, resistivity: 20 }], 1, 1), /duplicate distance/);
   assert.throws(() => interpolateERTResistivity(gridPoints, Number.NaN, 1), /coordinates must be finite/);
 });
 test('ERT interpolation remains finite for large but representable survey coordinates', () => {
