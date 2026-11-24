@@ -266,10 +266,10 @@ export default function GeophysicsPage() {
         </div>)}
         {activeERTModel && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 16, alignItems: 'start', minWidth: 0 }} aria-label="Linked ERT and geological interpretation views">
           <div style={{ minWidth: 0 }}>
-            <ERTTomogram models={[activeERTModel]} selectedERTDistance={selectedERTDistance} onCellSelect={cell => { setSelectedCell({ ...cell, modelId: activeERTModel.id, lineId: activeERTModel.lineId || 'Unlabelled line' }); setSelectedERTDistance(cell.x); }} />
+            <ERTTomogram models={[activeERTModel]} selectedDistance={selectedERTDistance} onCellSelect={cell => { setSelectedCell({ ...cell, modelId: activeERTModel.id, lineId: activeERTModel.lineId || 'Unlabelled line' }); setSelectedERTDistance(cell.x); }} />
           </div>
           <div style={{ minWidth: 0 }}>
-            <GeologicalInterpretationEditor model={activeERTModel} selectedERTDistance={selectedERTDistance} onDistanceChange={distance => { setSelectedERTDistance(distance); const nearest = displayCells.reduce((best, cell) => !best || Math.abs(cell.x-distance) < Math.abs(best.x-distance) ? cell : best, null); if (nearest) setSelectedCell(nearest); }} />
+            <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedERTDistance} onDistanceChange={distance => { setSelectedERTDistance(distance); const nearest = displayCells.reduce((best, cell) => !best || Math.abs(cell.x-distance) < Math.abs(best.x-distance) ? cell : best, null); if (nearest) setSelectedCell(nearest); }} />
           </div>
         </div>}
         {allCells.length > 0 && <>
