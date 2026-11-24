@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { buildERTGrid } from '../engine/ert.js';
 
 function colour(value, min, max) {
@@ -15,6 +15,7 @@ const initialView = { x: 0, y: 0, w: 760, h: 390 };
 export default function ERTTomogram({ models = [], onCellSelect = () => {} }) {
   const [view, setView] = useState(initialView);
   const [drag, setDrag] = useState(null);
+  const suppressClick = useRef(false);
   const points = useMemo(() => models.flatMap(model =>
     (model.cells || []).map(p => ({...p, lineId: model.lineId || 'Unlabelled line'}))
   ), [models]);
@@ -31,6 +32,13 @@ export default function ERTTomogram({ models = [], onCellSelect = () => {} }) {
   function pan(dx,dy) {
     setView(old => ({...old,x:Math.max(0,Math.min(760-old.w,old.x+dx*old.w)),
       y:Math.max(0,Math.min(390-old.h,old.y+dy*old.h))}));
+  }
+  function handleSectionClick(event) {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
+    selectNearest(event);
   }
   function selectNearest(event) {
     if (!grid) return;
@@ -62,10 +70,10 @@ export default function ERTTomogram({ models = [], onCellSelect = () => {} }) {
         <button type="button" onClick={()=>pan(0,-0.2)}>↑ Pan</button>
         <button type="button" onClick={()=>pan(0,0.2)}>Pan ↓</button>
       </div>
-      <svg viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} role="img" aria-label="Interpolated resistivity tomogram with zoom and pan" onClick={selectNearest}
-        onPointerDown={event=>{if(event.button!==0)return;event.currentTarget.setPointerCapture?.(event.pointerId);setDrag({x:event.clientX,y:event.clientY,view});}}
-        onPointerMove={event=>{if(!drag)return;const rect=event.currentTarget.getBoundingClientRect();setView({...drag.view,x:Math.max(0,Math.min(760-drag.view.w,drag.view.x-(event.clientX-drag.x)*drag.view.w/rect.width)),y:Math.max(0,Math.min(390-drag.view.h,drag.view.y-(event.clientY-drag.y)*drag.view.h/rect.height))});}}
-        onPointerUp={()=>setDrag(null)} onPointerCancel={()=>setDrag(null)}
+      <svg viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} role="img" aria-label="Interpolated resistivity tomogram with zoom and pan" onClick={handleSectionClick}
+        onPointerDown={event=>{if(event.button!==0)return;suppressClick.current=false;event.currentTarget.setPointerCapture?.(event.pointerId);setDrag({x:event.clientX,y:event.clientY,view});}}
+        onPointerMove={event=>{if(!drag)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;if(Math.hypot(dx,dy)>4)suppressClick.current=true;const rect=event.currentTarget.getBoundingClientRect();setView({...drag.view,x:Math.max(0,Math.min(760-drag.view.w,drag.view.x-dx*drag.view.w/rect.width)),y:Math.max(0,Math.min(390-drag.view.h,drag.view.y-dy*drag.view.h/rect.height))});}}
+        onPointerUp={()=>setDrag(null)} onPointerCancel={()=>{setDrag(null);suppressClick.current=false;}}
         style={{width:'100%',background:'#fff',border:'1px solid #cbd5e1',touchAction:'pan-y',cursor:drag?'grabbing':'grab'}}>
         <text x="65" y="16" fontSize="12" fill="#334155">Depth (m)</text>
         <text x="350" y="375" fontSize="12" fill="#334155">Distance along line (m)</text>
