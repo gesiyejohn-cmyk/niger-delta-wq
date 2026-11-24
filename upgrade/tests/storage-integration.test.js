@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getDB } from '../src/storage/db.js';
-import { saveVES, listVES, saveVESInterpretation, saveERT, getERTSource } from '../src/storage/geophysics.js';
+import { saveVES, listVES, saveVESInterpretation, saveERT, getERTSource, saveERTInterpretation, getERTInterpretation, deleteERTInterpretation } from '../src/storage/geophysics.js';
 import { createDatabaseBackup, restoreDatabaseBackup, validateDatabaseBackup } from '../src/storage/backup.js';
 import { saveWQIAssessment, listWQIAssessments } from '../src/storage/wqi.js';
 
@@ -182,4 +182,37 @@ test('backup validation rejects duplicate primary keys before restore', () => {
     () => validateDatabaseBackup(duplicateSettingBackup),
     /duplicate primary keys in settings/
   );
+});
+
+
+test('geological ERT interpretations persist independently and can be reopened or deleted', async () => {
+  const db = await getDB();
+  const stores = ['samples', 'settings', 'syncQueue', 'ves', 'vesInterpretations',
+    'ert', 'ertSource', 'ertInterpretations', 'hydrochemistry', 'vulnerability', 'wqiAssessments'];
+  const clearTx = db.transaction(stores, 'readwrite');
+  for (const name of stores) await clearTx.objectStore(name).clear();
+  await clearTx.done;
+
+  const model = await saveERT({
+    id: 'ert-interpretation-roundtrip',
+    lineId: 'ERT-ROUNDTRIP',
+    cells: [{ x: 0, depth: 1, resistivity: 80 }]
+  });
+  const interpretation = {
+    schemaVersion: 1,
+    ertModelId: model.id,
+    lineId: model.lineId,
+    interpretationStatus: 'provisional',
+    units: [{ id: 'unit-1', name: 'Sandy clay', confidence: 'low', evidence: 'Illustrative interpretation' }],
+    stations: [{ x: 0, boundaries: [0, 10] }, { x: 5, boundaries: [0, 10] }]
+  };
+
+  const saved = await saveERTInterpretation(model.id, interpretation);
+  assert.equal(saved.ertModelId, model.id);
+  assert.equal((await getERTInterpretation(model.id)).units[0].name, 'Sandy clay');
+  assert.equal((await db.get('ert', model.id)).lineId, 'ERT-ROUNDTRIP');
+
+  await deleteERTInterpretation(model.id);
+  assert.equal(await getERTInterpretation(model.id), undefined);
+  assert.equal((await db.get('ert', model.id)).lineId, 'ERT-ROUNDTRIP');
 });
