@@ -19,3 +19,12 @@ test('charge-balance table labels cation and anion sums explicitly as totals', (
   assert.match(source, /Total Anions \(meq\/L\)/);
   assert.match(source, /sum of all measured major-ion equivalents for each sample/);
 });
+
+
+test('hydrochemistry CSV export follows the checked sample selection', () => {
+  const source = readFileSync(new URL('../src/pages/HydrochemistryPage.jsx', import.meta.url), 'utf8');
+  assert.match(source, /const exportSamples=samples\.filter\(s=>selected\.includes\(s\.id\)\)/);
+  assert.match(source, /buildHydrochemistryCSV\(exportSamples\)/);
+  assert.match(source, /disabled=\{!exportSamples\.length\}/);
+  assert.match(source, /Download selected chemistry and facies CSV/);
+});
