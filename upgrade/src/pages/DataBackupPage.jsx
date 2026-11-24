@@ -20,20 +20,31 @@ export default function DataBackupPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [backupText, setBackupText] = useState('');
+  const [copyStatus, setCopyStatus] = useState('');
 
   async function downloadBackup() {
     setBusy(true); setError(''); setMessage('');
     try {
       const backup = await createDatabaseBackup();
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = 'niger-delta-wq-backup-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
-      document.body.appendChild(anchor); anchor.click(); anchor.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      const text = JSON.stringify(backup, null, 2);
+      setBackupText(text);
+      setCopyStatus('');
+      let downloadStarted = false;
+      try {
+        const blob = new Blob([text], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'niger-delta-wq-backup-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+        document.body.appendChild(anchor); anchor.click(); anchor.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+        downloadStarted = true;
+      } catch (downloadError) {
+        setCopyStatus('Automatic download is unavailable. Use Copy backup JSON or manually select the text below.');
+      }
       const count = Object.values(backup.stores).reduce((sum, records) => sum + records.length, 0);
-      setMessage('Backup file created with ' + count + ' records across ' + Object.keys(backup.stores).length + ' data stores.');
+      setMessage('Backup data prepared with ' + count + ' records across ' + Object.keys(backup.stores).length + ' data stores.' + (downloadStarted ? ' If no file appears, use the copy fallback below.' : ' Use the copy fallback below to save it manually.'));
     } catch (e) { setError('Backup failed: ' + e.message); }
     finally { setBusy(false); }
   }
@@ -80,6 +91,26 @@ export default function DataBackupPage() {
       <p>Exports all supported local data stores to a JSON file. The export does not send your records to a server.</p>
       <button style={button} type="button" disabled={busy} onClick={downloadBackup}>{busy ? 'Working…' : 'Download full backup'}</button>
     </section>
+    {backupText && <section style={panel} aria-live="polite">
+      <h2>Backup JSON fallback</h2>
+      <p>If your device does not save the downloaded file, copy this complete JSON backup into a text editor and save it with a <strong>.json</strong> extension. Keep the file private; it contains your local project records.</p>
+      <button style={button} type="button" onClick={async () => {
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(backupText);
+            setCopyStatus('Backup JSON copied. Paste it into a text editor and save as a .json file.');
+            return;
+          }
+        } catch (e) { /* use the manual selection fallback */ }
+        const field = document.getElementById('ndwq-backup-json');
+        if (field) {
+          field.focus(); field.select(); field.setSelectionRange(0, field.value.length);
+          setCopyStatus('Select and copy the complete JSON text, then paste it into a text editor and save as a .json file.');
+        }
+      }}>Copy backup JSON</button>
+      {copyStatus && <p className="muted" role="status">{copyStatus}</p>}
+      <textarea id="ndwq-backup-json" aria-label="Full database backup JSON" readOnly value={backupText} rows={12} style={{ width: '100%', marginTop: 8, fontFamily: 'monospace', fontSize: 11 }} />
+    </section>}
     <section style={panel}>
       <h2>Restore from backup</h2>
       <label>Select a Niger Delta WQ backup file
