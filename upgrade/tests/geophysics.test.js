@@ -165,8 +165,8 @@ test('Schlumberger complete-row selection still requires AB/2, MN/2 and resistan
 
 test('VES graph uses the method-specific electrode spacing field', () => {
   const source = readFileSync(new URL('../src/pages/GeophysicsPage.jsx', import.meta.url), 'utf8');
-  assert.match(source, /const spacingFor = point => wenner \\? point\\.spacing : point\\.ab2/);
-  assert.match(source, /const spacingLabel = wenner \\? 'a' : 'AB\\/2'/);
+  assert.ok(source.includes('const spacingFor = point => wenner ? point.spacing : point.ab2;'));
+  assert.ok(source.includes("const spacingLabel = wenner ? 'a' : 'AB/2';"));
 });
 
 test('Wenner saved rows with an empty AB/2 field still classify using spacing', () => {
