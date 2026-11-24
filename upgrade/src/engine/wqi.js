@@ -39,6 +39,7 @@ function calculateForStandard(sample, standard, overrides) {
       throw new Error(`${definition.name}: measurement must be a finite number. Correct the value or leave it blank only when it was not measured.`);
     }
     const value = Number(rawValue);
+    if (value < 0) throw new Error(`${definition.name}: measurement cannot be negative.`);
 
     const base = definition[standard];
     const override = overrides?.[id]?.[standard];
@@ -156,6 +157,9 @@ export function calculateWeightedArithmeticWQI(measurements) {
     if (!isNumericInput(item.value)) {
       throw new Error((item.label || item.key || 'Parameter') + ': measurement must be a finite number or left blank only when it was not measured.');
     }
+    if (Number(item.value) < 0) {
+      throw new Error((item.label || item.key || 'Parameter') + ': measurement cannot be negative.');
+    }
   }
   const usable = measurements.filter(item => item && hasValue(item.value)
     && hasValue(item.ideal)
@@ -267,6 +271,7 @@ function calculateDatasetForStandard(samples, standard, overrides) {
         throw new Error(`${sampleLabel} — ${definition.name}: measurement must be a finite number.`);
       }
       const value = Number(rawValue);
+      if (value < 0) throw new Error(`${sampleLabel} — ${definition.name}: measurement cannot be negative.`);
 
       const base = definition[standard];
       const override = overrides?.[id]?.[standard];

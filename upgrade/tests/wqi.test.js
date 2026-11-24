@@ -238,3 +238,15 @@ test('weighted arithmetic WQI rejects malformed nonblank readings even before li
     { key: 'nitrate', value: 10, standard: 50, ideal: 0 }
   ]), /lead: measurement must be a finite number/);
 });
+
+
+test('WQI methods reject negative measured water-quality values rather than scoring impossible concentrations', async () => {
+  const { computeDualWQI, computeDualWQIDataset } = await import('../src/engine/wqi.js');
+  assert.throws(() => computeDualWQI({ tds: -1 }), /Total Dissolved Solids: measurement cannot be negative/);
+  assert.throws(() => computeDualWQIDataset([{ sampleCode: 'GW-NEG', nitrate: -0.1 }]),
+    /GW-NEG — Nitrate .* measurement cannot be negative/);
+  assert.throws(() => calculateWeightedArithmeticWQI([
+    { key: 'tds', label: 'TDS', value: -2, maxStandard: 500, ideal: 0 },
+    { key: 'nitrate', label: 'Nitrate', value: 5, maxStandard: 50, ideal: 0 }
+  ]), /TDS: measurement cannot be negative/);
+});
