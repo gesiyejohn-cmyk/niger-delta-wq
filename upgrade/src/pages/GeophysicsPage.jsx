@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Papa from 'papaparse';
 import { calculateVES, validateVES, validateERT, isCompleteVESReading } from '../engine/geophysics.js';
 import VESInterpretation from './VESInterpretation.jsx';
@@ -10,6 +10,39 @@ import { saveVES, listVES, deleteVES, saveERT, listERT, deleteERT } from '../sto
 
 const input = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
 const panel = { background: '#fff', border: '1px solid #dbe3ea', borderRadius: 12, padding: 16, marginBottom: 16 };
+
+function InteractiveChartFrame({ title, children }) {
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const drag = useRef(null);
+  function startPan(event) {
+    if (zoom <= 1) return;
+    drag.current = { x: event.clientX, y: event.clientY, ox: offset.x, oy: offset.y };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  }
+  function movePan(event) {
+    if (!drag.current) return;
+    setOffset({ x: drag.current.ox + event.clientX - drag.current.x,
+      y: drag.current.oy + event.clientY - drag.current.y });
+  }
+  function stopPan() { drag.current = null; }
+  function reset() { setZoom(1); setOffset({ x: 0, y: 0 }); }
+  return <section aria-label={title} style={{ margin: '12px 0' }}>
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
+      <button type="button" aria-label={title + ' zoom in'} onClick={() => setZoom(value => Math.min(3, value + 0.25))} disabled={zoom >= 3}>Zoom in</button>
+      <button type="button" aria-label={title + ' zoom out'} onClick={() => setZoom(value => Math.max(1, value - 0.25))} disabled={zoom <= 1}>Zoom out</button>
+      <button type="button" aria-label={title + ' reset view'} onClick={reset} disabled={zoom === 1 && offset.x === 0 && offset.y === 0}>Reset view</button>
+      <span className="muted">Zoom {Math.round(zoom * 100)}% · Drag chart to pan</span>
+    </div>
+    <div onPointerDown={startPan} onPointerMove={movePan} onPointerUp={stopPan}
+      onPointerCancel={stopPan} onLostPointerCapture={stopPan}
+      style={{ overflow: 'hidden', position: 'relative', maxWidth: '100%',
+        touchAction: zoom > 1 ? 'none' : 'pan-y', cursor: zoom > 1 ? 'grab' : 'default' }}>
+      <div style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+        transformOrigin: 'center center', width: '100%' }}>{children}</div>
+    </div>
+  </section>;
+}
 
 export default function GeophysicsPage() {
   const [tab, setTab] = useState('VES');
@@ -239,6 +272,7 @@ export default function GeophysicsPage() {
           </label>
           <p className="muted">Showing {activeERTModel?.lineId || 'Unlabelled line'} only. Other survey lines are kept separate because their distance coordinates may have different origins.</p>
           <p className="muted">This is a plot of imported model points, not a continuous interpolated tomogram. Select a point to inspect its measured/imported value. A dense, gridded inversion export is needed for a continuous colour section.</p>
+          <InteractiveChartFrame title="ERT resistivity point plot">
           <svg viewBox="0 0 760 390" role="img" aria-label="ERT resistivity point plot with distance and depth axes" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
             <path d="M65 25V330H730" fill="none" stroke="#475569" strokeWidth="1.5" />
             <text x="65" y="16" fontSize="12" fill="#334155">Depth (m)</text>
@@ -258,6 +292,7 @@ export default function GeophysicsPage() {
                 onKeyDown={event => (event.key === 'Enter' || event.key === ' ') && setSelectedCell(cell)} />
             })}
           </svg>
+          </InteractiveChartFrame>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', margin: '8px 0' }}>
             <span><span style={{ color: '#2563eb' }}>●</span> Lower resistivity</span>
             <span><span style={{ color: '#eab308' }}>●</span> Intermediate resistivity</span>
@@ -288,13 +323,15 @@ function VESPlot({ record }) {
   const maxY = Math.max(1, ...points.map(point => point.apparentResistivity));
   return <section>
     <h2>{record.method || 'VES'} sounding curve — {record.stationId || 'Unlabelled sounding'}</h2>
-    <svg viewBox="0 0 720 300" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
+    <InteractiveChartFrame title="VES sounding curve">
+      <svg viewBox="0 0 720 300" role="img" aria-label="VES apparent resistivity versus electrode spacing plot" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
       <path d="M55 15V255H700" fill="none" stroke="#64748b" />
       {points.map((point, index) => <g key={index}>
         <circle cx={55 + (point.ab2 ?? point.spacing) / maxX * 630} cy={255 - point.apparentResistivity / maxY * 220} r="4" fill="#2563eb" />
         <title>AB/2 {point.ab2} m; apparent resistivity {point.apparentResistivity.toFixed(2)} Ωm</title>
       </g>)}
     </svg>
+    </InteractiveChartFrame>
     <p className="muted">Linear axes for quick review only. Formal VES interpretation requires appropriate log-log plotting and a validated layered-earth interpretation workflow.</p>
   </section>;
 }
