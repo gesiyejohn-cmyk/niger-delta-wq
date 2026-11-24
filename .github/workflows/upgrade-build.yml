@@ -16,20 +16,6 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
-      - name: Enable Android emulator hardware acceleration
-        run: |
-          if [ ! -c /dev/kvm ]; then
-            echo "KVM device /dev/kvm is unavailable on this runner."
-            exit 1
-          fi
-          sudo chmod 666 /dev/kvm
-          if [ ! -r /dev/kvm ] || [ ! -w /dev/kvm ]; then
-            echo "Runner user still cannot access /dev/kvm after permission setup."
-            ls -l /dev/kvm
-            exit 1
-          fi
-          ls -l /dev/kvm
-          echo "KVM access is available to the Android emulator."
       - name: Extract and apply upgrade overlay
         run: |
           unzip -q NDWQ-Source-Compact.zip -d source
