@@ -149,3 +149,11 @@ test('Piper projection rejects percentages that are incomplete or not normalized
  assert.throws(()=>buildPiperProjection({ca:50,mg:25,naK:20},{hco3Co3:50,so4:25,cl:25}),/total 100/);
  assert.throws(()=>buildPiperProjection({ca:50,mg:25,naK:25},{hco3Co3:50,so4:25,cl:26}),/total 100/);
 });
+
+test('hydrochemistry recalculates current diagram coordinates when a legacy cached result is present',()=>{
+ const stale={...sample,ca:80.156,calculation:{piper:{cation:{x:0,y:0},anion:{x:0,y:0},facies:'legacy'}}};
+ const current=calculateHydrochemistry(stale);
+ assert.ok(Number.isFinite(current.piper.diamond.x));
+ assert.ok(Number.isFinite(current.piper.diamond.y));
+ assert.notEqual(current.piper.diamond.x,stale.calculation.piper.cation.x);
+});
