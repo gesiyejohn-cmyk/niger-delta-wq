@@ -97,10 +97,13 @@ test('ERT and geological interpretation views share a responsive two-panel layou
   const page = readFileSync(new URL('../src/pages/GeophysicsPage.jsx', import.meta.url), 'utf8');
   const tomogram = readFileSync(new URL('../src/pages/ERTTomogram.jsx', import.meta.url), 'utf8');
   assert.ok(page.includes("gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))'"));
+  assert.match(page, /const \[selectedERTDistance, setSelectedERTDistance\] = useState\(null\)/);
+  assert.match(page, /setSelectedERTDistance\(cell\.x\)/);
+  assert.match(page, /setSelectedERTDistance\(distance\)/);
   assert.match(page, /<ERTTomogram models=\{\[activeERTModel\]\} selectedDistance=\{selectedDistance\}/);
   assert.match(page, /<GeologicalInterpretationEditor model=\{activeERTModel\} selectedDistance=\{selectedDistance\}/);
   assert.match(tomogram, /selectedDistance = null/);
   assert.match(tomogram, /Selected profile distance/);
   assert.match(tomogram, /strokeDasharray="6 4"/);
-  assert.match(page, /setSelectedDistance\(null\)/);
+  assert.match(page, /setSelectedERTDistance\(null\)/);
 });
