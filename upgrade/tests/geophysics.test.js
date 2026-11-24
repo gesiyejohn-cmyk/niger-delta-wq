@@ -140,3 +140,22 @@ test('Wenner alpha validation requires positive, increasing electrode spacing', 
     { spacing: 5, resistance: 10 }, { spacing: 5, resistance: 12 }
   ], 'Wenner alpha'), /strictly increasing/);
 });
+
+
+test('VES complete-row selection uses Wenner spacing rather than Schlumberger fields', () => {
+  const wennerRows = [
+    { spacing: '5', resistance: '10', ab2: '', mn2: '' },
+    { spacing: '10', resistance: '12', ab2: '', mn2: '' },
+    { spacing: '', resistance: '8', ab2: '', mn2: '' }
+  ];
+  const complete = wennerRows.filter(row => isCompleteVESReading(row, 'Wenner alpha'));
+  assert.equal(complete.length, 2);
+  assert.deepEqual(validateVES(complete, 'Wenner alpha').map(row => row.spacing), [5, 10]);
+  assert.equal(wennerRows.filter(row => isCompleteVESReading(row, 'Schlumberger')).length, 0);
+});
+
+test('Schlumberger complete-row selection still requires AB/2, MN/2 and resistance', () => {
+  assert.equal(isCompleteVESReading({ ab2: '10', mn2: '2', resistance: '5' }, 'Schlumberger'), true);
+  assert.equal(isCompleteVESReading({ ab2: '10', mn2: '', resistance: '5' }, 'Schlumberger'), false);
+  assert.equal(isCompleteVESReading({ spacing: '5', resistance: '5' }, 'Schlumberger'), false);
+});

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
-import { calculateVES, validateVES, validateERT } from '../engine/geophysics.js';
+import { calculateVES, validateVES, validateERT, isCompleteVESReading } from '../engine/geophysics.js';
 import VESInterpretation from './VESInterpretation.jsx';
 import CoordinateFields from './CoordinateFields.jsx';
 import ERTTomogram from './ERTTomogram.jsx';
@@ -58,9 +58,7 @@ export default function GeophysicsPage() {
   }
   async function saveSounding() {
     try {
-      const completeRows = readings.filter(row =>
-        row.ab2 !== '' && row.mn2 !== '' && row.resistance !== ''
-      );
+      const completeRows = readings.filter(row => isCompleteVESReading(row, meta.array));
       const clean = validateVES(completeRows, meta.array);
       const partial = clean.length < 2;
       const coordinates = validateCoordinatePair(vesCoordinates);
