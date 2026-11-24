@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateHydrochemistry, validateHydrochemistrySample } from '../src/engine/hydrochemistry.js';
+import { buildPiperProjection, calculateHydrochemistry, validateHydrochemistrySample } from '../src/engine/hydrochemistry.js';
 const sample={sampleId:'S1',ca:40.078,mg:24.305,na:22.9898,k:39.0983,hco3:61.0168,co3:30.004,cl:35.453,so4:48.03};
 function parseCSVRow(line) {
  const cells=[]; let value='', quoted=false;
@@ -114,4 +114,38 @@ test('hydrochemistry CSV safely neutralises formula-like text while preserving q
  const lines=buildHydrochemistryCSV([{...sample,sampleId:id}]).split(String.fromCharCode(13,10));
  const headers=parseCSVRow(lines[0]),cells=parseCSVRow(lines[1]);
  assert.equal(cells[headers.indexOf('Sample ID')],"'"+id);
+});
+
+test('Piper projection uses equilateral ternary coordinates and the standard central-diamond transform',()=>{
+ const q=buildPiperProjection(
+  {ca:50,mg:25,naK:25},
+  {hco3Co3:50,so4:25,cl:25}
+ );
+ const h=Math.sqrt(3)/2;
+ assert.ok(Math.abs(q.cation.x-37.5)<1e-9);
+ assert.ok(Math.abs(q.cation.y-h*25)<1e-9);
+ assert.ok(Math.abs(q.anion.x-157.5)<1e-9);
+ assert.ok(Math.abs(q.anion.y-h*25)<1e-9);
+ assert.ok(Math.abs(q.diamond.x-85)<1e-9);
+ assert.ok(Math.abs(q.diamond.y-h*120)<1e-9);
+});
+
+test('Piper central diamond reaches its four chemically defined corner compositions',()=>{
+ const h=Math.sqrt(3)/2;
+ const cases=[
+  [{ca:100,mg:0,naK:0},{hco3Co3:100,so4:0,cl:0},{x:60,y:h*120}],
+  [{ca:0,mg:0,naK:100},{hco3Co3:100,so4:0,cl:0},{x:110,y:h*20}],
+  [{ca:100,mg:0,naK:0},{hco3Co3:0,so4:0,cl:100},{x:110,y:h*220}],
+  [{ca:0,mg:0,naK:100},{hco3Co3:0,so4:0,cl:100},{x:160,y:h*120}]
+ ];
+ for(const[c,a,expected]of cases){
+  const q=buildPiperProjection(c,a).diamond;
+  assert.ok(Math.abs(q.x-expected.x)<1e-9);
+  assert.ok(Math.abs(q.y-expected.y)<1e-9);
+ }
+});
+
+test('Piper projection rejects percentages that are incomplete or not normalized',()=>{
+ assert.throws(()=>buildPiperProjection({ca:50,mg:25,naK:20},{hco3Co3:50,so4:25,cl:25}),/total 100/);
+ assert.throws(()=>buildPiperProjection({ca:50,mg:25,naK:25},{hco3Co3:50,so4:25,cl:26}),/total 100/);
 });

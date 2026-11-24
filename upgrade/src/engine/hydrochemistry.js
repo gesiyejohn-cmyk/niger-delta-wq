@@ -18,6 +18,27 @@ function ionMeq(sample,key) {
 }
 const sum = (o,keys) => keys.reduce((v,k)=>v+o[k],0);
 const pct = (v,total) => total>0 ? v/total*100 : null;
+/**
+ * Project Piper ternary compositions into the central diamond.
+ * Coordinates use percentage units, an equilateral-triangle height, and a
+ * 20-unit gap between the two lower triangles.
+ */
+export function buildPiperProjection(cationPercent,anionPercent) {
+  const values=[cationPercent?.ca,cationPercent?.mg,cationPercent?.naK,anionPercent?.hco3Co3,anionPercent?.so4,anionPercent?.cl];
+  if(!values.every(v=>Number.isFinite(v)&&v>=0&&v<=100)) throw new Error('Piper components must be finite percentages from 0 to 100.');
+  const cationTotal=cationPercent.ca+cationPercent.mg+cationPercent.naK;
+  const anionTotal=anionPercent.hco3Co3+anionPercent.so4+anionPercent.cl;
+  if(Math.abs(cationTotal-100)>1e-6||Math.abs(anionTotal-100)>1e-6) throw new Error('Piper cation and anion percentages must each total 100.');
+  const h=Math.sqrt(3)/2;
+  const n= cationPercent.naK, m=cationPercent.mg;
+  const a=anionPercent.cl+anionPercent.so4;
+  return {
+    cation:{x:n+m/2,y:h*m},
+    anion:{x:120+anionPercent.cl+anionPercent.so4/2,y:h*anionPercent.so4},
+    diamond:{x:60+(n+a)/2,y:h*(120+a-n)}
+  };
+}
+
 export function calculateHydrochemistry(sample) {
   if(!sample || typeof sample!=='object') throw new Error('Enter a water chemistry sample.');
   const meq=Object.fromEntries(Object.keys(IONS).map(key=>[key,ionMeq(sample,key)]));
@@ -32,12 +53,7 @@ export function calculateHydrochemistry(sample) {
   const anionPct={hco3Co3:pct(meq.hco3+meq.co3,diagramAnions),so4:pct(meq.so4,diagramAnions),cl:pct(meq.cl,diagramAnions)};
   const balanceError=(cations-anions)/(cations+anions)*100;
   const totalDissolvedIons=Object.keys(IONS).reduce((v,k)=>v+(finite(sample[k])?Number(sample[k]):0),0);
-  const piperPoint=(parts)=>({x:parts[1]*0.5/100+parts[2]*1/100,y:parts[1]*Math.sqrt(3)/2/100});
-  const cationXY=piperPoint([cationPct.ca,cationPct.mg,cationPct.naK]);
-  const anionXY=piperPoint([anionPct.hco3Co3,anionPct.so4,anionPct.cl]);
-  // Two equilateral triangles are offset and joined to the central diamond.
-  const triangle=(p,ox,oy,scale)=>({x:ox+p.x*scale,y:oy+p.y*scale});
-  const cp=triangle(cationXY,0,0,100), ap=triangle(anionXY,220,0,100);
+  const piperProjection=buildPiperProjection(cationPct,anionPct);
   const cationDominant=Object.entries(cationPct).sort((a,b)=>b[1]-a[1])[0][0];
   const anionDominant=Object.entries(anionPct).sort((a,b)=>b[1]-a[1])[0][0];
   const cationName={ca:'calcium',mg:'magnesium',naK:'sodium-potassium'}[cationDominant];
@@ -54,7 +70,7 @@ export function calculateHydrochemistry(sample) {
   const weakAcids=pct(meq.hco3+meq.co3,chadhaAnions);
   return {
     meqL:meq,totalCationsMeqL:cations,totalAnionsMeqL:anions,chargeBalanceErrorPercent:balanceError,
-    cationPercent: cationPct, anionPercent: anionPct, piper:{cation:cp,anion:ap,facies},
+    cationPercent: cationPct, anionPercent: anionPct, piper:{...piperProjection,facies},
     durovs:{cation: cationPct, anion: anionPct, central:{x:(meq.hco3+meq.co3+meq.so4/2)/diagramAnions,y:(meq.ca+meq.mg/2)/cations}},
     schoeller:Object.keys(IONS).map(key=>({key,name:IONS[key].name,meqL:meq[key]})),
     gibbs:{naCaRatio:sodiumCalcium,clHco3Ratio:chlorideBicarbonate,tdsMgL:totalDissolvedIons},
