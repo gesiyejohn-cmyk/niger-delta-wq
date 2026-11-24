@@ -126,8 +126,8 @@ test('Piper projection uses equilateral ternary coordinates and the standard cen
  assert.ok(Math.abs(q.cation.y-h*25)<1e-9);
  assert.ok(Math.abs(q.anion.x-157.5)<1e-9);
  assert.ok(Math.abs(q.anion.y-h*25)<1e-9);
- assert.ok(Math.abs(q.diamond.x-85)<1e-9);
- assert.ok(Math.abs(q.diamond.y-h*120)<1e-9);
+ assert.ok(Math.abs(q.diamond.x-97.5)<1e-9);
+ assert.ok(Math.abs(q.diamond.y-h*145)<1e-9);
 });
 
 test('Piper central diamond reaches its four chemically defined corner compositions',()=>{
