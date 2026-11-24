@@ -12,7 +12,7 @@ function colour(value, min, max) {
 }
 
 const initialView = { x: 0, y: 0, w: 760, h: 390 };
-export default function ERTTomogram({ models = [], onCellSelect = () => {} }) {
+export default function ERTTomogram({ models = [], selectedDistance = null, onCellSelect = () => {} }) {
   const [view, setView] = useState(initialView);
   const [drag, setDrag] = useState(null);
   const suppressClick = useRef(false);
@@ -83,6 +83,10 @@ export default function ERTTomogram({ models = [], onCellSelect = () => {} }) {
             width={650/grid.cols + 0.4} height={300/grid.rows + 0.4}
             fill={colour(cell.value,min,max)} />)}
         </g>
+        {selectedDistance != null && Number.isFinite(Number(selectedDistance)) && Number(selectedDistance) >= grid.x0 && Number(selectedDistance) <= grid.x1 && <g pointerEvents="none" aria-label={`Selected profile distance ${Number(selectedDistance).toFixed(2)} metres`}>
+          <line x1={65 + ((Number(selectedDistance) - grid.x0) / (grid.x1 - grid.x0 || 1)) * 650} x2={65 + ((Number(selectedDistance) - grid.x0) / (grid.x1 - grid.x0 || 1)) * 650} y1="28" y2="328" stroke="#111827" strokeWidth="2.5" strokeDasharray="6 4"/>
+          <circle cx={65 + ((Number(selectedDistance) - grid.x0) / (grid.x1 - grid.x0 || 1)) * 650} cy="178" r="6" fill="#fff" stroke="#111827" strokeWidth="2"/>
+        </g>}
         <path d="M65 28V328H715" fill="none" stroke="#334155" strokeWidth="1.5"/>
         <text x="65" y="346" fontSize="11" fill="#475569">{grid.x0} m</text>
         <text x="680" y="346" fontSize="11" fill="#475569">{grid.x1} m</text>
