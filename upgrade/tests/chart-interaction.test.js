@@ -76,7 +76,7 @@ test('vulnerability map explicitly enables zoom, drag, touch and keyboard naviga
 test('chart pan handlers track the initiating primary pointer and release cleanly', () => {
   for (const path of ['HydrochemistryPage.jsx', 'AnalyticsPage.jsx', 'GeophysicsPage.jsx']) {
     const source = readFileSync(new URL('../src/pages/' + path, import.meta.url), 'utf8');
-    assert.match(source, /event?\.?(?:isPrimary)===false|e\.isPrimary===false/);
+    assert.match(source, /(?:event|e)\.isPrimary\s*===\s*false/);
     assert.match(source, /pointerId/);
     assert.match(source, /onLostPointerCapture/);
   }
