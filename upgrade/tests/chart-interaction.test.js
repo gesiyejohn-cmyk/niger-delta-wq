@@ -58,3 +58,9 @@ test('ERT section drag suppresses the synthetic click so panning does not select
   assert.match(source, /if \(suppressClick\.current\) \{[\s\S]*?suppressClick\.current = false;[\s\S]*?return;/);
   assert.match(source, /onClick=\{handleSectionClick\}/);
 });
+
+test('ERT tomogram captures touch gestures for two-axis pan and cleans up lost pointer capture', () => {
+  const source = readFileSync(new URL('../src/pages/ERTTomogram.jsx', import.meta.url), 'utf8');
+  assert.match(source, /onLostPointerCapture=\{\(\)=>setDrag\(null\)\}/);
+  assert.match(source, /touchAction:'none'/);
+});
