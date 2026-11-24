@@ -11,3 +11,10 @@ test('hydrochemistry CSV export remains accessible when Android download hand-of
   assert.match(source, /document\.execCommand\('copy'\)/);
   assert.match(source, /Select and copy the CSV text below/);
 });
+
+
+test('charge-balance table labels cation and anion sums explicitly as totals', () => {
+  assert.match(source, /Total Cations \(meq\/L\)/);
+  assert.match(source, /Total Anions \(meq\/L\)/);
+  assert.match(source, /sum of all measured major-ion equivalents for each sample/);
+});
