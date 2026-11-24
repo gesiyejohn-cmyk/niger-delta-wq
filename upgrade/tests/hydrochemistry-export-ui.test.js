@@ -28,3 +28,11 @@ test('hydrochemistry CSV export follows the checked sample selection', () => {
   assert.match(source, /disabled=\{!exportSamples\.length\}/);
   assert.match(source, /Download selected chemistry and facies CSV/);
 });
+
+
+test('hydrochemistry export exposes select-all, clear-selection and a visible selection count', () => {
+  const source = readFileSync(new URL('../src/pages/HydrochemistryPage.jsx', import.meta.url), 'utf8');
+  assert.match(source, /onClick=\{\(\)=>setSelected\(samples\.map\(s=>s\.id\)\)\}>Select all/);
+  assert.match(source, /onClick=\{\(\)=>setSelected\(\[\]\)\}>Clear selection/);
+  assert.match(source, /\{exportSamples\.length\} of \{samples\.length\} sample\(s\) selected/);
+});
