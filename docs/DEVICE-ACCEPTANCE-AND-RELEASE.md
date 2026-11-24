@@ -516,3 +516,21 @@ Artifacts from run #354 (uploaded ZIP sizes and GitHub artifact digests):
 - Integrated source `ndwq-integrated-source`, ID `14909339438`, 176,933 bytes; SHA-256 `829804a7fa2513f4e9912e34138d732f3034651fee8b3272d24a81e48bc1902a`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45373349786/artifacts/14909339438).
 
 These are CI build artifacts, not production releases. The Android APK is debug-signed; the workflow's emulator smoke test is not physical-phone acceptance or proof of signing compatibility with an existing installation. The Windows installer is generated but has not been installed/runtime-tested on a real Windows machine. Public web deployment, real-device backup/restore, independent scientific/calibration review and formal acceptance remain open release gates. Do not uninstall, clear app data or install this debug APK over an existing phone installation based on this CI result. Pull requests #2 and #6 remain open drafts and unmerged.
+
+### Latest superseding CI evidence — 24 November 2026
+
+The verified development branch is `feature/external-reference-validation` at commit `55c79cfd0d18ef1fa6d10520aee120831c1b7d01` (`fix(backup): clear stale fallback before new export`). Workflow [run 45396501807](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45396501807) ran on that exact commit and all three jobs completed successfully:
+
+- `web-and-tests`: scientific/geophysics test step and production web build passed; integrated web and source snapshot artifacts uploaded.
+- `android`: debug APK build passed; API 35 emulator boot, install and launcher launch passed; the original application identity and separate preview build were exercised by CI.
+- `windows-desktop`: Windows desktop installer build and artifact upload passed.
+
+Artifacts for this exact commit are available from the run while GitHub retains them:
+- Android debug APK archive: [artifact 14922530186](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45396501807/artifacts/14922530186), 8,147,464 bytes; archive SHA-256 `3a55bb2267dc11e8b39123bd47fd10f3c439669427ffb5ae5e7a1171ba77b9a8`.
+- Windows desktop installer archive: [artifact 14922315333](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45396501807/artifacts/14922315333), 95,609,511 bytes; archive SHA-256 `3e2fbe686bc81e9feda1920a5bdb5d8edbb80f25d901e96a5b53e46ee20ac322`.
+- Integrated source snapshot: [artifact 14922220209](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45396501807/artifacts/14922220209), 178,278 bytes.
+- Integrated web build: [artifact 14921906024](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45396501807/artifacts/14921906024), 329,767 bytes.
+
+This evidence supersedes earlier CI entries for the current development head only. It does not establish physical Android or Windows acceptance, public web deployment, production signing, existing-installation upgrade compatibility, or real-device backup/restore. The APK is deliberately not being requested for another user installation until the integrated major milestone and device-acceptance gates are ready. Preserve the current installation and its data.
+
+Pull requests [#2](https://github.com/gesiyejohn-cmyk/niger-delta-wq/pull/2) and [#6](https://github.com/gesiyejohn-cmyk/niger-delta-wq/pull/6) remain open draft PRs and must not be merged as part of this work.
