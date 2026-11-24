@@ -100,8 +100,8 @@ test('ERT and geological interpretation views share a responsive two-panel layou
   assert.match(page, /const \[selectedERTDistance, setSelectedERTDistance\] = useState\(null\)/);
   assert.match(page, /setSelectedERTDistance\(cell\.x\)/);
   assert.match(page, /setSelectedERTDistance\(distance\)/);
-  assert.match(page, /<ERTTomogram models=\{\[activeERTModel\]\} selectedDistance=\{selectedDistance\}/);
-  assert.match(page, /<GeologicalInterpretationEditor model=\{activeERTModel\} selectedDistance=\{selectedDistance\}/);
+  assert.match(page, /<ERTTomogram models=\{\[activeERTModel\]\} selectedDistance=\{selectedERTDistance\}/);
+  assert.match(page, /<GeologicalInterpretationEditor model=\{activeERTModel\} selectedDistance=\{selectedERTDistance\}/);
   assert.match(tomogram, /selectedDistance = null/);
   assert.match(tomogram, /Selected profile distance/);
   assert.match(tomogram, /strokeDasharray="6 4"/);
