@@ -19,6 +19,13 @@ test('Durov central square coordinates project the normalized cation and anion g
 test('Piper coordinates remain finite and chloride facies uses the chloride group',()=>{const r=calculateHydrochemistry(sample);assert.ok(Number.isFinite(r.piper.anion.x));assert.ok(Number.isFinite(r.piper.anion.y));assert.ok(Number.isFinite(r.piper.cation.x));assert.ok(Number.isFinite(r.piper.cation.y));assert.equal(r.classification.dominantAnion,'bicarbonate-carbonate');assert.ok(!r.classification.facies.includes('undefined'));});
 test('Gibbs sodium ratio uses Na divided by Na plus Ca, excluding potassium',()=>{const r=calculateHydrochemistry(sample);assert.ok(Math.abs(r.gibbs.naCaRatio-(1/(1+2)))<1e-9);});
 
+test('Chadha y-axis includes measured nitrate in the strong-acid group and total anions',()=>{
+ const withoutNitrate=calculateHydrochemistry(sample);
+ const withOneMeqNitrate=calculateHydrochemistry({...sample,no3:62.0049});
+ assert.ok(Math.abs(withoutNitrate.chadha.y-0)<1e-9);
+ assert.ok(Math.abs(withOneMeqNitrate.chadha.y-(-20))<1e-9);
+});
+
 test('eight balanced synthetic Niger Delta chemistry samples retain charge balance and defined facies',()=>{
  const eq={ca:20.039,mg:12.1525,na:22.9898,k:39.0983,hco3:61.0168,co3:30.004,cl:35.453,so4:48.03,no3:62.0049};
  const rows=[

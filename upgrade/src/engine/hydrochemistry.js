@@ -47,8 +47,11 @@ export function calculateHydrochemistry(sample) {
   const chlorideBicarbonate=meq.cl+meq.hco3+meq.co3>0?meq.cl/(meq.cl+meq.hco3+meq.co3):null;
   const bicarbonateCalcium=pct(meq.hco3+meq.co3,cations+anions);
   const alkalineEarths=pct(meq.ca+meq.mg,cations);
-  const strongAcids=pct(meq.cl+meq.so4,diagramAnions);
-  const weakAcids=pct(meq.hco3+meq.co3,diagramAnions);
+  // Chadha's strong-acid group includes nitrate; keep its denominator
+  // consistent with the full measured anion total used for charge balance.
+  const chadhaAnions=diagramAnions+(meq.no3??0);
+  const strongAcids=pct(meq.cl+meq.so4+(meq.no3??0),chadhaAnions);
+  const weakAcids=pct(meq.hco3+meq.co3,chadhaAnions);
   return {
     meqL:meq,totalCationsMeqL:cations,totalAnionsMeqL:anions,chargeBalanceErrorPercent:balanceError,
     cationPercent: cationPct, anionPercent: anionPct, piper:{cation:cp,anion:ap,facies},
