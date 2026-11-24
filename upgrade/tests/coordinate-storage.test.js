@@ -7,7 +7,7 @@ import { createDatabaseBackup, restoreDatabaseBackup } from '../src/storage/back
 
 const STORE_NAMES = [
   'samples', 'settings', 'syncQueue', 'ves', 'vesInterpretations',
-  'ert', 'ertSource', 'vulnerability', 'wqiAssessments'
+  'ert', 'ertSource', 'ertInterpretations', 'hydrochemistry', 'vulnerability', 'wqiAssessments'
 ];
 
 async function clearAllStores(db) {
@@ -96,7 +96,7 @@ test('canonical WGS84 coordinates and original DD/DMS/DDM entries survive geophy
   const backup = await createDatabaseBackup();
   await clearAllStores(db);
   const result = await restoreDatabaseBackup(backup, 'replace');
-  assert.equal(result.restored, 4);
+  assert.equal(result.restored, 4); // Four explicitly seeded records; empty added stores must remain safe.
 
   const restoredVES = (await listVES()).find(record => record.id === 'coord-ves-01');
   const restoredERT = await db.get('ert', 'coord-ert-01');
