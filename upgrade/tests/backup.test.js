@@ -11,7 +11,7 @@ import { getDB } from '../src/storage/db.js';
 
 const STORE_NAMES = [
   'samples', 'settings', 'syncQueue', 'ves', 'vesInterpretations',
-  'ert', 'ertSource', 'vulnerability', 'wqiAssessments'
+  'ert', 'ertSource', 'ertInterpretations', 'hydrochemistry', 'vulnerability', 'wqiAssessments'
 ];
 
 async function clearStores(db, names = STORE_NAMES) {
@@ -82,7 +82,9 @@ test('full backup and replace restore preserve raw data, interpretations and mis
     ves: [{ id: 'ves-1', station: 'VES-01', readings: [{ ab2: 5, mn2: 1, resistance: 10 }] }],
     vesInterpretations: [{ id: 'ves-1', vesId: 'ves-1', layers: [{ layer: 1, resistivity: 100, thickness: 2 }] }],
     ert: [{ id: 'ert-1', line: 'LINE-01', sourceImportId: 'ert-1', cells: [{ x: 0, depth: 1, resistivity: 50 }] }],
+    ertInterpretations: [{ id: 'ert-1', ertModelId: 'ert-1', interpretationStatus: 'provisional', units: [{ id: 'unit-1', name: 'Sand', confidence: 'low' }] }],
     ertSource: [{ id: 'ert-1', fileName: 'line.csv', contentType: 'text/csv', content: 'x,depth,resistivity\\n0,1,50' }],
+    hydrochemistry: [{ id: 'chem-1', sampleId: 'CHEM-01', ca: 18, mg: 7, na: 22, coordinateFormat: 'DDM' }],
     vulnerability: [{ id: 'vuln-1', method: 'DRASTIC', weightedScore: 120, ratings: { depth: 5 } }],
     wqiAssessments: [{ id: 'wqi-1', sample: { id: 'sample-1' }, measurements: [{ key: 'nitrate', measuredValue: null }], result: { wqi: 20, details: [] }, standardSource: 'Project reference' }]
   };
@@ -98,13 +100,15 @@ test('full backup and replace restore preserve raw data, interpretations and mis
   await clearStores(db);
 
   const restored = await restoreDatabaseBackup(backup, 'replace');
-  assert.deepEqual(restored, { restored: 9, skipped: 0, mode: 'replace' });
+  assert.deepEqual(restored, { restored: 11, skipped: 0, mode: 'replace' });
   for (const name of STORE_NAMES) {
     assert.deepEqual(await db.getAll(name), fixture[name], name + ' should round-trip without data loss');
   }
   assert.equal((await db.get('samples', 'sample-1')).nitrate, null);
   assert.equal((await db.get('vesInterpretations', 'ves-1')).vesId, 'ves-1');
   assert.equal((await db.get('ertSource', 'ert-1')).content, 'x,depth,resistivity\\n0,1,50');
+  assert.equal((await db.get('ertInterpretations', 'ert-1')).units[0].name, 'Sand');
+  assert.equal((await db.get('hydrochemistry', 'chem-1')).ca, 18);
 });
 
 test('merge restore keeps existing records and adds only records with new IDs', async () => {
