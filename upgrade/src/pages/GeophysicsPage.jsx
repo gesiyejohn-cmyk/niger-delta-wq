@@ -55,7 +55,7 @@ export default function GeophysicsPage() {
   const [vesCoordinates, setVesCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
   const [ertCoordinates, setErtCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
   const [readings, setReadings] = useState([{ ab2: '', mn2: '', spacing: '', resistance: '' }]);
-  const [selectedDistance, setSelectedDistance] = useState(null);
+  const [selectedERTDistance, setSelectedERTDistance] = useState(null);
   const [line, setLine] = useState({ lineId: '', spacing: '', electrodes: '', rms: '', software: '', notes: '' });
   const [cells, setCells] = useState([]);
   const [sourceImport, setSourceImport] = useState(null);
@@ -266,16 +266,16 @@ export default function GeophysicsPage() {
         </div>)}
         {activeERTModel && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 16, alignItems: 'start', minWidth: 0 }} aria-label="Linked ERT and geological interpretation views">
           <div style={{ minWidth: 0 }}>
-            <ERTTomogram models={[activeERTModel]} selectedDistance={selectedDistance} onCellSelect={cell => { setSelectedCell({ ...cell, modelId: activeERTModel.id, lineId: activeERTModel.lineId || 'Unlabelled line' }); setSelectedDistance(cell.x); }} />
+            <ERTTomogram models={[activeERTModel]} selectedERTDistance={selectedERTDistance} onCellSelect={cell => { setSelectedCell({ ...cell, modelId: activeERTModel.id, lineId: activeERTModel.lineId || 'Unlabelled line' }); setSelectedERTDistance(cell.x); }} />
           </div>
           <div style={{ minWidth: 0 }}>
-            <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedDistance} onDistanceChange={distance => { setSelectedDistance(distance); const nearest = displayCells.reduce((best, cell) => !best || Math.abs(cell.x-distance) < Math.abs(best.x-distance) ? cell : best, null); if (nearest) setSelectedCell(nearest); }} />
+            <GeologicalInterpretationEditor model={activeERTModel} selectedERTDistance={selectedERTDistance} onDistanceChange={distance => { setSelectedERTDistance(distance); const nearest = displayCells.reduce((best, cell) => !best || Math.abs(cell.x-distance) < Math.abs(best.x-distance) ? cell : best, null); if (nearest) setSelectedCell(nearest); }} />
           </div>
         </div>}
         {allCells.length > 0 && <>
           <h2>ERT resistivity point section</h2>
           <label>Survey line to display
-            <select style={input} value={activeERTModel?.id || ''} onChange={event => { setSelectedErtModelId(event.target.value); setSelectedCell(null); setSelectedDistance(null); }}>
+            <select style={input} value={activeERTModel?.id || ''} onChange={event => { setSelectedErtModelId(event.target.value); setSelectedCell(null); setSelectedERTDistance(null); }}>
               {ert.map((model, index) => <option key={model.id} value={model.id}>{model.lineId || 'Unlabelled line'} — {model.cells.length} points (model {index + 1})</option>)}
             </select>
           </label>
