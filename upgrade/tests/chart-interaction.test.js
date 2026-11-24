@@ -96,7 +96,7 @@ test('analytics correlation heatmap safely renders undefined correlations for ze
 test('ERT and geological interpretation views share a responsive two-panel layout and selected-distance marker', () => {
   const page = readFileSync(new URL('../src/pages/GeophysicsPage.jsx', import.meta.url), 'utf8');
   const tomogram = readFileSync(new URL('../src/pages/ERTTomogram.jsx', import.meta.url), 'utf8');
-  assert.match(page, /gridTemplateColumns: 'repeat\(auto-fit, minmax\(min\(100%, 420px\), 1fr\)\)'/);
+  assert.ok(page.includes("gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))'"));
   assert.match(page, /<ERTTomogram models=\{\[activeERTModel\]\} selectedDistance=\{selectedDistance\}/);
   assert.match(page, /<GeologicalInterpretationEditor model=\{activeERTModel\} selectedDistance=\{selectedDistance\}/);
   assert.match(tomogram, /selectedDistance = null/);
