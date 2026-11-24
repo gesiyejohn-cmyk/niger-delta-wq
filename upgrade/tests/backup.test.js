@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import 'fake-indexeddb/auto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -168,4 +169,17 @@ test('replace refuses an empty backup before clearing current records', async ()
 
   await assert.rejects(restoreDatabaseBackup(emptyBackup, 'replace'), /Cannot replace current data with an empty backup/);
   assert.deepEqual(await db.get('samples', 'sample-safe'), { id: 'sample-safe', sampleCode: 'KEEP' });
+});
+
+
+test('starting a new backup clears stale fallback JSON before attempting a fresh export', () => {
+  const source = readFileSync(new URL('../src/pages/DataBackupPage.jsx', import.meta.url), 'utf8');
+  const start = source.indexOf('async function downloadBackup()');
+  const end = source.indexOf('\n  async function selectBackup', start);
+  assert.notEqual(start, -1);
+  assert.notEqual(end, -1);
+  const handler = source.slice(start, end);
+  assert.match(handler, /setBackupText\(''\)/);
+  assert.match(handler, /setCopyStatus\(''\)/);
+  assert.ok(handler.indexOf("setBackupText('')") < handler.indexOf('await createDatabaseBackup()'));
 });

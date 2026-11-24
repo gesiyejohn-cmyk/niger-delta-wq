@@ -24,7 +24,7 @@ export default function DataBackupPage() {
   const [copyStatus, setCopyStatus] = useState('');
 
   async function downloadBackup() {
-    setBusy(true); setError(''); setMessage('');
+    setBusy(true); setError(''); setMessage(''); setBackupText(''); setCopyStatus('');
     try {
       const backup = await createDatabaseBackup();
       const text = JSON.stringify(backup, null, 2);
