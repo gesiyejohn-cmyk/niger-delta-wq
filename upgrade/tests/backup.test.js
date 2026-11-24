@@ -20,6 +20,13 @@ async function clearStores(db, names = STORE_NAMES) {
   await tx.done;
 }
 
+test('backup export includes every current IndexedDB store', async () => {
+  const db = await getDB();
+  const backup = await createDatabaseBackup();
+  const expected = Array.from(db.objectStoreNames).sort();
+  assert.deepEqual(Object.keys(backup.stores).sort(), expected);
+});
+
 test('backup validator accepts an empty versioned database backup', () => {
   const backup = { format: BACKUP_FORMAT, version: 1, stores: { samples: [], settings: [], syncQueue: [], ves: [], vesInterpretations: [], ert: [], ertSource: [], vulnerability: [], wqiAssessments: [] } };
   assert.equal(validateDatabaseBackup(backup), backup);
