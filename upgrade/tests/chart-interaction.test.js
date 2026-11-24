@@ -106,4 +106,5 @@ test('ERT and geological interpretation views share a responsive two-panel layou
   assert.match(tomogram, /Selected profile distance/);
   assert.match(tomogram, /strokeDasharray="6 4"/);
   assert.match(page, /setSelectedERTDistance\(null\)/);
+  assert.match(page, /selectedErtModelId === record\.id\) \{ setSelectedErtModelId\(''\); setSelectedCell\(null\); setSelectedERTDistance\(null\); \}/);
 });
