@@ -74,8 +74,7 @@ export default function ERTTomogram({ models = [], onCellSelect = () => {} }) {
         onPointerDown={event=>{if(event.button!==0)return;suppressClick.current=false;event.currentTarget.setPointerCapture?.(event.pointerId);setDrag({x:event.clientX,y:event.clientY,view});}}
         onPointerMove={event=>{if(!drag)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;if(Math.hypot(dx,dy)>4)suppressClick.current=true;const rect=event.currentTarget.getBoundingClientRect();setView({...drag.view,x:Math.max(0,Math.min(760-drag.view.w,drag.view.x-dx*drag.view.w/rect.width)),y:Math.max(0,Math.min(390-drag.view.h,drag.view.y-dy*drag.view.h/rect.height))});}}
         onPointerUp={()=>setDrag(null)} onPointerCancel={()=>{setDrag(null);suppressClick.current=false;}}
-        onLostPointerCapture={()=>setDrag(null)}
-        style={{width:'100%',background:'#fff',border:'1px solid #cbd5e1',touchAction:'none',cursor:drag?'grabbing':'grab'}}>
+        style={{width:'100%',background:'#fff',border:'1px solid #cbd5e1',touchAction:'pan-y',cursor:drag?'grabbing':'grab'}}>
         <text x="65" y="16" fontSize="12" fill="#334155">Depth (m)</text>
         <text x="350" y="375" fontSize="12" fill="#334155">Distance along line (m)</text>
         <g transform="translate(65 28)">

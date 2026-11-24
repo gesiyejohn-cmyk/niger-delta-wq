@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { buildERTGrid, interpolateERTResistivity } from '../src/engine/ert.js';
 import {
   schlumbergerGeometricFactor,
   wennerGeometricFactor,
@@ -176,4 +177,55 @@ test('Wenner saved rows with an empty AB/2 field still classify using spacing', 
     { spacing: '15', resistance: '14', ab2: '', mn2: '' }
   ], 'Wenner alpha');
   assert.equal(classifyVESCurve(rows).code, 'A');
+});
+
+
+test('ERT imported model interpolation preserves exact imported resistivity values', () => {
+  const points = [
+    { x: 0, depth: 0, resistivity: 100 },
+    { x: 10, depth: 0, resistivity: 400 }
+  ];
+  assert.equal(interpolateERTResistivity(points, 0, 0), 100);
+  assert.equal(interpolateERTResistivity(points, 10, 0), 400);
+});
+
+test('ERT log-resistivity IDW gives the geometric mean at an equal-distance midpoint', () => {
+  const points = [
+    { x: 0, depth: 0, resistivity: 100 },
+    { x: 10, depth: 0, resistivity: 400 }
+  ];
+  assert.ok(Math.abs(interpolateERTResistivity(points, 5, 0) - 200) < 1e-10);
+});
+
+test('ERT interpolated section masks cells outside the imported-point convex hull', () => {
+  const points = [
+    { x: 0, depth: 0, resistivity: 100 },
+    { x: 10, depth: 0, resistivity: 200 },
+    { x: 0, depth: 10, resistivity: 300 },
+    { x: 2, depth: 2, resistivity: 150 },
+    { x: 4, depth: 2, resistivity: 180 },
+    { x: 2, depth: 4, resistivity: 220 }
+  ];
+  const grid = buildERTGrid(points);
+  assert.ok(grid);
+  assert.equal(grid.inversionPerformed, false);
+  assert.ok(grid.values.length < grid.rows * grid.cols);
+  for (const cell of grid.values) {
+    const x = grid.x0 + (cell.c + 0.5) / grid.cols * (grid.x1 - grid.x0);
+    const depth = grid.z0 + (cell.r + 0.5) / grid.rows * (grid.z1 - grid.z0);
+    assert.ok(x + depth <= 10 + 1e-9, `cell outside triangular hull: x=${x}, depth=${depth}`);
+  }
+});
+
+test('ERT interpolation rejects duplicate source cells and invalid depth or resistivity', () => {
+  assert.throws(() => interpolateERTResistivity([
+    { x: 0, depth: 1, resistivity: 50 },
+    { x: 0, depth: 1, resistivity: 80 }
+  ], 1, 1), /duplicate distance\/depth cells/);
+  assert.throws(() => interpolateERTResistivity([
+    { x: 0, depth: -1, resistivity: 50 }
+  ], 1, 1), /non-negative depth/);
+  assert.throws(() => interpolateERTResistivity([
+    { x: 0, depth: 1, resistivity: 0 }
+  ], 1, 1), /positive resistivity/);
 });
