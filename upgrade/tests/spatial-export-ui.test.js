@@ -7,7 +7,7 @@ test('IDW grid CSV export remains accessible when mobile downloads fail', () => 
   assert.match(source, /setIdwCsv\(csv\)/);
   assert.match(source, /IDW grid CSV fallback/);
   assert.match(source, /navigator\.clipboard\?\.writeText/);
-  assert.match(source, /ndwq-idw-grid-csv/);
+  assert.match(source, /a\\.download='ndwq-idw-'\\+parameter\\+'\\.csv'/);
   assert.match(source, /setSelectionRange\(0,field\.value\.length\)/);
   assert.match(source, /ndwq-idw-\+parameter\+\.csv/);
 });
