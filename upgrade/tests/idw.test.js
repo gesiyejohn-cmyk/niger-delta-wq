@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {interpolateIDW,convexHull,pointInPolygon,collectIDWSamples,assertUniqueIDWCoordinates,formatIDWGridCSV} from '../src/engine/idw.js';
+import {interpolateIDW,convexHull,pointInPolygon,clipGridCellToHull,collectIDWSamples,assertUniqueIDWCoordinates,formatIDWGridCSV} from '../src/engine/idw.js';
 const triangle=[{id:'A',latitude:5,longitude:6,value:10},{id:'B',latitude:5,longitude:6.1,value:20},{id:'C',latitude:5.1,longitude:6,value:30}];
 test('IDW generates cells only inside the sample convex hull',()=>{const r=interpolateIDW(triangle,{resolution:10,maxDistanceMeters:20000,neighbors:3});assert.ok(r.cells.length>3);assert.ok(r.cells.every(c=>pointInPolygon(c,r.hull)));assert.equal(r.sampleCount,3);});
 test('IDW uses exact sample values at sample coordinates',()=>{const r=interpolateIDW(triangle,{resolution:10,maxDistanceMeters:20000,neighbors:3});const a=r.cells.find(c=>Math.abs(c.latitude-5)<1e-9&&Math.abs(c.longitude-6)<1e-9);assert.equal(a.value,10);});
@@ -145,3 +145,7 @@ test('synthetic IDW CSV download has an in-app copyable fallback for Android Web
   assert.match(source, /document\.execCommand\('copy'\)/);
   assert.match(source, /Select and copy the CSV text below/);
 });
+
+
+test('IDW raster cell polygons are clipped to the sampled convex hull',()=>{const r=interpolateIDW(triangle,{resolution:10,maxDistanceMeters:20000,neighbors:3});assert.ok(r.cells.length>3);for(const cell of r.cells){assert.ok(Array.isArray(cell.polygon)&&cell.polygon.length>=3);assert.ok(cell.polygon.every(vertex=>pointInPolygon(vertex,r.hull)));}});
+test('grid-cell clipping retains interior cells and trims cells crossing a hull edge',()=>{const hull=[{latitude:0,longitude:0},{latitude:0,longitude:2},{latitude:2,longitude:0}];const interior=clipGridCellToHull([{latitude:.2,longitude:.2},{latitude:.2,longitude:.4},{latitude:.4,longitude:.4},{latitude:.4,longitude:.2}],hull);const crossing=clipGridCellToHull([{latitude:.8,longitude:.8},{latitude:.8,longitude:1.2},{latitude:1.2,longitude:1.2},{latitude:1.2,longitude:.8}],hull);assert.equal(interior.length,4);assert.ok(crossing.length>=3);assert.ok(crossing.every(vertex=>pointInPolygon(vertex,hull)));});
