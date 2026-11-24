@@ -160,3 +160,10 @@ test('Schlumberger complete-row selection still requires AB/2, MN/2 and resistan
   assert.equal(isCompleteVESReading({ ab2: '10', mn2: '', resistance: '5' }, 'Schlumberger'), false);
   assert.equal(isCompleteVESReading({ spacing: '5', resistance: '5' }, 'Schlumberger'), false);
 });
+
+
+test('VES graph labels Wenner spacing as a and Schlumberger spacing as AB/2', () => {
+  const source = readFileSync(new URL('../src/pages/GeophysicsPage.jsx', import.meta.url), 'utf8');
+  assert.match(source, /const spacingLabel = record\.method\?\.toLowerCase\(\)\.startsWith\('wenner'\) \? 'a' : 'AB\/2'/);
+  assert.match(source, /\{spacingLabel\} \{point\.ab2 \?\? point\.spacing\}/);
+});

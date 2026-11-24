@@ -321,11 +321,13 @@ function VESPlot({ record }) {
   const points = record.readings.filter(row => (row.ab2 ?? row.spacing) > 0 && row.apparentResistivity > 0);
   const maxX = Math.max(1, ...points.map(point => point.ab2 ?? point.spacing));
   const maxY = Math.max(1, ...points.map(point => point.apparentResistivity));
+  const spacingLabel = record.method?.toLowerCase().startsWith('wenner') ? 'a' : 'AB/2';
   return <section>
     <h2>{record.method || 'VES'} sounding curve — {record.stationId || 'Unlabelled sounding'}</h2>
     <InteractiveChartFrame title="VES sounding curve">
       <svg viewBox="0 0 720 300" role="img" aria-label="VES apparent resistivity versus electrode spacing plot" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
       <path d="M55 15V255H700" fill="none" stroke="#64748b" />
+      <text x="375" y="286" textAnchor="middle" fontSize="11" fill="#475569">{spacingLabel} (m)</text>
       {points.map((point, index) => <g key={index}>
         <circle cx={55 + (point.ab2 ?? point.spacing) / maxX * 630} cy={255 - point.apparentResistivity / maxY * 220} r="4" fill="#2563eb" />
         <title>AB/2 {point.ab2} m; apparent resistivity {point.apparentResistivity.toFixed(2)} Ωm</title>
