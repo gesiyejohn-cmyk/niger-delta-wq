@@ -318,20 +318,29 @@ export default function GeophysicsPage() {
 }
 
 function VESPlot({ record }) {
-  const points = record.readings.filter(row => (row.ab2 ?? row.spacing) > 0 && row.apparentResistivity > 0);
-  const maxX = Math.max(1, ...points.map(point => point.ab2 ?? point.spacing));
-  const maxY = Math.max(1, ...points.map(point => point.apparentResistivity));
-  const spacingLabel = record.method?.toLowerCase().startsWith('wenner') ? 'a' : 'AB/2';
+  const wenner = String(record.method || '').toLowerCase().startsWith('wenner');
+  const spacingFor = point => wenner ? point.spacing : point.ab2;
+  const points = (record.readings || []).filter(row => {
+    const spacing = spacingFor(row);
+    return spacing !== '' && Number.isFinite(Number(spacing)) && Number(spacing) > 0 &&
+      Number.isFinite(Number(row.apparentResistivity)) && Number(row.apparentResistivity) > 0;
+  });
+  const maxX = Math.max(1, ...points.map(point => Number(spacingFor(point))));
+  const maxY = Math.max(1, ...points.map(point => Number(point.apparentResistivity)));
+  const spacingLabel = wenner ? 'a' : 'AB/2';
   return <section>
     <h2>{record.method || 'VES'} sounding curve — {record.stationId || 'Unlabelled sounding'}</h2>
     <InteractiveChartFrame title="VES sounding curve">
       <svg viewBox="0 0 720 300" role="img" aria-label="VES apparent resistivity versus electrode spacing plot" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
       <path d="M55 15V255H700" fill="none" stroke="#64748b" />
       <text x="375" y="286" textAnchor="middle" fontSize="11" fill="#475569">{spacingLabel} (m)</text>
-      {points.map((point, index) => <g key={index}>
-        <circle cx={55 + (point.ab2 ?? point.spacing) / maxX * 630} cy={255 - point.apparentResistivity / maxY * 220} r="4" fill="#2563eb" />
-        <title>{spacingLabel} {point.ab2 ?? point.spacing} m; apparent resistivity {point.apparentResistivity.toFixed(2)} Ωm</title>
-      </g>)}
+      {points.map((point, index) => {
+        const spacing = Number(spacingFor(point));
+        return <g key={index}>
+          <circle cx={55 + spacing / maxX * 630} cy={255 - Number(point.apparentResistivity) / maxY * 220} r="4" fill="#2563eb" />
+          <title>{spacingLabel} {spacing} m; apparent resistivity {Number(point.apparentResistivity).toFixed(2)} Ωm</title>
+        </g>;
+      })}
     </svg>
     </InteractiveChartFrame>
     <p className="muted">Linear axes for quick review only. Formal VES interpretation requires appropriate log-log plotting and a validated layered-earth interpretation workflow.</p>

@@ -20,9 +20,13 @@ export function pearsonCorrelation(xs,ys){if(!Array.isArray(xs)||!Array.isArray(
 // Preliminary shape classification of apparent resistivity values. This is not
 // a substitute for layered-earth inversion or geological interpretation.
 export function classifyVESCurve(rows) {
-  const valid = (rows || []).filter(r => Number.isFinite(Number(r.ab2 ?? r.spacing)) &&
-    Number(r.ab2 ?? r.spacing) > 0 && Number.isFinite(Number(r.apparentResistivity)) &&
-    Number(r.apparentResistivity) > 0).sort((a,b) => Number(a.ab2 ?? a.spacing)-Number(b.ab2 ?? b.spacing));
+  // Wenner records may retain an empty AB/2 form field alongside a valid spacing.
+  // Treat an empty string as absent rather than letting ?? select it as zero.
+  const spacingValue = row => row?.ab2 !== undefined && row?.ab2 !== null && row.ab2 !== ''
+    ? row.ab2 : row?.spacing;
+  const valid = (rows || []).filter(r => Number.isFinite(Number(spacingValue(r))) &&
+    Number(spacingValue(r)) > 0 && Number.isFinite(Number(r.apparentResistivity)) &&
+    Number(r.apparentResistivity) > 0).sort((a,b) => Number(spacingValue(a))-Number(spacingValue(b)));
   if (valid.length < 3) return { code: null, label: 'Insufficient data', description: 'At least three valid readings are required.' };
   const first = Math.sign(Number(valid[1].apparentResistivity)-Number(valid[0].apparentResistivity));
   const second = Math.sign(Number(valid[2].apparentResistivity)-Number(valid[1].apparentResistivity));
