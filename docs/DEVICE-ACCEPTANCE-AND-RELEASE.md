@@ -499,3 +499,20 @@ A physical-device report identified that tapping the synthetic IDW CSV download 
 - Android artifact: [ndwq-integrated-android-debug-apk](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45291018553/artifacts/14873823394), archive SHA-256 `07b415057f2572dc48205b3edad818575017118348b6f3e715b31c13fbaad4d8`. Physical-device acceptance remains outstanding.
 - Development task started: georeferenced DRASTIC assessment surface using IDW, bounded to the assessment convex hull. The surface is exploratory, uses provisional app screening bands, and must not be described as calibrated risk or contamination probability. Duplicate locations and invalid coordinates/scores are rejected.
 - This new feature requires its own CI run and physical-device acceptance before being treated as verified.
+
+
+## Integrated multi-platform CI milestone — 24 November 2026
+
+The exact branch-head commit `975829ca00abfd763f25a65d916e9456243ba7bf` was verified by [Actions run #354](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45373349786). All three required jobs completed successfully:
+
+- `web-and-tests`: scientific/geophysics test suite passed; production web build and source snapshot packaging passed.
+- `android`: debug APK built for the original application identity, Android API 35 emulator install/launch smoke test passed, and the separate side-by-side preview APK built.
+- `windows-desktop`: Windows NSIS desktop installer built and uploaded successfully.
+
+Artifacts from run #354 (uploaded ZIP sizes and GitHub artifact digests):
+- Web `ndwq-integrated-web`, ID `14910626487`, 329,769 bytes; SHA-256 `2c5d76e353a21b46a61f5577fa7f9dcd540386c2223195fa1cd588d69ba7a812`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45373349786/artifacts/14910626487).
+- Android `ndwq-integrated-android-debug-apk`, ID `14910556981`, 8,147,419 bytes; archive SHA-256 `9d6ced7d929e25b84798ea98f1a15c2e4e26e1a0fa6555c82b04053f74a23b43`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45373349786/artifacts/14910556981).
+- Windows `ndwq-integrated-windows-desktop`, ID `14910861327`, 95,609,280 bytes; SHA-256 `b1c98c04bad421333a13ed882be235a19dbc0410b9fb41939bd0663b494dfb6d`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45373349786/artifacts/14910861327).
+- Integrated source `ndwq-integrated-source`, ID `14909339438`, 176,933 bytes; SHA-256 `829804a7fa2513f4e9912e34138d732f3034651fee8b3272d24a81e48bc1902a`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45373349786/artifacts/14909339438).
+
+These are CI build artifacts, not production releases. The Android APK is debug-signed; the workflow's emulator smoke test is not physical-phone acceptance or proof of signing compatibility with an existing installation. The Windows installer is generated but has not been installed/runtime-tested on a real Windows machine. Public web deployment, real-device backup/restore, independent scientific/calibration review and formal acceptance remain open release gates. Do not uninstall, clear app data or install this debug APK over an existing phone installation based on this CI result. Pull requests #2 and #6 remain open drafts and unmerged.
