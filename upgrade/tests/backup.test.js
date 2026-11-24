@@ -144,6 +144,7 @@ test('partial replace touches only stores present in the backup', async () => {
   await clearStores(db);
   await db.put('samples', { id: 'sample-old', sampleCode: 'OLD' });
   await db.put('settings', { key: 'keep-setting', value: 'preserve' });
+  await db.put('hydrochemistry', { id: 'chem-keep', sampleId: 'GW-KEEP', ca: 18, mg: 7, na: 22 });
   const backup = {
     format: BACKUP_FORMAT,
     version: 1,
@@ -154,6 +155,9 @@ test('partial replace touches only stores present in the backup', async () => {
   assert.deepEqual(result, { restored: 1, skipped: 0, mode: 'replace' });
   assert.deepEqual(await db.getAll('samples'), [{ id: 'sample-new', sampleCode: 'NEW' }]);
   assert.deepEqual(await db.get('settings', 'keep-setting'), { key: 'keep-setting', value: 'preserve' });
+  assert.deepEqual(await db.get('hydrochemistry', 'chem-keep'), {
+    id: 'chem-keep', sampleId: 'GW-KEEP', ca: 18, mg: 7, na: 22
+  });
 });
 
 test('replace refuses an empty backup before clearing current records', async () => {
