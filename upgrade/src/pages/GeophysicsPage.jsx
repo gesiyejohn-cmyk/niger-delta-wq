@@ -264,12 +264,18 @@ export default function GeophysicsPage() {
           <strong>{record.lineId || 'Unlabelled line'}</strong> · {record.cells.length} points · RMS {record.rms || 'not recorded'}%
           <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); } await refresh(); }}>Delete</button>
         </div>)}
-        {activeERTModel && <ERTTomogram models={[activeERTModel]} onCellSelect={cell => { setSelectedCell({ ...cell, modelId: activeERTModel.id, lineId: activeERTModel.lineId || 'Unlabelled line' }); setSelectedDistance(cell.x); }} />}
-        {activeERTModel && <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedDistance} onDistanceChange={distance => { setSelectedDistance(distance); const nearest = displayCells.reduce((best, cell) => !best || Math.abs(cell.x-distance) < Math.abs(best.x-distance) ? cell : best, null); if (nearest) setSelectedCell(nearest); }} />}
+        {activeERTModel && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 16, alignItems: 'start', minWidth: 0 }} aria-label="Linked ERT and geological interpretation views">
+          <div style={{ minWidth: 0 }}>
+            <ERTTomogram models={[activeERTModel]} selectedDistance={selectedDistance} onCellSelect={cell => { setSelectedCell({ ...cell, modelId: activeERTModel.id, lineId: activeERTModel.lineId || 'Unlabelled line' }); setSelectedDistance(cell.x); }} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedDistance} onDistanceChange={distance => { setSelectedDistance(distance); const nearest = displayCells.reduce((best, cell) => !best || Math.abs(cell.x-distance) < Math.abs(best.x-distance) ? cell : best, null); if (nearest) setSelectedCell(nearest); }} />
+          </div>
+        </div>}
         {allCells.length > 0 && <>
           <h2>ERT resistivity point section</h2>
           <label>Survey line to display
-            <select style={input} value={activeERTModel?.id || ''} onChange={event => { setSelectedErtModelId(event.target.value); setSelectedCell(null); }}>
+            <select style={input} value={activeERTModel?.id || ''} onChange={event => { setSelectedErtModelId(event.target.value); setSelectedCell(null); setSelectedDistance(null); }}>
               {ert.map((model, index) => <option key={model.id} value={model.id}>{model.lineId || 'Unlabelled line'} — {model.cells.length} points (model {index + 1})</option>)}
             </select>
           </label>
