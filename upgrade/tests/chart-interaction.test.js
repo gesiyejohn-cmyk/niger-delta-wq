@@ -92,3 +92,15 @@ test('analytics correlation heatmap safely renders undefined correlations for ze
   assert.match(source, /title=\{v==null\?'Undefined: zero variance or insufficient paired data':v\.toFixed\(3\)\}/);
   assert.match(source, /v==null\?'—':v\.toFixed\(2\)/);
 });
+
+test('ERT and geological interpretation views share a responsive two-panel layout and selected-distance marker', () => {
+  const page = readFileSync(new URL('../src/pages/GeophysicsPage.jsx', import.meta.url), 'utf8');
+  const tomogram = readFileSync(new URL('../src/pages/ERTTomogram.jsx', import.meta.url), 'utf8');
+  assert.match(page, /gridTemplateColumns: 'repeat\(auto-fit, minmax\(min\(100%, 420px\), 1fr\)\)'/);
+  assert.match(page, /<ERTTomogram models=\{\[activeERTModel\]\} selectedDistance=\{selectedDistance\}/);
+  assert.match(page, /<GeologicalInterpretationEditor model=\{activeERTModel\} selectedDistance=\{selectedDistance\}/);
+  assert.match(tomogram, /selectedDistance = null/);
+  assert.match(tomogram, /Selected profile distance/);
+  assert.match(tomogram, /strokeDasharray="6 4"/);
+  assert.match(page, /setSelectedDistance\(null\)/);
+});
