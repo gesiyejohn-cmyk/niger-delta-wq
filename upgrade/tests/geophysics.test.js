@@ -5,6 +5,7 @@ import {
   wennerGeometricFactor,
   calculateVES,
   validateVES,
+  isCompleteVESReading,
   validateERT,
   descriptiveStats,
   pearsonCorrelation,
