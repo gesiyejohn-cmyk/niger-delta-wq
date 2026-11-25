@@ -56,6 +56,7 @@ export default function GeophysicsPage() {
   const [ertCoordinates, setErtCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
   const [readings, setReadings] = useState([{ ab2: '', mn2: '', spacing: '', resistance: '' }]);
   const [selectedERTDistance, setSelectedERTDistance] = useState(null);
+  const [selectedERTDepth, setSelectedERTDepth] = useState(null);
   const [line, setLine] = useState({ lineId: '', spacing: '', electrodes: '', rms: '', software: '', notes: '' });
   const [cells, setCells] = useState([]);
   const [sourceImport, setSourceImport] = useState(null);
@@ -260,20 +261,22 @@ export default function GeophysicsPage() {
         <h2>Saved ERT lines</h2>
         {ert.map(record => <div key={record.id} style={{ padding: 8, borderTop: '1px solid #e2e8f0' }}>
           <strong>{record.lineId || 'Unlabelled line'}</strong> · {record.cells.length} points · RMS {record.rms || 'not recorded'}%
-          <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); setSelectedERTDistance(null); } await refresh(); }}>Delete</button>
+          <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); setSelectedERTDistance(null); setSelectedERTDepth(null); } await refresh(); }}>Delete</button>
         </div>)}
         {activeERTModel && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 16, alignItems: 'start', minWidth: 0 }} aria-label="Linked ERT and geological interpretation views">
           <div style={{ minWidth: 0 }}>
-            <ERTTomogram models={[activeERTModel]} selectedDistance={selectedERTDistance} onCellSelect={cell => { setSelectedCell({ ...cell, modelId: activeERTModel.id, lineId: activeERTModel.lineId || 'Unlabelled line' }); setSelectedERTDistance(cell.x); }} />
+            <ERTTomogram models={[activeERTModel]} selectedDistance={selectedERTDistance} selectedDepth={selectedERTDepth} onCellSelect={cell => { setSelectedCell({ ...cell, modelId: activeERTModel.id, lineId: activeERTModel.lineId || 'Unlabelled line' }); setSelectedERTDistance(cell.x); setSelectedERTDepth(cell.depth); }} />
           </div>
           <div style={{ minWidth: 0 }}>
-            <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedERTDistance} onDistanceChange={distance => { setSelectedERTDistance(distance); const nearest = displayCells.reduce((best, cell) => !best || Math.abs(cell.x-distance) < Math.abs(best.x-distance) ? cell : best, null); if (nearest) setSelectedCell(nearest); }} />
+            <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedERTDistance} selectedDepth={selectedERTDepth}
+              onDistanceChange={distance => { setSelectedERTDistance(distance); const nearest = displayCells.reduce((best, cell) => !best || Math.hypot((cell.x-distance)/(maxX-minX || 1),(cell.depth-(selectedERTDepth ?? 0))/(maxDepth || 1)) < Math.hypot((best.x-distance)/(maxX-minX || 1),(best.depth-(selectedERTDepth ?? 0))/(maxDepth || 1)) ? cell : best, null); if (nearest) setSelectedCell(nearest); }}
+              onDepthChange={depth => { setSelectedERTDepth(depth); const nearest = displayCells.reduce((best, cell) => !best || Math.hypot((cell.x-(selectedERTDistance ?? minX))/(maxX-minX || 1),(cell.depth-depth)/(maxDepth || 1)) < Math.hypot((best.x-(selectedERTDistance ?? minX))/(maxX-minX || 1),(best.depth-depth)/(maxDepth || 1)) ? cell : best, null); if (nearest) setSelectedCell(nearest); }} />
           </div>
         </div>}
         {allCells.length > 0 && <>
           <h2>ERT resistivity point section</h2>
           <label>Survey line to display
-            <select style={input} value={activeERTModel?.id || ''} onChange={event => { setSelectedErtModelId(event.target.value); setSelectedCell(null); setSelectedERTDistance(null); }}>
+            <select style={input} value={activeERTModel?.id || ''} onChange={event => { setSelectedErtModelId(event.target.value); setSelectedCell(null); setSelectedERTDistance(null); setSelectedERTDepth(null); }}>
               {ert.map((model, index) => <option key={model.id} value={model.id}>{model.lineId || 'Unlabelled line'} — {model.cells.length} points (model {index + 1})</option>)}
             </select>
           </label>
