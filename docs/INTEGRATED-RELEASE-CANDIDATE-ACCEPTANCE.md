@@ -53,7 +53,7 @@ See [Android signing readiness and safe-update gate](ANDROID-SIGNING-READINESS.m
 ## 3. Windows desktop acceptance
 
 - [ ] Install and launch the candidate in a clean test environment without changing production user data.
-- [ ] Confirm the Windows CI runtime smoke test passes on the final candidate commit: **passed in run 45709672813**. It launches the packaged Electron executable from `release/win-unpacked`, checks that it remains alive for the startup window, and terminates the test process.
+- [ ] Confirm the Windows CI runtime smoke test passes on the final candidate commit: **passed in run 45715788639**. It launches the packaged Electron executable from `release/win-unpacked`, checks that it remains alive for the startup window, and terminates the test process.
 - [ ] Verify startup, navigation, local persistence, backup/restore, file import/export, and graceful offline behavior.
 - [ ] Verify installer identity, version, architecture, dependencies, and upgrade/uninstall behavior in the test environment.
 - [ ] Decide whether code signing is required for distribution; if so, verify the publisher signature and timestamp on the final installer.
