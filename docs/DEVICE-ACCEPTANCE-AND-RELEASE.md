@@ -626,3 +626,20 @@ Artifacts from run 45603361776 (GitHub Actions retention applies):
 The Android CI log confirms the original package ID, version code/name `1`/`1.0`, and debug signer certificate SHA-256 `c18797f7a83d851128e1587dd29f211d35060f57415bd9023535798f1f91ea0a`. The same debug certificate was used for the preview package. This is not a production signing identity and does not establish compatibility with the debug or release signer on the user's existing phone installation.
 
 **Open release gates:** physical Android acceptance; safe update/signature compatibility; Windows installation and runtime acceptance; public web deployment; real-device backup/restore verification; production signing; and independent scientific review/calibration. Do not install this CI APK over the existing phone app or uninstall/clear the existing app. No new phone installation is requested at this milestone.
+
+
+### Latest follow-up verification — 25 November 2026, run 45608368102
+
+The evidence-recording commit `fdf47980e734561093b36096df8bcdd6a90a5283` was itself verified successfully by [workflow run 45608368102](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45608368102). All three jobs passed on this exact commit:
+
+- Web/tests: 250 tests passed, 0 failed; production web build passed; integrated source ZIP compression/integrity check passed. Main JavaScript bundle: 171.56 kB (56.15 kB gzip); XLSX: 429.02 kB (143.08 kB gzip); Leaflet: 149.58 kB (43.36 kB gzip).
+- Android: Gradle build passed; API 35 emulator booted; original application `com.nigerdeltawq.mobile`, version `1.0` (version code 1), installed and launched with `com.nigerdeltawq.mobile.MainActivity`. A side-by-side preview package `com.nigerdeltawq.mobile.preview431` also installed and launched. Debug APK SHA-256: `5aa1b8dc2d20a1c9a7aefc36cbbf9e599bd2e6ad4aa72c9394b2f3e9b2c8d255`. Debug signer certificate SHA-256: `4f334234fc0c5995e5b5fe4d676c2cac4c889c41e36f363698520b5dec3b55bb` (same for preview). Emulator evidence only; no physical-device or existing-install update compatibility is implied.
+- Windows: installer `Niger-Delta-WQ-Setup-1.0.0.exe` generated and uploaded. The CI log explicitly reports that no code-signing certificate is configured and signing was skipped. Windows installer archive SHA-256: `a42d376f1ed8298926e32613c8161bb1ab0ce06e2aa22fa50b8d87b33c087143`.
+
+Artifacts from run 45608368102:
+- Android debug APK archive, ID `15019277132`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45608368102/artifacts/15019277132), 8,184,418 bytes, expires 9 December 2026.
+- Windows installer archive, ID `15019346492`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45608368102/artifacts/15019346492), 95,614,719 bytes, expires 9 December 2026.
+- Integrated web archive, ID `15017989632`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45608368102/artifacts/15017989632), 350,158 bytes, expires 9 December 2026.
+- Integrated source archive, ID `15019331670`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45608368102/artifacts/15019331670), 194,334 bytes, expires 25 December 2026.
+
+**Release restrictions remain:** debug-only Android signing; no verified signature compatibility with the user's current phone installation; no physical Android acceptance; no signed Windows installer or physical Windows runtime acceptance; no public web deployment; no real-device backup/restore verification; and independent scientific review/calibration remains required. Do not install this CI APK over the existing phone app or uninstall/clear its data.
