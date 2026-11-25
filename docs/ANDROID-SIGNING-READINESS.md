@@ -21,6 +21,30 @@ The integrated CI APKs are debug-signed and intended for automated emulator chec
 7. After the signing model and identity are independently confirmed, configure the release build, increment `versionCode`, verify package ID, inspect the final APK using `apksigner verify --print-certs`, and compare its certificate with the correct installed-app signing identity.
 8. Conduct update and backup/restore acceptance on a separate test device or isolated test installation first. Preserve the existing installation and its data.
 
+
+## Read-only extraction of the installed APK certificate (direct APK installations)
+
+If the app was installed directly as an APK and an authorized computer with Android Platform Tools is available, the following procedure reads the installed package files; it does not uninstall, update, clear, or modify app data.
+
+1. Enable USB debugging only if permitted by the device owner, connect the phone, unlock it, and approve the computer's ADB authorization prompt.
+2. Confirm the package is present:
+   `adb shell pm list packages com.nigerdeltawq.mobile`
+3. List the installed APK paths:
+   `adb shell pm path com.nigerdeltawq.mobile`
+4. Pull the path ending in `/base.apk` exactly as returned by the previous command:
+   `adb pull "<path-returned-for-base.apk>" ndwq-installed-base.apk`
+   If Android reports split APKs, retain the full path list and pull the base and split APKs for the evidence record. Do not alter the files on the device.
+5. On the computer, run:
+   `apksigner verify --verbose --print-certs ndwq-installed-base.apk`
+   Record the signer certificate SHA-256 digest, package ID, app version, device model, Android version, and date. Keep the APK private; it may contain proprietary application code.
+6. Compare only against a trusted production signing record or the correct distribution identity. For Google Play installations, confirm the Play app-signing certificate in Play Console; do not treat the upload key as the installed app signer.
+
+Useful read-only package metadata commands:
+- `adb shell dumpsys package com.nigerdeltawq`
+- `adb shell pm path com.nigerdeltawq.mobile`
+
+If ADB access is unavailable, the package path cannot be read, the installed build came from Google Play, or the signer/lineage is ambiguous, stop and obtain the authoritative signing record from the original distributor. Do not use a third-party APK download as a substitute for the exact installed build.
+
 ## Stop conditions
 
 Do not attempt an update if the installed certificate, Play App Signing identity, signing lineage, package identity, or backup integrity is uncertain. Never uninstall the existing app or clear its data as a workaround for a signature mismatch.
