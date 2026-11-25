@@ -70,7 +70,7 @@ import sys
 path = pathlib.Path(sys.argv[1])
 if not path.is_file() or path.stat().st_size < 1024:
     raise SystemExit("Emulator screenshot is missing or implausibly small.")
-if path.read_bytes()[:8] != b"\\x89PNG\\r\\n\\x1a\\n":
+if path.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
     raise SystemExit("Emulator screenshot is not a valid PNG file.")
 print(f"Captured emulator screenshot: {path} ({path.stat().st_size} bytes)")
 PY
