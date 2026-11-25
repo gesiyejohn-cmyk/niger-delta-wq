@@ -143,6 +143,7 @@ jobs:
 
   deploy-pages:
     needs: web
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
