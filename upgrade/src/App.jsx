@@ -36,7 +36,8 @@ export default function App() {
             <small>Groundwater &amp; environmental monitoring</small>
           </span>
         </div>
-        <nav aria-label="Primary navigation" tabIndex={0} style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', overflowY: 'hidden', maxWidth: '100%', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin' }}>
+        <nav aria-label="Primary navigation">
+          <div tabIndex={0} aria-label="Scroll primary navigation links" style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', overflowY: 'hidden', maxWidth: '100%', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin' }}>
           <NavLink to="/" end style={{ flex: '0 0 auto' }}>Dashboard</NavLink>
           <NavLink to="/new" style={{ flex: '0 0 auto' }}>New sample</NavLink>
           <NavLink to="/map" style={{ flex: '0 0 auto' }}>GIS map</NavLink>
@@ -51,6 +52,7 @@ export default function App() {
           <NavLink to="/external-validation" style={{ flex: '0 0 auto' }}>External validation</NavLink>
           <NavLink to="/hydrochemistry" style={{ flex: '0 0 auto' }}>Hydrochemistry diagrams</NavLink>
           <NavLink to="/spatial-analysis" style={{ flex: '0 0 auto' }}>IDW spatial analysis</NavLink>
+          </div>
         </nav>
       </header>
       <main>
