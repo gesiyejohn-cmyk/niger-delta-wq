@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { calculateHydrochemistry, validateHydrochemistrySample, buildHydrochemistryCSV } from '../engine/hydrochemistry.js';
+import { calculateHydrochemistry, validateHydrochemistrySample, buildHydrochemistryCSV, buildSchoellerSegments } from '../engine/hydrochemistry.js';
 import { saveHydrochemistrySample, listHydrochemistrySamples, deleteHydrochemistrySample } from '../storage/hydrochemistry.js';
 import CoordinateFields from './CoordinateFields.jsx';
 import { validateCoordinatePair } from '../engine/coordinates.js';
