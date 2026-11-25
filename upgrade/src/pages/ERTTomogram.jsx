@@ -15,6 +15,7 @@ const initialView = { x: 0, y: 0, w: 760, h: 390 };
 export default function ERTTomogram({ models = [], selectedDistance = null, onCellSelect = () => {} }) {
   const [view, setView] = useState(initialView);
   const [drag, setDrag] = useState(null);
+  const [selectedCell, setSelectedCell] = useState(null);
   const suppressClick = useRef(false);
   const points = useMemo(() => models.flatMap(model =>
     (model.cells || []).map(p => ({...p, lineId: model.lineId || 'Unlabelled line'}))
@@ -32,6 +33,19 @@ export default function ERTTomogram({ models = [], selectedDistance = null, onCe
   function pan(dx,dy) {
     setView(old => ({...old,x:Math.max(0,Math.min(760-old.w,old.x+dx*old.w)),
       y:Math.max(0,Math.min(390-old.h,old.y+dy*old.h))}));
+  }
+  function selectGridCell(cell) {
+    const x = grid.x0 + ((cell.c + 0.5) / grid.cols) * (grid.x1 - grid.x0);
+    const depth = grid.z0 + ((cell.r + 0.5) / grid.rows) * (grid.z1 - grid.z0);
+    const nearest = points.reduce((best, point) => {
+      const distance = Math.hypot(
+        (point.x - x) / (grid.x1 - grid.x0 || 1),
+        (point.depth - depth) / (grid.z1 - grid.z0 || 1)
+      );
+      return !best || distance < best.distance ? { point, distance } : best;
+    }, null);
+    setSelectedCell({ r: cell.r, c: cell.c, x, depth, value: cell.value, nearest });
+    if (nearest) onCellSelect(nearest.point);
   }
   function handleSectionClick(event) {
     if (suppressClick.current) {
@@ -78,10 +92,23 @@ export default function ERTTomogram({ models = [], selectedDistance = null, onCe
         <text x="65" y="16" fontSize="12" fill="#334155">Depth (m)</text>
         <text x="350" y="375" fontSize="12" fill="#334155">Distance along line (m)</text>
         <g transform="translate(65 28)">
-          {grid.values.map(cell => <rect key={cell.r+'-'+cell.c}
-            x={cell.c * 650/grid.cols} y={cell.r * 300/grid.rows}
-            width={650/grid.cols + 0.4} height={300/grid.rows + 0.4}
-            fill={colour(cell.value,min,max)} />)}
+          {grid.values.map(cell => {
+            const isSelected = selectedCell?.r === cell.r && selectedCell?.c === cell.c;
+            return <rect key={cell.r+'-'+cell.c}
+              x={cell.c * 650/grid.cols} y={cell.r * 300/grid.rows}
+              width={650/grid.cols + 0.4} height={300/grid.rows + 0.4}
+              fill={colour(cell.value,min,max)}
+              stroke={isSelected ? '#111827' : 'none'} strokeWidth={isSelected ? 2.5 : 0}
+              role="button" tabIndex={0}
+              aria-label={`Interpolated resistivity ${cell.value.toFixed(2)} ohm metres at distance ${(grid.x0 + (cell.c + 0.5) / grid.cols * (grid.x1-grid.x0)).toFixed(2)} metres and depth ${(grid.z0 + (cell.r + 0.5) / grid.rows * (grid.z1-grid.z0)).toFixed(2)} metres`}
+              onClick={event => { event.stopPropagation(); selectGridCell(cell); }}
+              onKeyDown={event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault(); event.stopPropagation(); selectGridCell(cell);
+                }
+              }}
+              style={{cursor:'pointer',outline:'none'}} />;
+          })}
         </g>
         {selectedDistance != null && Number.isFinite(Number(selectedDistance)) && Number(selectedDistance) >= grid.x0 && Number(selectedDistance) <= grid.x1 && <g pointerEvents="none" aria-label={`Selected profile distance ${Number(selectedDistance).toFixed(2)} metres`}>
           <line x1={65 + ((Number(selectedDistance) - grid.x0) / (grid.x1 - grid.x0 || 1)) * 650} x2={65 + ((Number(selectedDistance) - grid.x0) / (grid.x1 - grid.x0 || 1)) * 650} y1="28" y2="328" stroke="#111827" strokeWidth="2.5" strokeDasharray="6 4"/>
@@ -96,6 +123,19 @@ export default function ERTTomogram({ models = [], selectedDistance = null, onCe
       <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginTop:6}}>
         <span>Lower: {min} Ωm</span><span>Logarithmic colour scale</span><span>Higher: {max} Ωm</span>
       </div>
+      {selectedCell && <section aria-live="polite" style={{marginTop:12,padding:12,border:'1px solid #cbd5e1',borderRadius:8,background:'#fff'}}>
+        <h3 style={{marginTop:0}}>Selected tomogram cell</h3>
+        <p><strong>Interpolated resistivity:</strong> {selectedCell.value.toFixed(2)} Ωm</p>
+        <p><strong>Profile distance:</strong> {selectedCell.x.toFixed(2)} m</p>
+        <p><strong>Depth:</strong> {selectedCell.depth.toFixed(2)} m</p>
+        {selectedCell.nearest && <div style={{borderTop:'1px solid #e2e8f0',paddingTop:8}}>
+          <strong>Nearest imported measurement (not the interpolated value)</strong>
+          <p>Distance: {Number(selectedCell.nearest.point.x).toFixed(2)} m · Depth: {Number(selectedCell.nearest.point.depth).toFixed(2)} m</p>
+          <p>Measured resistivity: {Number(selectedCell.nearest.point.resistivity).toFixed(2)} Ωm</p>
+          <p>Normalized offset: {selectedCell.nearest.distance.toFixed(4)}</p>
+        </div>}
+        <button type="button" onClick={() => setSelectedCell(null)}>Clear selection</button>
+      </section>}
     </>}
   </section>;
 }
