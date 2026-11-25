@@ -5,6 +5,8 @@ import { resolve } from 'node:path';
 
 const scriptPath = resolve(process.cwd(), '../../upgrade/scripts/android-emulator-boot-and-smoke-test.sh');
 const script = readFileSync(scriptPath, 'utf8');
+const smokeScriptPath = resolve(process.cwd(), '../../upgrade/scripts/android-emulator-smoke-test.sh');
+const smokeScript = readFileSync(smokeScriptPath, 'utf8');
 
 test('Android emulator ADB startup is bounded', () => {
   assert.match(script, /timeout --foreground 15s "\$ADB" start-server/);
@@ -21,4 +23,15 @@ test('Android emulator cleanup bounds shutdown and terminates its process group'
     script.indexOf('wait "$EMULATOR_PID"'),
     'the emulator process is force-terminated before it is reaped'
   );
+});
+
+test('Android emulator smoke test captures and validates a PNG screenshot after launch', () => {
+  assert.match(smokeScript, /exec-out screencap -p > "\$SCREENSHOT"/);
+  assert.match(smokeScript, /stat\(\)\.st_size < 1024/);
+  assert.match(smokeScript, /b"\\x89PNG\\r\\n\\x1a\\n"/);
+});
+
+test('Android emulator smoke test preserves UI hierarchy when available', () => {
+  assert.match(smokeScript, /uiautomator dump \/sdcard\/ndwq-window\.xml/);
+  assert.match(smokeScript, /Captured Android UI hierarchy/);
 });
