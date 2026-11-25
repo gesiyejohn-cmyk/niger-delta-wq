@@ -50,3 +50,20 @@ The pinned upgrade overlay was validated against the clean `main` baseline by wo
 - Comparison against base `aa9a5f6e0da0d84477f2ab00d040a2f1bbda9fe7`: 5 commits ahead, 0 behind; only three paths changed — the Pages deployment guard, this integration workflow, and this inventory document.
 
 This is a successful clean-baseline CI integration milestone. It is not a production merge, signed release, physical-device acceptance, or public deployment. The integration branch remains isolated from `main`.
+
+
+## Selective ERT touch-navigation integration — 25 November 2026
+
+The clean-baseline release-candidate workflow was updated to pin the separately reviewed ERT overlay at commit `6365a3677274c5385e4b62148592948d23c95a09`, rather than importing the diverged feature branch wholesale. The pin update is recorded in workflow commit `c3509d4c14bdcc5a06b2cadda4e2ecaabaf3ad41`.
+
+- Selectively transferred ERT source: `upgrade/src/pages/ERTTomogram.jsx`.
+- Selectively transferred regression tests: `upgrade/tests/ert-tomogram-accessibility.test.js`.
+- Interaction additions include mobile touch pan, two-finger pinch zoom, and mouse-wheel zoom.
+- Existing `selectedDistance` and `onCellSelect` integration hooks and selected-cell marker behavior were retained.
+- Integrated clean-baseline workflow run [45682468365](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45682468365): all three jobs passed.
+- Web/test job: 262 tests passed, 0 failed.
+- Android: debug APK built; APK identity/certificate recorded; original-identity APK launched in emulator; side-by-side preview APK built; artifact upload passed.
+- Windows desktop: installer build passed.
+- Artifacts uploaded: `ndwq-integrated-android-debug-apk` (8,535,940 bytes), `ndwq-integrated-source` (180,652 bytes), `ndwq-integrated-web` (351,319 bytes), `ndwq-integrated-windows-desktop` (95,615,683 bytes), and `ndwq-source-provenance` (3,515 bytes).
+
+This closes the selective ERT overlay's clean-baseline three-platform CI validation gate. It does not constitute a production merge, production signing, physical-device acceptance, Windows signing/runtime acceptance, or public deployment. No APK installation was requested or performed; `main` remains untouched and PRs #2, #3, and #6 remain unmerged.
