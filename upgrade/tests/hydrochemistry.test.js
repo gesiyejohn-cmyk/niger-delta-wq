@@ -18,6 +18,9 @@ test('Durov central square coordinates project the normalized cation and anion g
 
 test('Piper coordinates remain finite and chloride facies uses the chloride group',()=>{const r=calculateHydrochemistry(sample);assert.ok(Number.isFinite(r.piper.anion.x));assert.ok(Number.isFinite(r.piper.anion.y));assert.ok(Number.isFinite(r.piper.cation.x));assert.ok(Number.isFinite(r.piper.cation.y));assert.equal(r.classification.dominantAnion,'bicarbonate-carbonate');assert.ok(!r.classification.facies.includes('undefined'));});
 test('Gibbs sodium ratio uses Na divided by Na plus Ca, excluding potassium',()=>{const r=calculateHydrochemistry(sample);assert.ok(Math.abs(r.gibbs.naCaRatio-(1/(1+2)))<1e-9);});
+test('Gibbs uses laboratory-measured TDS when supplied and records its provenance',()=>{const r=calculateHydrochemistry({...sample,tdsMgL:'450'});assert.equal(r.gibbs.dissolvedSolidsMgL,450);assert.equal(r.gibbs.dissolvedSolidsSource,'laboratory-measured TDS');assert.equal(r.measuredTDSMgL,450);});
+test('Gibbs uses the major-ion sum only as a clearly identified proxy when TDS is absent',()=>{const r=calculateHydrochemistry(sample);const expected=Object.keys(sample).filter(k=>k!=='sampleId').reduce((s,k)=>s+Number(sample[k]||0),0);assert.equal(r.gibbs.dissolvedSolidsMgL,expected);assert.equal(r.gibbs.dissolvedSolidsSource,'sum of measured major ions (proxy)');assert.equal(r.measuredTDSMgL,null);});
+test('hydrochemistry validation rejects invalid measured TDS',()=>{assert.throws(()=>validateHydrochemistrySample({...sample,tdsMgL:0}),/Measured TDS/);assert.throws(()=>validateHydrochemistrySample({...sample,tdsMgL:'unknown'}),/Measured TDS/);});
 
 test('Chadha y-axis includes measured nitrate in the strong-acid group and total anions',()=>{
  const withoutNitrate=calculateHydrochemistry(sample);
@@ -59,6 +62,8 @@ test('hydrochemistry CSV clearly labels total cations and total anions and expor
  const header = csv.split(String.fromCharCode(13,10))[0];
  assert.match(header,/Total Cations \(meq\/L\)/);
  assert.match(header,/Total Anions \(meq\/L\)/);
+ assert.match(header,/Measured TDS \(mg\/L\)/);
+ assert.match(header,/Gibbs dissolved-solids source/);
  assert.match(header,/Calcium \(mg\/L\)/);
  assert.match(header,/Calcium \(meq\/L\)/);
  const headers=header.split(',').map(cell=>cell.slice(1,-1));
