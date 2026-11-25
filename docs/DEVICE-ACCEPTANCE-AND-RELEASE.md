@@ -518,3 +518,28 @@ Original Android debug APK SHA-256: \`0420c65d687fb8a484daaa98c02580bbf6d2385414
 The follow-up commit \`7674353a5207c5e7c776e9646e0fce6203dce81b\` adds regression coverage for signed decimal-string imports without hemisphere columns and case/spacing normalization of coordinate-format and CRS labels. Its CI verification is pending; the preceding 136-test and three-platform pass above applies to \`ea9c8d2\`, not to that follow-up commit.
 
 These results do not establish physical-phone visual acceptance, real-device backup/restore, Windows installation/runtime on a physical computer, web deployment/browser acceptance, production signing, safe update compatibility, or scientific sign-off. Do not uninstall, clear app data or install the debug APK over an existing phone installation based on this CI result. PR #2 remains open and draft.
+
+
+## Bulk-import numeric cell integrity — 25 November 2026
+
+A review of the CSV/Excel sample importer found that whitespace-only parameter cells were not treated as blank. JavaScript numeric coercion can turn a whitespace-only string into `0`, incorrectly recording a measurement that was never supplied. Boolean spreadsheet cells could also coerce to numeric zero. The importer now uses a shared numeric-cell parser: null, empty and whitespace-only cells are skipped; genuine numeric zero is retained; booleans, non-numeric values and non-finite values are rejected with a row-level import error. Whitespace-only mapped metadata cells are ignored, while partially supplied coordinate pairs still fail validation in sample storage.
+
+Regression coverage is in `upgrade/tests/import-values.test.js` and verifies blank-cell handling, preservation of real zero values, rejection of booleans/non-finite values, and that the importer uses the guards in both metadata and parameter mapping. The patch is committed for CI verification; the preceding baseline below is not evidence that this new patch has passed.
+
+### Pre-patch multi-platform baseline — commit `8e753353b9eb9c3ccd67669cb77daef301a875c4`
+
+[Workflow run #45621267475](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45621267475) completed successfully on this exact commit:
+
+- `web-and-tests`: **137 passed, 0 failed**; production web build and artifact upload passed.
+- `android`: original package `com.nigerdeltawq.mobile` built and installed; API 35 emulator launch returned `Status: ok`, with `com.nigerdeltawq.mobile/.MainActivity` observed as top-resumed. The side-by-side preview package `com.nigerdeltawq.mobile.preview2` also launched. The APK is debug-signed; certificate SHA-256 fingerprint `6cfbebac47c6e3e39df09a2014fdd27c7a59c485e772b5a790ab8cf469453dca`.
+- `windows-desktop`: NSIS installer `Niger-Delta-WQ-Setup-1.0.0.exe` generated and uploaded; CI log confirms no code-signing certificate was configured.
+
+Artifact metadata (uploaded ZIP archive sizes):
+
+- Web `ndwq-integrated-web`, ID `15025065778`, **303,260 bytes**, SHA-256 `788319066c29bf73d4e5f75a56516d8ae500b4f1b109f5d56fbc18ca3734f556`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45621267475/artifacts/15025065778); expires **9 December 2026 at 13:13:14 UTC**.
+- Android `ndwq-integrated-android-debug-apk`, ID `15023983689`, **8,084,381 bytes**, SHA-256 `584548b1ac631607586c52104ff7cc3ba581e01a541686a5a662ef4ceef2be87`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45621267475/artifacts/15023983689); expires **9 December 2026 at 13:17:12 UTC**.
+- Windows `ndwq-integrated-windows-desktop`, ID `15025171075`, **95,588,806 bytes**, SHA-256 `27ebf9bf3d46172fc9aa50543976ce45bf3c0e307ee0b1d9bb8b6514618e7bea`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45621267475/artifacts/15025171075); expires **9 December 2026 at 13:14:37 UTC**.
+
+The earlier specifically requested [run #43762079209](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43762079209) is complete and failed in its Android launch job: the emulator reached boot-complete, but the subsequent ADB settings-service command returned `Broken pipe (32)` and ADB exit code 224 before an APK artifact could be uploaded. This failure is retained as historical evidence; the later run above demonstrates the corrected boot-and-launch sequence on a later commit.
+
+These CI results do not establish physical-phone visual acceptance, production signing, compatibility with an existing installation, real-device backup/restore, Windows installation/runtime on a physical computer, web deployment/browser acceptance or scientific sign-off. Do not uninstall, clear data or install a debug APK over an existing phone installation.

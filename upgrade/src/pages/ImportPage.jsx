@@ -4,6 +4,7 @@ import Papa from 'papaparse';
 import { saveSample } from '../storage/samples.js';
 import { PARAMETER_REGISTRY } from '../engine/parameters.js';
 import { availableUnits, toCanonical } from '../engine/units.js';
+import { isBlankImportValue, parseImportedNumericValue } from '../engine/importValues.js';
 
 const META_COLUMNS = {
   sampleCode: ['sample code', 'sample id', 'id'],
@@ -114,7 +115,7 @@ export default function ImportPage() {
       for (const [key, header] of Object.entries(mapping)) {
         if (!header) continue;
         const value = row[headers.indexOf(header)];
-        if (value !== '' && value != null) meta[key] = value;
+        if (!isBlankImportValue(value)) meta[key] = value;
       }
 
       if (typeof meta.collectionDate === 'number') {
@@ -128,11 +129,12 @@ export default function ImportPage() {
         for (const [key, header] of Object.entries(paramMap)) {
           if (!header) continue;
           const raw = row[headers.indexOf(header)];
-          if (raw === '' || raw == null) continue;
+          const numericValue = parseImportedNumericValue(raw);
+          if (numericValue == null) continue;
           const unit = inferUnit(headers[headers.indexOf(header)] || '', key);
-          const converted = toCanonical(key, raw, unit);
+          const converted = toCanonical(key, numericValue, unit);
           params[key] = {
-            value: Number(raw),
+            value: numericValue,
             unit,
             canonical: converted.canonical,
             canonicalUnit: converted.unit
