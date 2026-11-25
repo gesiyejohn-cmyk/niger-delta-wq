@@ -18,3 +18,12 @@ test('the route fallback and lazy-page loading remain announced to assistive tec
   assert.match(source, /role="status" aria-live="polite"/);
   assert.match(source, /<Route path="\*" element={<Dashboard \/>} \/>/);
 });
+
+
+test('the primary navigation is keyboard-focusable and horizontally scrollable on narrow screens', () => {
+  assert.match(source, /<nav aria-label="Primary navigation" tabIndex=\{0\}/);
+  assert.match(source, /overflowX: 'auto'/);
+  assert.match(source, /flexWrap: 'nowrap'/);
+  assert.match(source, /WebkitOverflowScrolling: 'touch'/);
+  assert.match(source, /flex: '0 0 auto'/);
+});
