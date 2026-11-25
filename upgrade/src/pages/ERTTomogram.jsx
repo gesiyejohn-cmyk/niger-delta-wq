@@ -17,6 +17,7 @@ export default function ERTTomogram({ models = [], selectedDistance = null, onCe
   const [drag, setDrag] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
   const suppressClick = useRef(false);
+  const touchGesture = useRef(null);
   const points = useMemo(() => models.flatMap(model =>
     (model.cells || []).map(p => ({...p, lineId: model.lineId || 'Unlabelled line'}))
   ), [models]);
@@ -85,10 +86,22 @@ export default function ERTTomogram({ models = [], selectedDistance = null, onCe
         <button type="button" onClick={()=>pan(0,0.2)}>Pan ↓</button>
       </div>
       <svg viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} role="img" aria-label="Interpolated resistivity tomogram with zoom and pan" onClick={handleSectionClick}
-        onPointerDown={event=>{if(event.button!==0||event.isPrimary===false)return;suppressClick.current=false;event.currentTarget.setPointerCapture?.(event.pointerId);setDrag({pointerId:event.pointerId,x:event.clientX,y:event.clientY,view});}}
-        onPointerMove={event=>{if(!drag||drag.pointerId!==event.pointerId)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;if(Math.hypot(dx,dy)>4)suppressClick.current=true;const rect=event.currentTarget.getBoundingClientRect();setView({...drag.view,x:Math.max(0,Math.min(760-drag.view.w,drag.view.x-dx*drag.view.w/rect.width)),y:Math.max(0,Math.min(390-drag.view.h,drag.view.y-dy*drag.view.h/rect.height))});}}
+        onWheel={event=>{event.preventDefault();const factor=event.deltaY<0?0.88:1.14;zoom(factor);}}
+        onTouchStart={event=>{
+          if(event.touches.length===1){const t=event.touches[0];touchGesture.current={mode:'pan',x:t.clientX,y:t.clientY,view};}
+          else if(event.touches.length>=2){const a=event.touches[0],b=event.touches[1];touchGesture.current={mode:'pinch',distance:Math.hypot(b.clientX-a.clientX,b.clientY-a.clientY),view};}
+        }}
+        onTouchMove={event=>{
+          const g=touchGesture.current;if(!g)return;
+          const rect=event.currentTarget.getBoundingClientRect();
+          if(g.mode==='pan'&&event.touches.length===1){const t=event.touches[0],dx=t.clientX-g.x,dy=t.clientY-g.y;if(Math.hypot(dx,dy)>6){event.preventDefault();suppressClick.current=true;setView({...g.view,x:Math.max(0,Math.min(760-g.view.w,g.view.x-dx*g.view.w/rect.width)),y:Math.max(0,Math.min(390-g.view.h,g.view.y-dy*g.view.h/rect.height))});}}
+          else if(g.mode==='pinch'&&event.touches.length>=2){event.preventDefault();const a=event.touches[0],b=event.touches[1],distance=Math.hypot(b.clientX-a.clientX,b.clientY-a.clientY);if(Math.abs(distance-g.distance)>3)suppressClick.current=true;const factor=g.distance/Math.max(1,distance),w=Math.max(190,Math.min(760,g.view.w*factor)),h=Math.max(98,Math.min(390,g.view.h*factor)),cx=(a.clientX+b.clientX)/2,cy=(a.clientY+b.clientY)/2,sx=g.view.x+(cx-rect.left)/rect.width*g.view.w,sy=g.view.y+(cy-rect.top)/rect.height*g.view.h;setView({x:Math.max(0,Math.min(760-w,sx-(sx-g.view.x)*w/g.view.w)),y:Math.max(0,Math.min(390-h,sy-(sy-g.view.y)*h/g.view.h)),w,h});}
+        }}
+        onTouchEnd={()=>{touchGesture.current=null;}}
+        onPointerDown={event=>{if(event.pointerType==='touch'||event.button!==0||event.isPrimary===false)return;suppressClick.current=false;event.currentTarget.setPointerCapture?.(event.pointerId);setDrag({pointerId:event.pointerId,x:event.clientX,y:event.clientY,view});}}
+        onPointerMove={event=>{if(event.pointerType==='touch'||!drag||drag.pointerId!==event.pointerId)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;if(Math.hypot(dx,dy)>4)suppressClick.current=true;const rect=event.currentTarget.getBoundingClientRect();setView({...drag.view,x:Math.max(0,Math.min(760-drag.view.w,drag.view.x-dx*drag.view.w/rect.width)),y:Math.max(0,Math.min(390-drag.view.h,drag.view.y-dy*drag.view.h/rect.height))});}}
         onPointerUp={event=>{if(drag?.pointerId===event.pointerId)setDrag(null);}} onPointerCancel={event=>{if(drag?.pointerId===event.pointerId)setDrag(null);suppressClick.current=false;}} onLostPointerCapture={()=>setDrag(null)}
-        style={{width:'100%',background:'#fff',border:'1px solid #cbd5e1',touchAction:'pan-y',cursor:drag?'grabbing':'grab'}}>
+        style={{width:'100%',background:'#fff',border:'1px solid #cbd5e1',touchAction:'none',cursor:drag?'grabbing':'grab'}}>
         <text x="65" y="16" fontSize="12" fill="#334155">Depth (m)</text>
         <text x="350" y="375" fontSize="12" fill="#334155">Distance along line (m)</text>
         <g transform="translate(65 28)">
