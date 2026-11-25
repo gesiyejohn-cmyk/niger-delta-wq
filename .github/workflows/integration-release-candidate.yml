@@ -342,6 +342,35 @@ jobs:
             "$APKSIGNER" verify --verbose --print-certs "$ARTIFACT_DIR/ndwq-side-by-side-preview-debug.apk"
           } | tee "$ARTIFACT_DIR/ndwq-preview-build-metadata.txt"
           NDWQ_ANDROID_APK="$ARTIFACT_DIR/ndwq-side-by-side-preview-debug.apk" bash upgrade/scripts/android-emulator-boot-and-smoke-test.sh
+      - name: Verify Android artifact bundle and generate checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARTIFACT_DIR="source/niger-delta-wq/android/ndwq-artifacts"
+          ORIGINAL_APK="$ARTIFACT_DIR/ndwq-original-debug.apk"
+          PREVIEW_APK="$ARTIFACT_DIR/ndwq-side-by-side-preview-debug.apk"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt -print | sort -V | tail -n 1)"
+          test -s "$ORIGINAL_APK"
+          test -s "$PREVIEW_APK"
+          test -s "$ARTIFACT_DIR/ndwq-original-build-metadata.txt"
+          test -s "$ARTIFACT_DIR/ndwq-preview-build-metadata.txt"
+          test -s "$ARTIFACT_DIR/com.nigerdeltawq.mobile-screen.png"
+          test -s "$ARTIFACT_DIR/com.nigerdeltawq.mobile.preview${GITHUB_RUN_NUMBER}-screen.png"
+          test -s "$ARTIFACT_DIR/com.nigerdeltawq.mobile-ui.xml"
+          test -s "$ARTIFACT_DIR/com.nigerdeltawq.mobile.preview${GITHUB_RUN_NUMBER}-ui.xml"
+          ORIGINAL_ID="$("$AAPT" dump badging "$ORIGINAL_APK" | sed -n "s/^package: name='\\([^']*\\)'.*/\\1/p" | head -n 1)"
+          PREVIEW_ID="$("$AAPT" dump badging "$PREVIEW_APK" | sed -n "s/^package: name='\\([^']*\\)'.*/\\1/p" | head -n 1)"
+          test "$ORIGINAL_ID" = "com.nigerdeltawq.mobile"
+          test "$PREVIEW_ID" = "com.nigerdeltawq.mobile.preview${GITHUB_RUN_NUMBER}"
+          "$APKSIGNER" verify "$ORIGINAL_APK"
+          "$APKSIGNER" verify "$PREVIEW_APK"
+          (
+            cd "$ARTIFACT_DIR"
+            sha256sum *.apk *.txt *.png *.xml > SHA256SUMS
+            sha256sum --check SHA256SUMS
+          )
+          echo "Android artifact bundle verified: original and isolated preview identities, signatures, emulator evidence, and SHA-256 checksums."
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ndwq-integrated-android-debug-apk
@@ -350,6 +379,7 @@ jobs:
             source/niger-delta-wq/android/ndwq-artifacts/*.txt
             source/niger-delta-wq/android/ndwq-artifacts/*.png
             source/niger-delta-wq/android/ndwq-artifacts/*.xml
+            source/niger-delta-wq/android/ndwq-artifacts/SHA256SUMS
           retention-days: 14
   windows-desktop:
     runs-on: windows-latest
