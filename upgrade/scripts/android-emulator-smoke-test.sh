@@ -59,6 +59,17 @@ echo "Android resumed activity: $RESUMED_ACTIVITY"
 
 # Preserve a real emulator frame for visual review. A resumed activity alone
 # does not prove that the WebView rendered useful app content.
+# Capacitor's resumed Activity can be visible while its splash screen is still
+# covering the WebView. Give the local web bundle time to mount before capturing
+# evidence; this is deliberately separate from the Activity-resumed check above.
+SCREEN_SETTLE_SECONDS="${NDWQ_SCREEN_SETTLE_SECONDS:-15}"
+if ! [[ "$SCREEN_SETTLE_SECONDS" =~ ^[0-9]+$ ]] || [ "$SCREEN_SETTLE_SECONDS" -lt 1 ] || [ "$SCREEN_SETTLE_SECONDS" -gt 60 ]; then
+  echo "NDWQ_SCREEN_SETTLE_SECONDS must be an integer from 1 to 60."
+  exit 1
+fi
+echo "Waiting ${SCREEN_SETTLE_SECONDS}s for the WebView and first app screen to render."
+sleep "$SCREEN_SETTLE_SECONDS"
+
 OUTPUT_DIR="${NDWQ_SMOKE_OUTPUT_DIR:-source/niger-delta-wq/android/ndwq-artifacts}"
 mkdir -p "$OUTPUT_DIR"
 SCREENSHOT="$OUTPUT_DIR/${APP_ID}-screen.png"
