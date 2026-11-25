@@ -264,3 +264,8 @@ test('ERT CSV rejects duplicate cells and invalid physical values', () => {
 test('ERT CSV rejects a header-only file', () => {
   assert.throws(() => parseERTCSV('x,depth,resistivity'), /No ERT model cells were supplied/);
 });
+
+test('ERT CSV rejects rows with missing or extra fields instead of silently shifting or ignoring values', () => {
+  assert.throws(() => parseERTCSV('x,depth,resistivity\\n0,1\\n10,2,250'), /row 2 has 2 fields; expected 3/);
+  assert.throws(() => parseERTCSV('x,depth,resistivity\\n0,1,100,unexpected'), /row 2 has 4 fields; expected 3/);
+});
