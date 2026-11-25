@@ -497,3 +497,24 @@ The implementation is committed for CI verification. It does not retroactively a
 
 
 The sample-import follow-up also normalizes case and spacing in DD/DMS/DDM and WGS84 CRS labels, and infers S/W hemispheres from signed decimal-degree strings when an import file has no separate hemisphere columns. Explicit mapped hemisphere columns still take precedence; conflicting signed values are rejected rather than silently rewritten.
+
+
+### Sample-coordinate workflow integration — CI evidence on 25 November 2026
+
+The sample-entry, import, storage and export integration was validated on commit \`ea9c8d2e7c167214fc7ac9e4bf01d6af72523b9a\` by [workflow run #45620155992](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45620155992). All three platform jobs completed successfully on that exact commit:
+
+- \`web-and-tests\`: **136 passed, 0 failed**; production Vite build and web artifact upload passed.
+- \`android\`: original-identity debug APK built; API 35 emulator installed and launched the original app. The observed package was \`com.nigerdeltawq.mobile\`, version code 1, version name 1.0, label \`Niger Delta WQ\`, launcher \`com.nigerdeltawq.mobile.MainActivity\`. The launch step returned \`Status: ok\`, process 2116 was observed, and the original launcher activity was reported as top-resumed. The isolated preview package \`com.nigerdeltawq.mobile.preview2\` also installed and launched.
+- \`windows-desktop\`: NSIS installer \`Niger-Delta-WQ-Setup-1.0.0.exe\` was generated and uploaded. The build log states that no code-signing certificate was configured.
+
+Artifacts from run #45620155992 (GitHub-uploaded ZIP archive sizes):
+
+- Web \`ndwq-integrated-web\`, ID \`15024007296\`, **303,181 bytes**, SHA-256 \`5b2077ae6a6d1e9ea21d93a02364edd32ff4ce3cc3a26c4fb086939fae721d54\`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45620155992/artifacts/15024007296); expires **9 December 2026 at 13:06:30 UTC**.
+- Android \`ndwq-integrated-android-debug-apk\`, ID \`15024900649\`, **8,084,222 bytes**, SHA-256 \`9b2cc72aa6a878ba0f4701bfe7d6cd51407d3b1280e2bef302a64c67cfc647ce\`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45620155992/artifacts/15024900649); expires **9 December 2026 at 13:10:50 UTC**. The ZIP contains the original-identity debug APK, side-by-side preview APK and build/signing metadata.
+- Windows \`ndwq-integrated-windows-desktop\`, ID \`15025085159\`, **95,588,487 bytes**, SHA-256 \`5472f74fd6446a4e2a158ddabff62a6ca518d4e327a3cfcdfbd0d8966da3e250\`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45620155992/artifacts/15025085159); expires **9 December 2026 at 13:08:24 UTC**.
+
+Original Android debug APK SHA-256: \`0420c65d687fb8a484daaa98c02580bbf6d2385414647676e406b4edf8ed90e5\`. Its certificate subject is \`Android Debug\`; certificate SHA-256 fingerprint: \`2a4aece0c4afea8a952fa701cf0cee496eae1260554d604d22a98855e36c3475\`. This is CI debug-signing evidence only, not a persistent production signing identity and not proof of compatibility with the app installed on the user's phone.
+
+The follow-up commit \`7674353a5207c5e7c776e9646e0fce6203dce81b\` adds regression coverage for signed decimal-string imports without hemisphere columns and case/spacing normalization of coordinate-format and CRS labels. Its CI verification is pending; the preceding 136-test and three-platform pass above applies to \`ea9c8d2\`, not to that follow-up commit.
+
+These results do not establish physical-phone visual acceptance, real-device backup/restore, Windows installation/runtime on a physical computer, web deployment/browser acceptance, production signing, safe update compatibility, or scientific sign-off. Do not uninstall, clear app data or install the debug APK over an existing phone installation based on this CI result. PR #2 remains open and draft.
