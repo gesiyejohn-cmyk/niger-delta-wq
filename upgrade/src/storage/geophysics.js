@@ -46,7 +46,10 @@ export async function saveVESInterpretation(vesId, interpretation) {
   const tx = db.transaction(['ves', 'vesInterpretations'], 'readwrite');
   const raw = await tx.objectStore('ves').get(vesId);
   if (!raw) {
-    tx.abort();
+    // Let the read-only/no-write transaction settle before rejecting. Calling
+    // abort() and throwing immediately leaves tx.done rejected without a
+    // handler, which can surface as an unhandled IndexedDB rejection.
+    await tx.done;
     throw new Error('The selected raw VES sounding no longer exists.');
   }
   await tx.objectStore('vesInterpretations').put({
