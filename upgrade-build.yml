@@ -1,7 +1,9 @@
 name: Validate integrated geophysics upgrade
 on:
   push:
-    branches: [ndwq-integrated-geophysics-upgrade]
+    branches:
+      - ndwq-integrated-geophysics-upgrade
+      - feature/external-reference-validation
   workflow_dispatch:
 permissions:
   contents: read
