@@ -32,7 +32,7 @@ function csvCell(value) {
   return '"' + text.replace(/"/g, '""') + '"';
 }
 
-export default function GeologicalInterpretationEditor({ model, selectedDistance = null, selectedDepth = null, onDistanceChange = () => {}, onDepthChange = () => {} }) {
+export default function GeologicalInterpretationEditor({ model, selectedDistance = null, selectedDepth = null, onSelectionChange = () => {} }) {
   const [draft, setDraft] = useState(null);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -293,20 +293,28 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
             const fraction = Math.max(0, Math.min(1, (plotX - 70) / 650));
             const plotY = ((event.clientY - rect.top) / rect.height) * 390;
             const depthFraction = Math.max(0, Math.min(1, (plotY - 30) / 300));
-            onDistanceChange(xRange[0] + fraction * (xRange[1] - xRange[0]));
-            onDepthChange(range[0] + depthFraction * (range[1] - range[0]));
+            onSelectionChange({
+              distance: xRange[0] + fraction * (xRange[1] - xRange[0]),
+              depth: range[0] + depthFraction * (range[1] - range[0])
+            });
           }}
           onKeyDown={event => {
             if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
               event.preventDefault();
               const current = selectedDistance == null ? xRange[0] : selectedDistance;
               const step = (xRange[1] - xRange[0]) / 20;
-              onDistanceChange(Math.max(xRange[0], Math.min(xRange[1], current + (event.key === 'ArrowRight' ? step : -step))));
+              onSelectionChange({
+                distance: Math.max(xRange[0], Math.min(xRange[1], current + (event.key === 'ArrowRight' ? step : -step))),
+                depth: selectedDepth == null ? (range[0] + range[1]) / 2 : selectedDepth
+              });
             } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
               event.preventDefault();
               const current = selectedDepth == null ? range[0] : selectedDepth;
               const step = (range[1] - range[0]) / 20;
-              onDepthChange(Math.max(range[0], Math.min(range[1], current + (event.key === 'ArrowDown' ? step : -step))));
+              onSelectionChange({
+                distance: selectedDistance == null ? xRange[0] : selectedDistance,
+                depth: Math.max(range[0], Math.min(range[1], current + (event.key === 'ArrowDown' ? step : -step)))
+              });
             }
           }}
           tabIndex={0}
