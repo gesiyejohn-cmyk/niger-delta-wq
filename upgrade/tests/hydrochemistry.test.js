@@ -162,3 +162,9 @@ test('hydrochemistry recalculates current diagram coordinates when a legacy cach
  assert.ok(Number.isFinite(current.piper.diamond.y));
  assert.notEqual(current.piper.diamond.x,stale.calculation.piper.cation.x);
 });
+
+test('Gibbs sodium-calcium ratio is undefined when both Na and Ca are zero, even if potassium is present',()=>{
+ const potassiumOnly={...sample,ca:0,na:0,k:39.0983};
+ const r=calculateHydrochemistry(potassiumOnly);
+ assert.equal(r.gibbs.naCaRatio,null);
+});
