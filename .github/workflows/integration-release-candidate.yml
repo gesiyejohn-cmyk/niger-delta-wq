@@ -443,10 +443,48 @@ jobs:
               Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
             }
           }
+      - name: Verify Windows installer and generate checksums
+        shell: pwsh
+        working-directory: source/niger-delta-wq
+        run: |
+          $ErrorActionPreference = "Stop"
+          $releaseDirectory = Join-Path (Get-Location) "release"
+          $installers = @(Get-ChildItem -LiteralPath $releaseDirectory -Filter "*.exe" -File |
+            Where-Object { $_.Name -notmatch "^(unins|elevate|crashpad)" })
+          if ($installers.Count -ne 1) {
+            $installers | ForEach-Object { Write-Host $_.FullName }
+            throw "Expected exactly one Windows installer executable; found $($installers.Count)."
+          }
+          $installer = $installers[0]
+          if ($installer.Length -le 0) { throw "Windows installer is empty." }
+          $hash = (Get-FileHash -LiteralPath $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $version = $installer.VersionInfo
+          $signature = Get-AuthenticodeSignature -FilePath $installer.FullName
+          $metadataPath = Join-Path $releaseDirectory "ndwq-windows-installer-metadata.txt"
+          @(
+            "NDWQ Windows installer verification"
+            "File: $($installer.Name)"
+            "Size bytes: $($installer.Length)"
+            "SHA-256: $hash"
+            "Product: $($version.ProductName)"
+            "File version: $($version.FileVersion)"
+            "Product version: $($version.ProductVersion)"
+            "Authenticode status: $($signature.Status)"
+            "Signer subject: $(if ($signature.SignerCertificate) { $signature.SignerCertificate.Subject } else { 'None' })"
+            "Note: unsigned CI artifact is not approved for production distribution."
+          ) | Set-Content -LiteralPath $metadataPath -Encoding utf8
+          "$hash  $($installer.Name)" | Set-Content -LiteralPath (Join-Path $releaseDirectory "SHA256SUMS") -Encoding ascii
+          $verifiedHash = (Get-FileHash -LiteralPath $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($verifiedHash -ne $hash) { throw "Windows installer checksum changed during verification." }
+          Write-Host "Verified Windows installer: $($installer.Name), $($installer.Length) bytes, SHA-256 $hash"
+          Get-Content -LiteralPath $metadataPath
       - name: Upload Windows desktop installer
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ndwq-integrated-windows-desktop
-          path: source/niger-delta-wq/release/*.exe
+          path: |
+            source/niger-delta-wq/release/*.exe
+            source/niger-delta-wq/release/ndwq-windows-installer-metadata.txt
+            source/niger-delta-wq/release/SHA256SUMS
           if-no-files-found: error
           retention-days: 14
