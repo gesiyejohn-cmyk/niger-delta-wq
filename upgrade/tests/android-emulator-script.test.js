@@ -31,6 +31,12 @@ test('Android emulator smoke test captures and validates a PNG screenshot after 
   assert.match(smokeScript, /b"\\x89PNG\\r\\n\\x1a\\n"/);
 });
 
+test('Android emulator smoke test waits for the WebView screen after Activity resume', () => {
+  assert.match(smokeScript, /NDWQ_SCREEN_SETTLE_SECONDS:-15/);
+  assert.match(smokeScript, /Waiting \\${SCREEN_SETTLE_SECONDS\\}s for the WebView/);
+  assert.match(smokeScript, /sleep "\\$SCREEN_SETTLE_SECONDS"/);
+});
+
 test('Android emulator smoke test preserves UI hierarchy when available', () => {
   assert.match(smokeScript, /uiautomator dump \/sdcard\/ndwq-window\.xml/);
   assert.match(smokeScript, /Captured Android UI hierarchy/);
