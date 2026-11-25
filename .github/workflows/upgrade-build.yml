@@ -16,6 +16,20 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
+      - name: Validate Android signing preflight guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n upgrade/scripts/android-release-signing-preflight.sh
+          set +e
+          env -i PATH="$PATH" bash upgrade/scripts/android-release-signing-preflight.sh
+          status=$?
+          set -e
+          if [ "$status" -ne 2 ]; then
+            echo "Signing preflight must fail closed with status 2 when protected secrets are absent."
+            exit 1
+          fi
+          echo "Signing preflight syntax and missing-secret fail-closed checks passed."
       - name: Enable Android emulator hardware acceleration
         run: |
           if [ ! -c /dev/kvm ]; then
