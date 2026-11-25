@@ -182,6 +182,11 @@ export default function GeophysicsPage() {
     return '#dc2626';
   }
 
+  function selectERTCell(cell) {
+    setSelectedCell(cell);
+    setSelectedERTDistance(cell.x);
+  }
+
   return <div className="page">
     <p className="eyebrow">INTEGRATED GEOPHYSICAL DATA</p>
     <h1>VES &amp; ERT workspace</h1>
@@ -297,8 +302,8 @@ export default function GeophysicsPage() {
                 fill={colourFor(cell.resistivity)} stroke={selectedCell?.key === cell.key ? '#0f172a' : '#ffffff'}
                 strokeWidth="2" role="button" tabIndex="0"
                 aria-label={cell.resistivity + ' ohm metres at distance ' + cell.x + ' metres and depth ' + cell.depth + ' metres'}
-                onClick={() => setSelectedCell(cell)}
-                onKeyDown={event => (event.key === 'Enter' || event.key === ' ') && setSelectedCell(cell)} />
+                onClick={() => selectERTCell(cell)}
+                onKeyDown={event => (event.key === 'Enter' || event.key === ' ') && selectERTCell(cell)} />
             })}
           </svg>
           </InteractiveChartFrame>
@@ -315,7 +320,7 @@ export default function GeophysicsPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr><th align="left">Line</th><th align="right">Distance (m)</th><th align="right">Depth (m)</th><th align="right">Resistivity (Ωm)</th></tr></thead>
-              <tbody>{displayCells.map(cell => <tr key={cell.key} onClick={() => setSelectedCell(cell)}>
+              <tbody>{displayCells.map(cell => <tr key={cell.key} onClick={() => selectERTCell(cell)}>
                 <td>{cell.lineId}</td><td align="right">{cell.x}</td><td align="right">{cell.depth}</td><td align="right">{cell.resistivity}</td>
               </tr>)}</tbody>
             </table>
