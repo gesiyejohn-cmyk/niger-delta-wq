@@ -8,14 +8,19 @@ export async function createDatabaseBackup() {
   const db = await getDB();
   const names = STORE_NAMES.filter(name => db.objectStoreNames.contains(name));
   const tx = db.transaction(names, 'readonly');
+  // Handle the transaction rejection immediately: a failed read request also
+  // rejects idb's transaction-done promise, even when Promise.all catches it.
+  const transactionDone = tx.done;
+  transactionDone.catch(() => {});
   const stores = {};
   try {
     await Promise.all(names.map(async name => {
       stores[name] = await tx.objectStore(name).getAll();
     }));
-    await tx.done;
+    await transactionDone;
   } catch (error) {
     try { tx.abort(); } catch { /* transaction may already be closed */ }
+    await transactionDone.catch(() => {});
     throw new Error('Backup could not be completed: ' + error.message);
   }
   return {
