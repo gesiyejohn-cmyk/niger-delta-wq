@@ -1,14 +1,14 @@
 # Integrated release-candidate acceptance checklist
 
 **Candidate branch:** `integration/provenance-schema2`  
-**Latest integrated candidate validation:** [Run 45709672813](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45707740106) — candidate commit `493302c107cd5753b256739ef9e82a7869a98777`, completed successfully on 25 November 2026. All three jobs passed. Android artifact-bundle identity/signature/evidence checks and checksum generation also passed. The application source and pinned overlay were not changed by this CI-hardening commit.  
+**Latest integrated candidate validation:** [Run 45709672813](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45709672813) — candidate commit `493302c107cd5753b256739ef9e82a7869a98777`, completed successfully on 25 November 2026. All three jobs passed. Android artifact-bundle identity/signature/evidence checks and checksum generation also passed. The application source and pinned overlay were not changed by this CI-hardening commit.  
 **Acceptance status:** Automated three-platform candidate CI and independent Android artifact integrity verification passed; manual, production-signing, scientific-review, and release-authorization gates remain open.
 
 This checklist separates automated build confidence from evidence that the application is safe and usable on real devices. A checked CI item must not be treated as proof of physical-device, production-signing, or scientific validation.
 
 ## 1. Automated candidate evidence
 
-- [x] Candidate commit `493302c107cd5753b256739ef9e82a7869a98777` passed all three jobs in [run 45709672813](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45707740106).
+- [x] Candidate commit `493302c107cd5753b256739ef9e82a7869a98777` passed all three jobs in [run 45709672813](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45709672813).
 - [x] Web/scientific/geophysics test job passed and production web build completed.
 - [x] Android debug APK built; package identity and debug certificate recorded.
 - [x] Original-identity APK launched in the CI emulator; the smoke test verified the app process and resumed activity and captured screenshot evidence.
