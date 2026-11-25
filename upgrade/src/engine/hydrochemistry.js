@@ -39,6 +39,31 @@ export function buildPiperProjection(cationPercent,anionPercent) {
   };
 }
 
+
+/**
+ * Split Schoeller ion series at zero or unmeasured values.
+ * Logarithmic plots must not draw a connecting line across a missing analyte.
+ * Each point retains its original axis index so gaps remain visible.
+ */
+export function buildSchoellerSegments(meqL, ionKeys = Object.keys(IONS)) {
+  if (!meqL || typeof meqL !== 'object' || !Array.isArray(ionKeys)) {
+    throw new Error('Schoeller data must include an ion-equivalent object and an ion-key list.');
+  }
+  const segments = [];
+  let current = [];
+  ionKeys.forEach((key, index) => {
+    const value = meqL[key];
+    if (finite(value) && Number(value) > 0) {
+      current.push({ key, index, meqL: Number(value) });
+    } else {
+      if (current.length) segments.push(current);
+      current = [];
+    }
+  });
+  if (current.length) segments.push(current);
+  return segments;
+}
+
 export function calculateHydrochemistry(sample) {
   if(!sample || typeof sample!=='object') throw new Error('Enter a water chemistry sample.');
   const meq=Object.fromEntries(Object.keys(IONS).map(key=>[key,ionMeq(sample,key)]));
