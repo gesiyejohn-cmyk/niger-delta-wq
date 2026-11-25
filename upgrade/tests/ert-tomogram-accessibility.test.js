@@ -32,3 +32,14 @@ test('ERT selected-cell state can be cleared and its detail panel is announced a
   assert.match(source, /\{selectedCell && <section aria-live="polite"/);
   assert.match(source, /onClick=\{\(\) => setSelectedCell\(null\)\}>Clear selection/);
 });
+
+test('ERT tomogram supports mobile touch navigation and desktop wheel zoom without replacing pointer selection hooks', () => {
+  assert.match(source, /onTouchStart=\{event=>/);
+  assert.match(source, /mode:'pinch'/);
+  assert.match(source, /mode:'pan'/);
+  assert.match(source, /onTouchMove=\{event=>/);
+  assert.match(source, /onWheel=\{event=>/);
+  assert.match(source, /event\.pointerType==='touch'/);
+  assert.match(source, /selectedDistance = null, onCellSelect = \(\) => \{\}/);
+  assert.match(source, /if \(nearest\) onCellSelect\(nearest\.point\)/);
+});
