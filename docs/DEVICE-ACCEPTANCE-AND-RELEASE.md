@@ -558,3 +558,24 @@ Download links: [Android bundle](https://github.com/gesiyejohn-cmyk/niger-delta-
 This is a successful same-commit cross-platform CI build and emulator smoke-test milestone. It is not production release approval. The Android APK is debug-signed; signing compatibility with the user's existing installation and production signing remain unverified. Do not uninstall, clear data or install this APK over the existing phone app. The Windows installer has not been installed and runtime-tested on a physical Windows computer. Public web deployment, physical-device acceptance, real-device backup/restore, independent scientific/calibration review and formal acceptance sign-off remain open release gates. GitHub artifact downloads are temporary and expire as listed above; preserve required evidence before expiry.
 
 Pull requests [#2](https://github.com/gesiyejohn-cmyk/niger-delta-wq/pull/2) and [#6](https://github.com/gesiyejohn-cmyk/niger-delta-wq/pull/6) remain open draft PRs and are not merged.
+
+
+### Follow-up release-checklist commit verification — 25 November 2026
+
+The release-checklist documentation commit `ef498385f7116c2f6edf0c4c26ce8560a9f9b520` was independently rebuilt by [Actions run 45596901953](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45596901953). All three jobs completed successfully on that exact commit:
+
+- `web-and-tests`: **250 tests passed, 0 failed**; production web build passed.
+- `android`: Android debug APK build, emulator smoke checks and artifact upload passed.
+- `windows-desktop`: Windows installer build and artifact upload passed.
+
+Artifacts for this follow-up run:
+| Artifact | ID | Archive size | SHA-256 | Retention expiry |
+|---|---:|---:|---|---|
+| Android debug APK bundle | 15012843296 | 8,153,299 bytes | `d0bc7732cd067d88de167233e625eb14d9f897c0821758f0d5bac034f0b321af` | 9 Dec 2026 |
+| Windows desktop installer | 15014260746 | 95,611,559 bytes | `0a8fe454ffcc0ad30f680ceb520e87b1ece691e9046e75ef5199f4789e071335` | 9 Dec 2026 |
+| Integrated web build | 15013506745 | 332,312 bytes | `30b08f8629e917ed5a724a99687e8333fc95442d131a392529e1dd7b73164dde` | 9 Dec 2026 |
+| Integrated source snapshot | 15013013367 | 189,723 bytes | `4cc3c131546517b4da97812994e3af58d167672277152ef21472896e8ae6c7de` | 25 Dec 2026 |
+
+Downloads: [Android](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45596901953/artifacts/15012843296) · [Windows](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45596901953/artifacts/15014260746) · [Web](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45596901953/artifacts/15013506745) · [Source](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45596901953/artifacts/15013013367).
+
+The production web build reports a Vite warning that one or more minified chunks exceed 500 kB. The build succeeds, but bundle splitting and load-performance review remain open. All release limitations recorded above still apply: debug signing, no physical-device acceptance, no proof of existing-installation update compatibility, no physical Windows runtime acceptance, no public deployment, no real-device backup/restore acceptance and no independent scientific/calibration sign-off. This follow-up CI run does not close those gates.
