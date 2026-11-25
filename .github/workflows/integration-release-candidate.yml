@@ -347,6 +347,39 @@ jobs:
           npm install
           npm run build
           npx electron-builder --win nsis --publish never
+      - name: Smoke-test packaged Windows application runtime
+        shell: pwsh
+        working-directory: source/niger-delta-wq
+        timeout-minutes: 3
+        run: |
+          $ErrorActionPreference = "Stop"
+          $appDirectory = Join-Path (Get-Location) "release/win-unpacked"
+          if (-not (Test-Path -LiteralPath $appDirectory -PathType Container)) {
+            throw "Electron unpacked application directory was not produced: $appDirectory"
+          }
+          $executables = @(Get-ChildItem -LiteralPath $appDirectory -Filter "*.exe" -File |
+            Where-Object { $_.Name -notmatch "^(unins|elevate|crashpad)" })
+          if ($executables.Count -ne 1) {
+            $executables | ForEach-Object { Write-Host $_.FullName }
+            throw "Expected exactly one application executable in win-unpacked; found $($executables.Count)."
+          }
+          $app = $executables[0]
+          Write-Host "Launching packaged application: $($app.FullName)"
+          $process = Start-Process -FilePath $app.FullName -ArgumentList @("--disable-gpu") -PassThru
+          try {
+            Start-Sleep -Seconds 8
+            $process.Refresh()
+            if ($process.HasExited) {
+              throw "Packaged application exited during startup smoke test (exit code $($process.ExitCode))."
+            }
+            Write-Host "Packaged application remained running for the startup smoke-test window."
+          }
+          finally {
+            if (-not $process.HasExited) {
+              Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+              Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
+            }
+          }
       - name: Upload Windows desktop installer
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
