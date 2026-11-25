@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
-          ref: 0e876ec495a69935042d02f3d8e7ff646c426735
+          ref: d6bc2bd6483c58d912bb6086536cc0eea2a99d0e
           path: overlay
       - name: Stage pinned upgrade overlay
         shell: bash
@@ -55,6 +55,7 @@ jobs:
           FINGERPRINT="$(keytool -list -v -keystore "$TMP/ci-test.p12" -storepass "$STORE_PASSWORD" \
             -alias ndwq-ci-test | sed -n 's/^[[:space:]]*SHA256: //p' | head -n 1 | tr -d ':[:space:]')"
           test "${#FINGERPRINT}" -eq 64
+          export NDWQ_DISTRIBUTION_MODEL="direct-apk"
           export ANDROID_KEYSTORE_BASE64="$(base64 -w0 "$TMP/ci-test.p12")"
           export ANDROID_KEYSTORE_PASSWORD="$STORE_PASSWORD"
           export ANDROID_KEY_ALIAS="ndwq-ci-test"
@@ -108,7 +109,7 @@ jobs:
       - name: Create reproducible source provenance manifest
         shell: bash
         env:
-          OVERLAY_COMMIT: 0e876ec495a69935042d02f3d8e7ff646c426735
+          OVERLAY_COMMIT: d6bc2bd6483c58d912bb6086536cc0eea2a99d0e
         run: |
           set -euo pipefail
           bash -n upgrade/scripts/create-source-manifest.sh
@@ -175,7 +176,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
-          ref: 0e876ec495a69935042d02f3d8e7ff646c426735
+          ref: d6bc2bd6483c58d912bb6086536cc0eea2a99d0e
           path: overlay
       - name: Stage pinned upgrade overlay
         shell: bash
@@ -326,7 +327,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
-          ref: 0e876ec495a69935042d02f3d8e7ff646c426735
+          ref: d6bc2bd6483c58d912bb6086536cc0eea2a99d0e
           path: overlay
       - name: Stage pinned upgrade overlay
         shell: pwsh
