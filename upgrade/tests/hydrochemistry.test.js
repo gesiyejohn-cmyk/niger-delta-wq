@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPiperProjection, calculateHydrochemistry, validateHydrochemistrySample } from '../src/engine/hydrochemistry.js';
+import { buildPiperProjection, buildSchoellerSegments, calculateHydrochemistry, validateHydrochemistrySample } from '../src/engine/hydrochemistry.js';
 const sample={sampleId:'S1',ca:40.078,mg:24.305,na:22.9898,k:39.0983,hco3:61.0168,co3:30.004,cl:35.453,so4:48.03};
 function parseCSVRow(line) {
  const cells=[]; let value='', quoted=false;
@@ -167,4 +167,16 @@ test('Gibbs sodium-calcium ratio is undefined when both Na and Ca are zero, even
  const potassiumOnly={...sample,ca:0,na:0,k:39.0983};
  const r=calculateHydrochemistry(potassiumOnly);
  assert.equal(r.gibbs.naCaRatio,null);
+});
+
+test('Schoeller series breaks at zero and unmeasured ions rather than connecting across gaps',()=>{
+ const segments=buildSchoellerSegments({ca:2,mg:null,na:0,k:1,hco3:4,cl:NaN},['ca','mg','na','k','hco3','cl']);
+ assert.deepEqual(segments,[
+  [{key:'ca',index:0,meqL:2}],
+  [{key:'k',index:3,meqL:1},{key:'hco3',index:4,meqL:4}]
+ ]);
+});
+test('Schoeller helper rejects malformed input and retains isolated valid measurements',()=>{
+ assert.throws(()=>buildSchoellerSegments(null),/Schoeller data/);
+ assert.deepEqual(buildSchoellerSegments({cl:0.5},['cl']),[[{key:'cl',index:0,meqL:0.5}]]);
 });
