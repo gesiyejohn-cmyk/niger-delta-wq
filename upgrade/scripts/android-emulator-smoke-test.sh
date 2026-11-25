@@ -56,3 +56,32 @@ fi
 
 echo "Android app process: $APP_PID"
 echo "Android resumed activity: $RESUMED_ACTIVITY"
+
+# Preserve a real emulator frame for visual review. A resumed activity alone
+# does not prove that the WebView rendered useful app content.
+OUTPUT_DIR="${NDWQ_SMOKE_OUTPUT_DIR:-source/niger-delta-wq/android/ndwq-artifacts}"
+mkdir -p "$OUTPUT_DIR"
+SCREENSHOT="$OUTPUT_DIR/${APP_ID}-screen.png"
+UI_HIERARCHY="$OUTPUT_DIR/${APP_ID}-ui.xml"
+adb_bounded 20 exec-out screencap -p > "$SCREENSHOT"
+python3 - "$SCREENSHOT" <<'PY'
+import pathlib
+import sys
+path = pathlib.Path(sys.argv[1])
+if not path.is_file() or path.stat().st_size < 1024:
+    raise SystemExit("Emulator screenshot is missing or implausibly small.")
+if path.read_bytes()[:8] != b"\\x89PNG\\r\\n\\x1a\\n":
+    raise SystemExit("Emulator screenshot is not a valid PNG file.")
+print(f"Captured emulator screenshot: {path} ({path.stat().st_size} bytes)")
+PY
+
+# UIAutomator output is useful diagnostic evidence, but some WebView versions
+# expose little semantic text. Preserve it when available without treating an
+# empty WebView hierarchy as an application launch failure.
+if adb_bounded 30 shell uiautomator dump /sdcard/ndwq-window.xml >/dev/null 2>&1 \
+  && adb_bounded 20 pull /sdcard/ndwq-window.xml "$UI_HIERARCHY" >/dev/null 2>&1 \
+  && [ -s "$UI_HIERARCHY" ]; then
+  echo "Captured Android UI hierarchy: $UI_HIERARCHY"
+else
+  echo "Android UI hierarchy capture unavailable; screenshot evidence was retained."
+fi
