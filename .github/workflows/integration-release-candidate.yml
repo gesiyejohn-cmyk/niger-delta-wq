@@ -143,6 +143,10 @@ jobs:
             mkdir -p ndwq-integrated-source/docs
             cp docs/CI-MILESTONE-2026-11-25.md ndwq-integrated-source/docs/
           fi
+          if [ -f docs/INTEGRATED-RELEASE-CANDIDATE-ACCEPTANCE.md ]; then
+            mkdir -p ndwq-integrated-source/docs
+            cp docs/INTEGRATED-RELEASE-CANDIDATE-ACCEPTANCE.md ndwq-integrated-source/docs/
+          fi
           printf 'Integrated source commit: %s\n' "$GITHUB_SHA" > ndwq-integrated-source/SOURCE-COMMIT.txt
           (cd ndwq-integrated-source && zip -qr ../NDWQ-Integrated-Source.zip .)
           unzip -t NDWQ-Integrated-Source.zip
