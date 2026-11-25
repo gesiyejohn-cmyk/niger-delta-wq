@@ -8,7 +8,7 @@ This checklist separates automated build confidence from evidence that the appli
 
 ## 1. Automated candidate evidence
 
-- [x] Candidate commit `493302c107cd5753b256739ef9e82a7869a98777` passed all three jobs in [run 45709672813](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45709672813).
+- [x] Candidate commit `2f6790e6875e45a9400d5a038a19d501239c6c71` passed all three jobs in [run 45715788639](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45715788639).
 - [x] Web/scientific/geophysics test job passed and production web build completed.
 - [x] Android debug APK built; package identity and debug certificate recorded.
 - [x] Original-identity APK launched in the CI emulator; the smoke test verified the app process and resumed activity and captured screenshot evidence.
@@ -23,11 +23,11 @@ This checklist separates automated build confidence from evidence that the appli
 
 | Artifact | Artifact ID | Size | SHA-256 |
 |---|---:|---:|---|
-| Android debug APK bundle (original + isolated preview, metadata and emulator evidence) | `15067790525` | 8,540,014 bytes | `2b57d89bd4ba652115332daa8556c5fac90fa2e23080dd976bf9520958d52b03` |
-| Windows desktop installer | `15067107135` | 95,620,345 bytes | `0edb07a77fd34de3a45cb553ba652e25343758e26eb911619d4e97c91d4ad47c` |
-| Source provenance | `15067655261` | 3,551 bytes | `10ffd7431f89c409112fb5182839ecc0f05457934210ed5a3273f50144a7c5e9` |
-| Integrated web build | `15065789902` | 351,319 bytes | `da89dceb520cb71b16a2cf18e14d29298760c01a56db77943e0c631f0f65330d` |
-| Integrated source | `15065954492` | 185,514 bytes | `d3a0b2fc62d64a498d12986903bfa979694f137802f71ceb20b27e1270525f6c` |
+| Android debug APK bundle (original + isolated preview, metadata and emulator evidence) | `15069752910` | 8,541,667 bytes | `33f535396859ad617b17aa6eb4043e6f6076c5b51d88202692179d78c7c80048` |
+| Windows desktop installer | `15069532925` | 95,620,713 bytes | `d47f15552fa7c368c49b30b3ce62aa63c7f45e75c4c3a4ffd951f7bbcb022686` |
+| Source provenance | `15069043495` | 3,601 bytes | `4602acf6ef6f30eb102da250c2c21be820ba0342060af976eba02d652c0763df` |
+| Integrated web build | `15070565059` | 351,622 bytes | `eab36c844ca4da0351ff0dfb913423b937d620b7267198599aeff00d0f81fa12` |
+| Integrated source | `15069547043` | 186,855 bytes | `c6a8266c5e0226fa949fc88fc7c1a1be9b3542ded1db9ba719cda38e12716168` |
 
 All three jobs in run 45715788639 completed successfully. The web/scientific/geophysics job measured 265 tests with zero failures. The Android job completed original-identity emulator launch, isolated side-by-side preview build, and all eight internal checksum checks. The Windows job completed packaged Electron startup smoke test and installer checksum verification. The Android bundle was independently downloaded: its ZIP SHA-256 matched GitHub's artifact digest, ZIP integrity passed, and all eight internal file checksums passed. Its metadata records package IDs `com.nigerdeltawq.mobile` and `com.nigerdeltawq.mobile.preview34`; both APKs are debug-signed, not production-signed. The Windows bundle was also independently downloaded: its ZIP SHA-256 matched GitHub's artifact digest, ZIP integrity passed, and the installer checksum passed. Its metadata records product `Niger Delta WQ`, file/product version `1.0.0`, and Authenticode status `NotSigned`. The source, web, and platform artifacts are inventoried above; only Android and Windows bundles were independently downloaded and rechecked in this pass. No test count is asserted because the run output did not expose a measured test total.
 
@@ -103,4 +103,4 @@ A release may be approved only when every applicable gate above has evidence and
 - CI debug APKs are for isolated testing only; do not use them to update the existing installation.
 - No production deployment or merge to `main` is authorized by this checklist.
 - Pull requests #2, #3, and #6 remain outside this integration candidate and must not be wholesale-merged as a shortcut.
-- The next Android milestone is a verified production-signing identity plus a non-destructive device/backup test record, not another debug APK installation. Run 45715788639 is the current CI evidence baseline; the artifact inventory above is retained from the earlier baseline and must not be mistaken for Run 40 artifact IDs or digests.
+- The next Android milestone is a verified production-signing identity plus a non-destructive device/backup test record, not another debug APK installation. Run 45715788639 is the current CI evidence baseline; its exact artifact IDs and GitHub SHA-256 digests are listed above.
