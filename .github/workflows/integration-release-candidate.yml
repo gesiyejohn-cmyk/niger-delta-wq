@@ -1,7 +1,7 @@
 name: Validate clean-main integrated release candidate
 on:
   push:
-    branches: [ndwq-integrated-geophysics-upgrade, ndwq-desktop-build-integration, ndwq-coordinate-system-upgrade, feature/external-reference-validation, integration/ndwq-complete-build, integration/ndwq-main-overlay]
+    branches: [ndwq-integrated-geophysics-upgrade, ndwq-desktop-build-integration, ndwq-coordinate-system-upgrade, feature/external-reference-validation, integration/ndwq-complete-build, integration/ndwq-main-overlay, integration/provenance-schema2]
   workflow_dispatch:
 concurrency:
   group: ndwq-${{ github.workflow }}-${{ github.ref }}
