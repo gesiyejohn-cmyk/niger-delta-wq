@@ -183,3 +183,33 @@ test('starting a new backup clears stale fallback JSON before attempting a fresh
   assert.match(handler, /setCopyStatus\(''\)/);
   assert.ok(handler.indexOf("setBackupText('')") < handler.indexOf('await createDatabaseBackup()'));
 });
+
+test('failed replace restore rolls back cleared records when a record cannot be stored', async () => {
+  const db = await getDB();
+  await clearStores(db);
+  await db.put('samples', { id: 'sample-before-failure', sampleCode: 'KEEP' });
+
+  // Functions pass the structural backup checks but cannot be structured-cloned
+  // by IndexedDB. This forces a real write failure after replace has cleared
+  // the store, exercising transaction rollback rather than input validation.
+  const backup = {
+    format: BACKUP_FORMAT,
+    version: 1,
+    stores: {
+      samples: [{
+        id: 'sample-after-failure',
+        sampleCode: 'MUST-NOT-PERSIST',
+        unsupportedValue: () => 'not cloneable'
+      }]
+    }
+  };
+
+  await assert.rejects(
+    restoreDatabaseBackup(backup, 'replace'),
+    /Restore was not completed/
+  );
+  assert.deepEqual(await db.getAll('samples'), [
+    { id: 'sample-before-failure', sampleCode: 'KEEP' }
+  ]);
+});
+
