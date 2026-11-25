@@ -16,11 +16,12 @@ fi
 
 {
   echo "Niger Delta WQ integrated source provenance"
-  echo "Manifest schema: 1"
+  echo "Manifest schema: 2"
   echo "Repository: ${GITHUB_REPOSITORY:-unknown}"
   echo "Workflow run: ${GITHUB_RUN_ID:-local}"
   echo "Workflow attempt: ${GITHUB_RUN_ATTEMPT:-1}"
-  echo "Overlay commit: ${GITHUB_SHA:-unknown}"
+  echo "Overlay commit: ${OVERLAY_COMMIT:-unknown}"
+  echo "Integration workflow commit: ${GITHUB_SHA:-unknown}"
   echo
   echo "Base archive SHA-256:"
   sha256sum "$ROOT/$ARCHIVE"
