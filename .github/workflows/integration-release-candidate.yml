@@ -138,13 +138,13 @@ jobs:
       - name: Create reproducible source provenance manifest
         shell: bash
         env:
-          OVERLAY_COMMIT: a50f3f0bf6cf0f9157d1687ffdfa3c0c374fb09c
+          OVERLAY_COMMIT: 62e45d12bb1fa686b664fdde6fe7e90f66662c25
         run: |
           set -euo pipefail
           bash -n upgrade/scripts/create-source-manifest.sh
           bash upgrade/scripts/create-source-manifest.sh . NDWQ-Source-Compact.zip NDWQ-SOURCE-MANIFEST.txt
           grep -q "^Manifest schema: 2$" NDWQ-SOURCE-MANIFEST.txt
-          grep -q "^Overlay commit: a50f3f0bf6cf0f9157d1687ffdfa3c0c374fb09c$" NDWQ-SOURCE-MANIFEST.txt
+          grep -q "^Overlay commit: 62e45d12bb1fa686b664fdde6fe7e90f66662c25$" NDWQ-SOURCE-MANIFEST.txt
           grep -q "^Integration workflow commit: $GITHUB_SHA$" NDWQ-SOURCE-MANIFEST.txt
           cat NDWQ-SOURCE-MANIFEST.txt
       - name: Install dependencies
