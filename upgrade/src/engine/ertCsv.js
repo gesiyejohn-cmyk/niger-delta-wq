@@ -53,7 +53,10 @@ export function parseERTCSV(sourceText) {
   }
 
   const rows = parsed.data.slice(1).map((row, rowIndex) => {
-    if (!Array.isArray(row)) throw new Error(`ERT CSV row ${rowIndex + 2} is invalid.`);
+    const csvRowNumber = rowIndex + 2;
+    if (!Array.isArray(row) || row.length !== headers.length) {
+      throw new Error(`ERT CSV row ${csvRowNumber} has ${Array.isArray(row) ? row.length : 0} fields; expected ${headers.length} to match the header.`);
+    }
     return {
       x: row[indexes.x],
       depth: row[indexes.depth],
