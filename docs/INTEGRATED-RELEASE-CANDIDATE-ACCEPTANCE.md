@@ -1,8 +1,8 @@
 # Integrated release-candidate acceptance checklist
 
 **Candidate branch:** `integration/provenance-schema2`  
-**Latest integrated candidate validation:** [Run 45709672813](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45709672813) — candidate commit `493302c107cd5753b256739ef9e82a7869a98777`, completed successfully on 25 November 2026. All three jobs passed. Android artifact-bundle identity/signature/evidence checks and checksum generation also passed. The application source and pinned overlay were not changed by this CI-hardening commit.  
-**Acceptance status:** Automated three-platform candidate CI and independent Android artifact integrity verification passed; manual, production-signing, scientific-review, and release-authorization gates remain open.
+**Latest integrated candidate validation:** [Run 45715788639](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45715788639) — candidate commit `2f6790e6875e45a9400d5a038a19d501239c6c71`, completed successfully on 25 November 2026. All three jobs passed. The run validates the linked ERT–geological depth-selection overlay and its corrected provenance manifest.  
+**Acceptance status:** Automated three-platform candidate CI and independent Android/Windows artifact integrity verification passed; manual, production-signing, scientific-review, and release-authorization gates remain open.
 
 This checklist separates automated build confidence from evidence that the application is safe and usable on real devices. A checked CI item must not be treated as proof of physical-device, production-signing, or scientific validation.
 
@@ -16,10 +16,10 @@ This checklist separates automated build confidence from evidence that the appli
 - [x] Android artifact verification gate passed: both APK identities and signatures checked, emulator screenshot/UI evidence confirmed, and an internal `SHA256SUMS` file generated and checked.
 - [x] Windows desktop installer built and uploaded; packaged Electron startup smoke test, installer metadata generation, and installer checksum verification passed.
 - [x] Source-provenance manifest generated and uploaded.
-- [x] All five expected artifacts uploaded by the cited run, including the Android debug bundle, Windows installer, source provenance, integrated web build, and integrated source.
+- [x] All five expected artifacts uploaded by run 45715788639, including the Android debug bundle, Windows installer, source provenance, integrated web build, and integrated source.
 - [x] Android and Windows artifacts independently downloaded; both ZIP integrity checks and GitHub artifact SHA-256 comparisons passed. All eight Android internal checksums and the Windows installer checksum passed.
 
-**Run 45709672813 artifact inventory** (CI artifacts; none is a production-signed release package):
+**Run 45715788639 artifact inventory** (CI artifacts; none is a production-signed release package):
 
 | Artifact | Artifact ID | Size | SHA-256 |
 |---|---:|---:|---|
@@ -29,7 +29,7 @@ This checklist separates automated build confidence from evidence that the appli
 | Integrated web build | `15065789902` | 351,319 bytes | `da89dceb520cb71b16a2cf18e14d29298760c01a56db77943e0c631f0f65330d` |
 | Integrated source | `15065954492` | 185,514 bytes | `d3a0b2fc62d64a498d12986903bfa979694f137802f71ceb20b27e1270525f6c` |
 
-All three jobs in run 45709672813 completed successfully. The Android bundle was independently downloaded: its ZIP SHA-256 matched GitHub's artifact digest, ZIP integrity passed, and all eight internal file checksums passed. Its metadata records package IDs `com.nigerdeltawq.mobile` and `com.nigerdeltawq.mobile.preview34`; both APKs are debug-signed, not production-signed. The Windows bundle was also independently downloaded: its ZIP SHA-256 matched GitHub's artifact digest, ZIP integrity passed, and the installer checksum passed. Its metadata records product `Niger Delta WQ`, file/product version `1.0.0`, and Authenticode status `NotSigned`. The source, web, and platform artifacts are inventoried above; only Android and Windows bundles were independently downloaded and rechecked in this pass. No test count is asserted because the run output did not expose a measured test total.
+All three jobs in run 45715788639 completed successfully. The web/scientific/geophysics job measured 265 tests with zero failures. The Android job completed original-identity emulator launch, isolated side-by-side preview build, and all eight internal checksum checks. The Windows job completed packaged Electron startup smoke test and installer checksum verification. The Android bundle was independently downloaded: its ZIP SHA-256 matched GitHub's artifact digest, ZIP integrity passed, and all eight internal file checksums passed. Its metadata records package IDs `com.nigerdeltawq.mobile` and `com.nigerdeltawq.mobile.preview34`; both APKs are debug-signed, not production-signed. The Windows bundle was also independently downloaded: its ZIP SHA-256 matched GitHub's artifact digest, ZIP integrity passed, and the installer checksum passed. Its metadata records product `Niger Delta WQ`, file/product version `1.0.0`, and Authenticode status `NotSigned`. The source, web, and platform artifacts are inventoried above; only Android and Windows bundles were independently downloaded and rechecked in this pass. No test count is asserted because the run output did not expose a measured test total.
 
 ## 2. Android safe-update and device acceptance
 
@@ -87,7 +87,7 @@ A release may be approved only when every applicable gate above has evidence and
 
 | Gate | Evidence required | Status |
 |---|---|---|
-| Automated CI | Successful run on final candidate SHA | Passed for `493302c107cd5753b256739ef9e82a7869a98777`; run 45709672813 |
+| Automated CI | Successful run on final candidate SHA | Passed for `2f6790e6875e45a9400d5a038a19d501239c6c71`; run 45715788639 |
 | Android identity/signing | Installed certificate, signing model, matching release APK | Open |
 | Android physical-device | Non-destructive test record and backup/restore evidence | Open |
 | Windows runtime/signing | Test record and final installer verification | Open |
@@ -95,7 +95,7 @@ A release may be approved only when every applicable gate above has evidence and
 | Scientific review | Independent review and documented limitations | Open |
 | Release authorization | Explicit approval of final artifacts and version | Open |
 
-**Current decision: NOT APPROVED FOR PRODUCTION DISTRIBUTION.** The latest validated candidate (`493302c107cd5753b256739ef9e82a7869a98777`) passed all three CI jobs in run 45709672813. Evidence includes Android original-identity emulator launch, isolated preview APK build, Android artifact integrity/checksum verification, Windows packaged-app startup smoke test, Windows installer metadata and checksum verification, and successful web/scientific test/build job. Production signing, physical-device acceptance, interactive Windows installer/upgrade/uninstall and code-signing checks, public deployment, independent scientific review, and release authorization remain open.
+**Current decision: NOT APPROVED FOR PRODUCTION DISTRIBUTION.** The latest validated candidate (`2f6790e6875e45a9400d5a038a19d501239c6c71`) passed all three CI jobs in run 45715788639 with 265 tests passing and zero failures. The linked ERT–geological depth-selection feature is included in the integrated source and test suite. Evidence includes Android original-identity emulator launch, isolated preview APK build, Android artifact integrity/checksum verification, Windows packaged-app startup smoke test, Windows installer metadata and checksum verification, and successful web/scientific test/build job. Production signing, physical-device acceptance, interactive Windows installer/upgrade/uninstall and code-signing checks, public deployment, independent scientific review, and release authorization remain open.
 
 ## 7. Safety and scope notes
 
@@ -103,4 +103,4 @@ A release may be approved only when every applicable gate above has evidence and
 - CI debug APKs are for isolated testing only; do not use them to update the existing installation.
 - No production deployment or merge to `main` is authorized by this checklist.
 - Pull requests #2, #3, and #6 remain outside this integration candidate and must not be wholesale-merged as a shortcut.
-- The next Android milestone is a verified production-signing identity plus a non-destructive device/backup test record, not another debug APK installation.
+- The next Android milestone is a verified production-signing identity plus a non-destructive device/backup test record, not another debug APK installation. Run 45715788639 is the current CI evidence baseline; the artifact inventory above is retained from the earlier baseline and must not be mistaken for Run 40 artifact IDs or digests.
