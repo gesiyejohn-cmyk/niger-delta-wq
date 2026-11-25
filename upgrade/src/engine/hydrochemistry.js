@@ -100,6 +100,8 @@ export function calculateHydrochemistry(sample) {
   const weakAcids=pct(meq.hco3+meq.co3,chadhaAnions);
   return {
     meqL:meq,totalCationsMeqL:cations,totalAnionsMeqL:anions,chargeBalanceErrorPercent:balanceError,
+    chargeBalanceNitrateIncluded:meq.no3!=null,
+    chargeBalanceUnmeasuredIons:Object.keys(IONS).filter(key=>meq[key]==null),
     cationPercent: cationPct, anionPercent: anionPct, piper:{...piperProjection,facies},
     durovs:{cation: cationPct, anion: anionPct, central:{x:(meq.hco3+meq.co3+meq.so4/2)/diagramAnions,y:(meq.ca+meq.mg/2)/cations}},
     schoeller:Object.keys(IONS).map(key=>({key,name:IONS[key].name,meqL:meq[key]})),
@@ -146,7 +148,7 @@ export function buildHydrochemistryCSV(samples) {
     'Measured TDS (mg/L)','Gibbs dissolved-solids value (mg/L)','Gibbs dissolved-solids source',
     ...HYDROCHEMISTRY_ION_FIELDS.map(key => IONS[key].name + ' (meq/L)'),
     'Total Cations (meq/L)','Total Anions (meq/L)',
-    'Charge Balance Error (%)','Dominant Cation','Dominant Anion','Hydrochemical Facies'
+    'Charge Balance Error (%)','Nitrate included in charge balance','Unmeasured ions','Dominant Cation','Dominant Anion','Hydrochemical Facies'
   ];
   const rows = samples.map(sample => {
     // Recalculate from the current laboratory fields; cached results may be stale after edits/imports.
@@ -163,6 +165,8 @@ export function buildHydrochemistryCSV(samples) {
       ...HYDROCHEMISTRY_ION_FIELDS.map(key => result.meqL[key]),
       result.totalCationsMeqL, result.totalAnionsMeqL,
       result.chargeBalanceErrorPercent,
+      result.chargeBalanceNitrateIncluded ? 'Yes' : 'No',
+      result.chargeBalanceUnmeasuredIons.join('; '),
       result.classification?.dominantCation,
       result.classification?.dominantAnion,
       result.classification?.facies
