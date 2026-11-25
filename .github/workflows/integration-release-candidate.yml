@@ -47,6 +47,7 @@ jobs:
 
           # Play App Signing uses a distinct upload key and app-signing key.
           # The direct-APK equality preflight must refuse that model explicitly.
+          TMP_PLAY_LOG="$(mktemp)"
           set +e
           env NDWQ_DISTRIBUTION_MODEL="play-app-signing" \
             ANDROID_KEYSTORE_BASE64="not-used" ANDROID_KEYSTORE_PASSWORD="not-used" \
@@ -59,6 +60,7 @@ jobs:
             cat "$TMP_PLAY_LOG"
             exit 1
           fi
+          rm -f "$TMP_PLAY_LOG"
 
           # Unknown distribution models must also fail closed.
           set +e
