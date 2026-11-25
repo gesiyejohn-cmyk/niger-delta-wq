@@ -1,33 +1,35 @@
 # Integrated release-candidate acceptance checklist
 
-**Candidate branch:** `integration/ndwq-main-overlay`  
-**Latest integrated candidate validation:** [Run 45697318725](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45697318725) — candidate commit `50cacab0c8ce3aa71c2020463155467eb553d48a`, completed successfully on 25 November 2026. All three jobs passed, including the Windows packaged-app runtime smoke test and Android original-identity emulator launch plus isolated preview APK build. This checklist records the latest completed integrated candidate validation; application source and pinned overlay are unchanged.  
-**Acceptance status:** Automated three-platform candidate CI passed; manual, production-signing, scientific-review, and release-authorization gates remain open.
+**Candidate branch:** `integration/provenance-schema2`  
+**Latest integrated candidate validation:** [Run 45707740106](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45707740106) — candidate commit `855527f64349d7d6e599561c666e992bf3fa89d0`, completed successfully on 25 November 2026. All three jobs passed. Android artifact-bundle identity/signature/evidence checks and checksum generation also passed. The application source and pinned overlay were not changed by this CI-hardening commit.  
+**Acceptance status:** Automated three-platform candidate CI and independent Android artifact integrity verification passed; manual, production-signing, scientific-review, and release-authorization gates remain open.
 
 This checklist separates automated build confidence from evidence that the application is safe and usable on real devices. A checked CI item must not be treated as proof of physical-device, production-signing, or scientific validation.
 
 ## 1. Automated candidate evidence
 
-- [x] Latest candidate commit `50cacab0c8ce3aa71c2020463155467eb553d48a` passed all three jobs in [run 45697318725](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45697318725).
+- [x] Candidate commit `855527f64349d7d6e599561c666e992bf3fa89d0` passed all three jobs in [run 45707740106](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45707740106).
 - [x] Web/scientific/geophysics test job passed and production web build completed.
 - [x] Android debug APK built; package identity and debug certificate recorded.
 - [x] Original-identity APK launched in the CI emulator; the smoke test verified the app process and resumed activity and captured screenshot evidence.
-- [x] Isolated side-by-side Android preview APK built and emulator-smoke-tested.
+- [x] Isolated side-by-side Android preview APK built.
+- [x] Android artifact verification gate passed: both APK identities and signatures checked, emulator screenshot/UI evidence confirmed, and an internal `SHA256SUMS` file generated and checked.
 - [x] Windows desktop installer built and uploaded; the packaged Electron executable startup smoke test passed.
 - [x] Source-provenance manifest generated and uploaded.
 - [x] All five expected artifacts uploaded by the cited run.
+- [x] Android artifact independently downloaded; ZIP integrity passed, downloaded SHA-256 matched GitHub's artifact digest, and all eight internal file checksums passed.
 
-**Latest run artifact inventory** (CI artifacts; none is a production-signed release package):
+**Run 45707740106 artifact inventory** (CI artifacts; none is a production-signed release package):
 
 | Artifact | Artifact ID | Size | SHA-256 |
 |---|---:|---:|---|
-| Android debug APK bundle (original + isolated preview, metadata and emulator evidence) | `15062695488` | 8,540,325 bytes | `6b812afbc7fcf65f453b34e4ee4a382d792a888096ee6bdd86fe5d5c0c00e1d9` |
-| Windows desktop installer | `15060904863` | 95,619,759 bytes | `9ee3708bb11f958ef6d141622d8fb4a44238b77f4aea91a4af6fbfc3f07bf438` |
-| Source provenance | `15061498437` | 3,554 bytes | `b7c57bc47b9f70877ade0d4e46b8d207612cd92eeebaadc9ffd701ce91c454b1` |
-| Integrated web build | `15062087084` | 351,319 bytes | `46d8953e4aea953cd29b94c4f89859370febb5612810cc08de5d50463f07ed4b` |
-| Integrated source | `15061732976` | 185,034 bytes | `839fd7455d80a1d44014ff84c2489b8d9f90aa4ae66f8739dad8508f883ea34a` |
+| Android debug APK bundle (original + isolated preview, metadata and emulator evidence) | `15067205512` | 8,540,898 bytes | `703383b51f3bf8f0e7a4c05b98faf61bc3da80bc3066a67e639a1b838c78c34e` |
+| Windows desktop installer | `15065383803` | 95,619,869 bytes | `2ffc16a3b63f94a40d133bf6313bd37fb843db02210eaaf060552ff70b6e0373` |
+| Source provenance | `15066875639` | 3,551 bytes | `767ab6ba58e1de785f0c90f4c459fc99c948df125e96413ffa9a483e26ffbf6d` |
+| Integrated web build | `15065423441` | 351,319 bytes | `37b1bb4e8da41aec872c79882120281b4d7e65c9348508996d1ee391f127692f` |
+| Integrated source | `15065528230` | 185,291 bytes | `811de843007e6c1246d0f990c0275964b97d5cc75dac34e2984bad7ef6e01852` |
 
-The latest run's three jobs completed successfully. All five artifacts from run 45697318725 were independently downloaded, ZIP-integrity checked, and their SHA-256 digests matched the GitHub artifact digests. The earlier run 45689659045 recorded 262 tests passed, but that count is not carried forward as a measured count for this later commit.
+All three jobs in run 45707740106 completed successfully. The Android artifact was independently downloaded and checked: its ZIP SHA-256 matched GitHub's artifact digest, ZIP integrity passed, and all eight internal file checksums passed. The Android bundle's metadata records package IDs `com.nigerdeltawq.mobile` and `com.nigerdeltawq.mobile.preview32`; both are debug-signed, not production-signed. Other artifacts are inventoried above but were not independently downloaded and rechecked in this verification pass. No test count is asserted here because the current run output did not expose a measured test total.
 
 ## 2. Android safe-update and device acceptance
 
@@ -51,7 +53,7 @@ See [Android signing readiness and safe-update gate](ANDROID-SIGNING-READINESS.m
 ## 3. Windows desktop acceptance
 
 - [ ] Install and launch the candidate in a clean test environment without changing production user data.
-- [ ] Confirm the Windows CI runtime smoke test passes on the final candidate commit: **passed in run 45697318725**. It launches the packaged Electron executable from `release/win-unpacked`, checks that it remains alive for the startup window, and terminates the test process.
+- [ ] Confirm the Windows CI runtime smoke test passes on the final candidate commit: **passed in run 45707740106**. It launches the packaged Electron executable from `release/win-unpacked`, checks that it remains alive for the startup window, and terminates the test process.
 - [ ] Verify startup, navigation, local persistence, backup/restore, file import/export, and graceful offline behavior.
 - [ ] Verify installer identity, version, architecture, dependencies, and upgrade/uninstall behavior in the test environment.
 - [ ] Decide whether code signing is required for distribution; if so, verify the publisher signature and timestamp on the final installer.
@@ -93,7 +95,7 @@ A release may be approved only when every applicable gate above has evidence and
 | Scientific review | Independent review and documented limitations | Open |
 | Release authorization | Explicit approval of final artifacts and version | Open |
 
-**Current decision: NOT APPROVED FOR PRODUCTION DISTRIBUTION.** The latest validated candidate (`50cacab0c8ce3aa71c2020463155467eb553d48a`) has successful three-platform CI evidence in run 45697318725, including the Windows packaged-app startup smoke test and Android original-identity emulator launch/isolated preview build. Production signing, physical-device acceptance, interactive Windows installer/upgrade/uninstall and signing checks, public deployment, independent scientific review, and release authorization remain open.
+**Current decision: NOT APPROVED FOR PRODUCTION DISTRIBUTION.** The latest validated candidate (`855527f64349d7d6e599561c666e992bf3fa89d0`) has successful three-platform CI evidence in run 45707740106, including Android artifact-bundle verification/checksum generation, the Windows packaged-app startup smoke test, and Android original-identity emulator launch. Production signing, physical-device acceptance, interactive Windows installer/upgrade/uninstall and signing checks, public deployment, independent scientific review, and release authorization remain open.
 
 ## 7. Safety and scope notes
 
