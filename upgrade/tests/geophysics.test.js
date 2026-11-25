@@ -269,3 +269,12 @@ test('ERT CSV rejects rows with missing or extra fields instead of silently shif
   assert.throws(() => parseERTCSV('x,depth,resistivity\n0,1\n10,2,250'), /row 2 has 2 fields; expected 3/);
   assert.throws(() => parseERTCSV('x,depth,resistivity\n0,1,100,unexpected'), /row 2 has 4 fields; expected 3/);
 });
+
+
+test('VES and ERT validators reject boolean and object values instead of coercing them to numbers', () => {
+  assert.throws(() => validateVES([{ ab2: true, mn2: 2, resistance: 5 }]), /AB\/2 and MN\/2 are required|geometry requires/);
+  assert.throws(() => validateERT([{ x: true, depth: 1, resistivity: 100 }]), /numeric x/);
+  assert.throws(() => validateERT([{ x: [], depth: 1, resistivity: 100 }]), /numeric x/);
+  assert.throws(() => validateERT([{ x: 0, depth: false, resistivity: 100 }]), /numeric x/);
+  assert.throws(() => validateERT([{ x: 0, depth: 1, resistivity: true }]), /numeric x/);
+});
