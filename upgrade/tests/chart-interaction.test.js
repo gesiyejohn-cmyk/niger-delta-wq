@@ -108,3 +108,12 @@ test('ERT and geological interpretation views share a responsive two-panel layou
   assert.match(page, /setSelectedERTDistance\(null\)/);
   assert.match(page, /selectedErtModelId === record\.id\) \{ setSelectedErtModelId\(''\); setSelectedCell\(null\); setSelectedERTDistance\(null\); \}/);
 });
+
+
+test('ERT point plot and data table selections synchronize the geological interpretation distance', () => {
+  const source = readFileSync(new URL('../src/pages/GeophysicsPage.jsx', import.meta.url), 'utf8');
+  assert.match(source, /function selectERTCell\(cell\)\s*\{\s*setSelectedCell\(cell\);\s*setSelectedERTDistance\(cell\.x\);\s*\}/);
+  assert.match(source, /onClick=\{\(\) => selectERTCell\(cell\)\}/);
+  assert.match(source, /onKeyDown=\{event => \(event\.key === 'Enter' \|\| event\.key === ' '\) && selectERTCell\(cell\)\}/);
+  assert.match(source, /<tr key=\{cell\.key\} onClick=\{\(\) => selectERTCell\(cell\)\}>/);
+});
