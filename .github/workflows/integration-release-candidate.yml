@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
-          ref: 6365a3677274c5385e4b62148592948d23c95a09
+          ref: 0e876ec495a69935042d02f3d8e7ff646c426735
           path: overlay
       - name: Stage pinned upgrade overlay
         shell: bash
@@ -107,6 +107,8 @@ jobs:
           test -f source/niger-delta-wq/src/pages/GeophysicsPage.jsx
       - name: Create reproducible source provenance manifest
         shell: bash
+        env:
+          OVERLAY_COMMIT: 0e876ec495a69935042d02f3d8e7ff646c426735
         run: |
           set -euo pipefail
           bash -n upgrade/scripts/create-source-manifest.sh
@@ -169,7 +171,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
-          ref: 6365a3677274c5385e4b62148592948d23c95a09
+          ref: 0e876ec495a69935042d02f3d8e7ff646c426735
           path: overlay
       - name: Stage pinned upgrade overlay
         shell: bash
@@ -320,7 +322,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
-          ref: 6365a3677274c5385e4b62148592948d23c95a09
+          ref: 0e876ec495a69935042d02f3d8e7ff646c426735
           path: overlay
       - name: Stage pinned upgrade overlay
         shell: pwsh
