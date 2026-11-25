@@ -1,8 +1,8 @@
 # Integrated release-candidate acceptance checklist
 
 **Candidate branch:** `integration/ndwq-main-overlay`  
-**Latest CI evidence:** [Run 45691731047](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45691731047) — commit `b23dafb3c6e1bdc074c606282d788fb3ca7491f9`  
-**Acceptance status:** Three-platform CI validated; manual and production gates remain open.
+**Latest completed CI evidence before the Windows runtime smoke-test change:** [Run 45691731047](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45691731047) — commit `b23dafb3c6e1bdc074c606282d788fb3ca7491f9`. The Windows startup smoke-test change is committed separately and requires its own workflow result.  
+**Acceptance status:** Previous three-platform CI validated; updated Windows startup smoke-test awaits CI; manual and production gates remain open.
 
 This checklist separates automated build confidence from evidence that the application is safe and usable on real devices. A checked CI item must not be treated as proof of physical-device, production-signing, or scientific validation.
 
@@ -50,13 +50,13 @@ See [Android signing readiness and safe-update gate](ANDROID-SIGNING-READINESS.m
 
 ## 3. Windows desktop acceptance
 
-- [ ] Install and launch the candidate in a clean test environment without changing production user data.
+- [ ] Install and launch the candidate in a clean test environment without changing production user data.\n- [ ] Confirm the Windows CI runtime smoke test passes on the final candidate commit: it launches the packaged Electron executable from `release/win-unpacked`, checks that it remains alive for the startup window, and terminates the test process.
 - [ ] Verify startup, navigation, local persistence, backup/restore, file import/export, and graceful offline behavior.
 - [ ] Verify installer identity, version, architecture, dependencies, and upgrade/uninstall behavior in the test environment.
 - [ ] Decide whether code signing is required for distribution; if so, verify the publisher signature and timestamp on the final installer.
 - [ ] Record Windows edition/build, architecture, installer hash, test date, and results.
 
-CI currently proves that the Windows installer can be built and uploaded; it does not prove that the installer has been run through an interactive Windows acceptance test.
+The Windows CI job now adds a bounded packaged-application startup smoke test before uploading the installer. This exercises the unpacked Electron application executable, not the NSIS installer installation flow. It does not replace interactive installer, upgrade/uninstall, code-signature, or real-user acceptance.
 
 ## 4. Web acceptance and deployment
 
@@ -92,7 +92,7 @@ A release may be approved only when every applicable gate above has evidence and
 | Scientific review | Independent review and documented limitations | Open |
 | Release authorization | Explicit approval of final artifacts and version | Open |
 
-**Current decision: NOT APPROVED FOR PRODUCTION DISTRIBUTION.** The candidate has successful three-platform CI evidence, but production signing, physical-device acceptance, Windows runtime/signing, public deployment, independent scientific review, and release authorization are not yet established.
+**Current decision: NOT APPROVED FOR PRODUCTION DISTRIBUTION.** The previous candidate has successful three-platform CI evidence. The newly added Windows startup smoke-test must pass on its own commit; production signing, physical-device acceptance, interactive Windows installer/signing, public deployment, independent scientific review, and release authorization remain open.
 
 ## 7. Safety and scope notes
 
