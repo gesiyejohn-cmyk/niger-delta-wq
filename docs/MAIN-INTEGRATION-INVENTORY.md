@@ -35,3 +35,18 @@
 4. Run all release checks from this branch and publish a provenance manifest before opening a focused pull request.
 
 No APK installation, production deployment, branch merge, or data migration is authorized by this inventory.
+
+
+## Clean-baseline three-platform validation — 25 November 2026
+
+The pinned upgrade overlay was validated against the clean `main` baseline by workflow run [45674603595](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45674603595), at integration branch commit `333447fa6480e5749fca8fd2fe04bc7781a6546c`.
+
+- Web and scientific/geophysics test job: passed; TAP summary reported 261 tests and 0 failures.
+- Web production build and integrated-source packaging: passed.
+- Android job: passed, including original-identity emulator launch and preview build.
+- Windows desktop installer build: passed.
+- Published artifacts: integrated source, source provenance manifest, Android debug APK package, Windows desktop installer, and Web build.
+- The provenance manifest records the clean-base archive SHA-256 and SHA-256 entries for the overlay source, tests, and scripts.
+- Comparison against base `aa9a5f6e0da0d84477f2ab00d040a2f1bbda9fe7`: 5 commits ahead, 0 behind; only three paths changed — the Pages deployment guard, this integration workflow, and this inventory document.
+
+This is a successful clean-baseline CI integration milestone. It is not a production merge, signed release, physical-device acceptance, or public deployment. The integration branch remains isolated from `main`.
