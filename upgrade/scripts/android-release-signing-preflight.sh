@@ -14,7 +14,7 @@ trap 'rm -rf "$tmp"' EXIT
 ks="$tmp/upload-key.keystore"
 printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ks" || { echo "Keystore base64 decoding failed." >&2; exit 2; }
 chmod 600 "$ks"
-if ! keytool -list -v -keystore "$ks" -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" > "$tmp/keytool.txt" 2>&1; then
+if ! keytool -list -v -keystore "$ks" -storepass:env ANDROID_KEYSTORE_PASSWORD -alias "$ANDROID_KEY_ALIAS" > "$tmp/keytool.txt" 2>&1; then
   echo "Keystore or alias validation failed; check protected CI secrets." >&2; exit 1
 fi
 raw="$(sed -n 's/^[[:space:]]*SHA256: //p' "$tmp/keytool.txt" | head -n 1)"
