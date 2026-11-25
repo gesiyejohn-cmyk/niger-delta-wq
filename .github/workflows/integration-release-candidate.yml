@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
-          ref: d6bc2bd6483c58d912bb6086536cc0eea2a99d0e
+          ref: a50f3f0bf6cf0f9157d1687ffdfa3c0c374fb09c
           path: overlay
       - name: Stage pinned upgrade overlay
         shell: bash
@@ -138,11 +138,14 @@ jobs:
       - name: Create reproducible source provenance manifest
         shell: bash
         env:
-          OVERLAY_COMMIT: d6bc2bd6483c58d912bb6086536cc0eea2a99d0e
+          OVERLAY_COMMIT: a50f3f0bf6cf0f9157d1687ffdfa3c0c374fb09c
         run: |
           set -euo pipefail
           bash -n upgrade/scripts/create-source-manifest.sh
           bash upgrade/scripts/create-source-manifest.sh . NDWQ-Source-Compact.zip NDWQ-SOURCE-MANIFEST.txt
+          grep -q "^Manifest schema: 2$" NDWQ-SOURCE-MANIFEST.txt
+          grep -q "^Overlay commit: a50f3f0bf6cf0f9157d1687ffdfa3c0c374fb09c$" NDWQ-SOURCE-MANIFEST.txt
+          grep -q "^Integration workflow commit: $GITHUB_SHA$" NDWQ-SOURCE-MANIFEST.txt
           cat NDWQ-SOURCE-MANIFEST.txt
       - name: Install dependencies
         working-directory: source/niger-delta-wq
@@ -205,7 +208,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
-          ref: d6bc2bd6483c58d912bb6086536cc0eea2a99d0e
+          ref: a50f3f0bf6cf0f9157d1687ffdfa3c0c374fb09c
           path: overlay
       - name: Stage pinned upgrade overlay
         shell: bash
@@ -356,7 +359,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
-          ref: d6bc2bd6483c58d912bb6086536cc0eea2a99d0e
+          ref: a50f3f0bf6cf0f9157d1687ffdfa3c0c374fb09c
           path: overlay
       - name: Stage pinned upgrade overlay
         shell: pwsh
