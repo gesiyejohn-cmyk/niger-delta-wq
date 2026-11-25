@@ -15,7 +15,7 @@ test('ERT tomogram receives and renders the shared depth cursor', () => {
 
 test('geological section sends click depth and arrow-key depth changes to its parent', () => {
   assert.match(editor, /selectedDepth = null/);
-  assert.match(editor, /onDepthChange = \(\) => \{\}/);
+  assert.match(editor, /onSelectionChange = \(\) => \{\}/);
   assert.match(editor, /const depthFraction = Math\.max\(0, Math\.min\(1, \(plotY - 30\) \/ 300\)\)/);
   assert.match(editor, /event\.key === 'ArrowUp' \|\| event\.key === 'ArrowDown'/);
   assert.match(editor, /selectedDepth != null && <path d=\{'M70 '/);
@@ -24,6 +24,7 @@ test('geological section sends click depth and arrow-key depth changes to its pa
 test('geophysics page keeps one shared depth state and wires both views bidirectionally', () => {
   assert.match(page, /const \[selectedERTDepth, setSelectedERTDepth\] = useState\(null\)/);
   assert.match(page, /selectedDepth=\{selectedERTDepth\}/);
-  assert.match(page, /onDepthChange=\{depth => \{ setSelectedERTDepth\(depth\)/);
+  assert.match(page, /onSelectionChange=\{\(\{ distance, depth \}\) => selectERTCoordinates\(distance, depth\)\}/);
   assert.match(page, /setSelectedERTDistance\(cell\.x\); setSelectedERTDepth\(cell\.depth\)/);
+  assert.match(page, /function selectERTCoordinates\(distance, depth\)/);
 });
