@@ -1,7 +1,7 @@
 # Integrated release-candidate acceptance checklist
 
 **Candidate branch:** `integration/ndwq-main-overlay`  
-**Current CI evidence:** [Run 45689659045](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45689659045) — commit `126b31167d5a68a7fc5af2cfe25e8c2e1dabcf3b`  
+**Current CI evidence:** [Run 45690529729](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45690529729) — commit `9ffecf257bcd3a76d130668c73e8daed11e24afb`  
 **Acceptance status:** CI-validated candidate; manual and production gates remain open.
 
 This checklist separates automated build confidence from evidence that the application is safe and usable on real devices. A checked CI item must not be treated as proof of physical-device, production-signing, or scientific validation.
@@ -16,7 +16,7 @@ This checklist separates automated build confidence from evidence that the appli
 - [x] Windows desktop installer artifact built.
 - [x] Source-provenance manifest generated with separate overlay and workflow commit identities.
 - [x] All five expected artifacts uploaded by the cited run.
-- [x] Latest candidate commit `126b31167d5a68a7fc5af2cfe25e8c2e1dabcf3b` passed all three jobs in [run 45689659045](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45689659045), including original-identity Android emulator launch and isolated preview APK build.
+- [x] Latest candidate commit `9ffecf257bcd3a76d130668c73e8daed11e24afb` passed all three jobs in [run 45690529729](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45690529729), including original-identity Android emulator launch, isolated preview APK build, and successful artifact uploads.
 
 ## 2. Android safe-update and device acceptance
 
@@ -67,7 +67,7 @@ A release may be approved only when every applicable gate above has evidence and
 
 | Gate | Evidence required | Status |
 |---|---|---|
-| Automated CI | Successful run on final candidate SHA | Passed for candidate SHA `126b3116`; run 45689659045 |
+| Automated CI | Successful run on final candidate SHA | Passed for candidate SHA `9ffecf257bcd3a76d130668c73e8daed11e24afb`; run 45690529729 |
 | Android identity/signing | Installed certificate, signing model, matching release APK | Open |
 | Android physical-device | Non-destructive test record and backup/restore evidence | Open |
 | Windows runtime/signing | Test record and final installer verification | Open |
@@ -76,3 +76,15 @@ A release may be approved only when every applicable gate above has evidence and
 | Release authorization | Explicit approval of final artifacts and version | Open |
 
 **Current decision: NOT APPROVED FOR PRODUCTION DISTRIBUTION.** The candidate has successful three-platform CI evidence, but production signing, physical-device acceptance, Windows runtime/signing, public deployment, and independent scientific review are not yet established.
+
+
+## Latest three-platform candidate validation — 25 November 2026
+
+The latest candidate commit `9ffecf257bcd3a76d130668c73e8daed11e24afb` completed workflow run [45690529729](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45690529729) with an overall successful conclusion.
+
+- Web and scientific/geophysics test job: passed; integrated web build, source package, and artifact uploads completed.
+- Android job: passed; original-identity APK emulator launch, isolated preview APK build, and artifact upload completed.
+- Windows desktop job: passed; installer artifact uploaded.
+- Five artifacts uploaded: Android debug APK (8,540,775 bytes), web build (351,319 bytes), Windows installer (95,619,899 bytes), source provenance (3,553 bytes), and integrated source (183,667 bytes).
+
+Artifact IDs for this run: Android `15059475284`, web `15059325148`, Windows `15058198166`, provenance `15056539592`, integrated source `15056309834`. These are CI debug/build artifacts, not production-signed release packages. Manual device, production-signing, Windows runtime/signing, web deployment, independent scientific review, and release-authorization gates remain open.
