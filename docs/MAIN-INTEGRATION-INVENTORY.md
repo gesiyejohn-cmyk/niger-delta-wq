@@ -67,3 +67,18 @@ The clean-baseline release-candidate workflow was updated to pin the separately 
 - Artifacts uploaded: `ndwq-integrated-android-debug-apk` (8,535,940 bytes), `ndwq-integrated-source` (180,652 bytes), `ndwq-integrated-web` (351,319 bytes), `ndwq-integrated-windows-desktop` (95,615,683 bytes), and `ndwq-source-provenance` (3,515 bytes).
 
 This closes the selective ERT overlay's clean-baseline three-platform CI validation gate. It does not constitute a production merge, production signing, physical-device acceptance, Windows signing/runtime acceptance, or public deployment. No APK installation was requested or performed; `main` remains untouched and PRs #2, #3, and #6 remain unmerged.
+
+
+## Corrected provenance verification — 25 November 2026
+
+The provenance manifest now distinguishes the pinned overlay source from the integration workflow revision. This correction was validated by workflow run [45683684499](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45683684499), triggered from workflow commit `3edb6e3894c55455e017655f2ef5c118f3fbed32`.
+
+- Manifest schema: 2.
+- Recorded overlay commit: `0e876ec495a69935042d02f3d8e7ff646c426735`.
+- Recorded integration workflow commit: `3edb6e3894c55455e017655f2ef5c118f3fbed32`.
+- Web/test job: 262 passed, 0 failed.
+- Android job: passed; debug APK built, original-identity APK launched in emulator, side-by-side preview APK built.
+- Windows desktop job: passed.
+- All five expected artifacts uploaded successfully, including corrected provenance manifest (3,553 bytes).
+
+This confirms the corrected provenance and all three CI platform gates for this candidate. It remains a CI-validated candidate, not a production-signed release, physical-device acceptance, production merge, or public deployment.
