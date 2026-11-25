@@ -56,3 +56,20 @@ This is a successful cross-platform CI build and API 35 emulator smoke-test mile
 - No additional APK installation is required to record or benefit from this CI milestone.
 
 The existing device installation and its data must be preserved until package identity, signing and safe update compatibility are explicitly verified.
+
+
+## Superseding Android visual-acceptance milestone — 25 November 2026
+
+- Verified commit: `43b72c111a71f66321e61c396abfd90414282845` (`test(android): correct WebView settle sleep assertion`).
+- CI run: [45613215677](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45613215677) — all three jobs passed: web/tests, Android and Windows desktop.
+- Automated tests: **253 passed, 0 failed**; production web build and integrated source packaging passed.
+- Android API 35 emulator: original package `com.nigerdeltawq.mobile` installed and launched. After a 15-second WebView settling window, the captured screenshot was visually inspected and confirmed to show the actual NDWQ dashboard, including navigation, dashboard heading, Add sample action, summary indicators and sampling-record controls. It no longer shows the Capacitor splash screen. Preview package `com.nigerdeltawq.mobile.preview443` also built, installed, launched and produced a screenshot.
+- Android artifact: [ID 15020153658](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45613215677/artifacts/15020153658), 8,533,319 bytes. Windows installer artifact: [ID 15020288946](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45613215677/artifacts/15020288946), 95,614,749 bytes. Web artifact: [ID 15020748104](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45613215677/artifacts/15020748104), 350,158 bytes. Source artifact: [ID 15020438742](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45613215677/artifacts/15020438742), 197,677 bytes.
+
+### What this closes
+
+The CI emulator first-screen visual-rendering check is now passed for this exact commit. This is stronger evidence than APK build/install/activity-resume alone.
+
+### What remains open
+
+This does not establish physical-phone acceptance, safe update/signature compatibility with the user's existing installation, production Android signing, physical Windows installation/runtime, Windows code signing, public web deployment, real-device backup/restore, or independent scientific review/calibration. The Android APK is CI debug-signed. Do not install it over the user's existing app, uninstall the app or clear its data. No additional APK installation is requested for this milestone.
