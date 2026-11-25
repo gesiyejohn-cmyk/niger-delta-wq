@@ -164,6 +164,7 @@ export default function GeophysicsPage() {
   const displayCells = activeERTModel ? allCells.filter(cell => cell.modelId === activeERTModel.id) : [];
   const minX = displayCells.length ? Math.min(...displayCells.map(cell => cell.x)) : 0;
   const maxX = displayCells.length ? Math.max(...displayCells.map(cell => cell.x)) : 1;
+  const minDepth = displayCells.length ? Math.min(...displayCells.map(cell => cell.depth)) : 0;
   const maxDepth = displayCells.length ? Math.max(1, ...displayCells.map(cell => cell.depth)) : 1;
   const minR = displayCells.length ? Math.min(...displayCells.map(cell => cell.resistivity)) : 1;
   const maxR = displayCells.length ? Math.max(...displayCells.map(cell => cell.resistivity)) : 1;
@@ -179,6 +180,7 @@ export default function GeophysicsPage() {
   function selectERTCell(cell) {
     setSelectedCell(cell);
     setSelectedERTDistance(cell.x);
+    setSelectedERTDepth(cell.depth);
   }
 
   return <div className="page">
@@ -269,8 +271,8 @@ export default function GeophysicsPage() {
           </div>
           <div style={{ minWidth: 0 }}>
             <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedERTDistance} selectedDepth={selectedERTDepth}
-              onDistanceChange={distance => { setSelectedERTDistance(distance); const nearest = displayCells.reduce((best, cell) => !best || Math.hypot((cell.x-distance)/(maxX-minX || 1),(cell.depth-(selectedERTDepth ?? 0))/(maxDepth || 1)) < Math.hypot((best.x-distance)/(maxX-minX || 1),(best.depth-(selectedERTDepth ?? 0))/(maxDepth || 1)) ? cell : best, null); if (nearest) setSelectedCell(nearest); }}
-              onDepthChange={depth => { setSelectedERTDepth(depth); const nearest = displayCells.reduce((best, cell) => !best || Math.hypot((cell.x-(selectedERTDistance ?? minX))/(maxX-minX || 1),(cell.depth-depth)/(maxDepth || 1)) < Math.hypot((best.x-(selectedERTDistance ?? minX))/(maxX-minX || 1),(best.depth-depth)/(maxDepth || 1)) ? cell : best, null); if (nearest) setSelectedCell(nearest); }} />
+              onDistanceChange={distance => { setSelectedERTDistance(distance); const nearest = displayCells.reduce((best, cell) => !best || Math.hypot((cell.x-distance)/(maxX-minX || 1),(cell.depth-(selectedERTDepth ?? minDepth))/(maxDepth-minDepth || 1)) < Math.hypot((best.x-distance)/(maxX-minX || 1),(best.depth-(selectedERTDepth ?? minDepth))/(maxDepth-minDepth || 1)) ? cell : best, null); if (nearest) setSelectedCell(nearest); }}
+              onDepthChange={depth => { setSelectedERTDepth(depth); const nearest = displayCells.reduce((best, cell) => !best || Math.hypot((cell.x-(selectedERTDistance ?? minX))/(maxX-minX || 1),(cell.depth-depth)/(maxDepth-minDepth || 1)) < Math.hypot((best.x-(selectedERTDistance ?? minX))/(maxX-minX || 1),(best.depth-depth)/(maxDepth-minDepth || 1)) ? cell : best, null); if (nearest) setSelectedCell(nearest); }} />
           </div>
         </div>}
         {allCells.length > 0 && <>
