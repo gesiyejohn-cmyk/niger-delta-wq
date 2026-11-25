@@ -9,7 +9,7 @@ const IONS = {
   so4: { name: 'Sulphate', charge: 2, equivalentWeight: 48.03 },
   no3: { name: 'Nitrate', charge: 1, equivalentWeight: 62.0049 }
 };
-const finite = v => v != null && !(typeof v === 'string' && v.trim() === '') && Number.isFinite(Number(v));
+const finite = v => v != null && typeof v !== 'boolean' && typeof v !== 'object' && !(typeof v === 'string' && v.trim() === '') && Number.isFinite(Number(v));
 function ionMeq(sample,key) {
   const value=sample?.[key];
   if(value==null || (typeof value==='string'&&value.trim()==='')) return null;
