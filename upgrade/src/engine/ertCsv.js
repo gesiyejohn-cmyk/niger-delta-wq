@@ -12,7 +12,7 @@ const COLUMN_ALIASES = {
 
 function normalizeHeader(value) {
   return String(value ?? '')
-    .replace(/^\\uFEFF/, '')
+    .replace(/^\uFEFF/, '')
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
