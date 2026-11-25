@@ -1,14 +1,14 @@
 # Integrated release-candidate acceptance checklist
 
 **Candidate branch:** `integration/ndwq-main-overlay`  
-**Latest integrated candidate validation:** [Run 45695844553](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45695844553) — candidate commit `506984f61e800da2202c1413d75255af93e2770a`, completed successfully on 25 November 2026. All three jobs passed, including the Windows packaged-app runtime smoke test and Android original-identity emulator launch plus isolated preview APK build. This checklist update is documentation-only; the validated application source and pinned overlay are unchanged.  
+**Latest integrated candidate validation:** [Run 45697318725](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45697318725) — candidate commit `50cacab0c8ce3aa71c2020463155467eb553d48a`, completed successfully on 25 November 2026. All three jobs passed, including the Windows packaged-app runtime smoke test and Android original-identity emulator launch plus isolated preview APK build. This checklist records the latest completed integrated candidate validation; application source and pinned overlay are unchanged.  
 **Acceptance status:** Automated three-platform candidate CI passed; manual, production-signing, scientific-review, and release-authorization gates remain open.
 
 This checklist separates automated build confidence from evidence that the application is safe and usable on real devices. A checked CI item must not be treated as proof of physical-device, production-signing, or scientific validation.
 
 ## 1. Automated candidate evidence
 
-- [x] Latest candidate commit `506984f61e800da2202c1413d75255af93e2770a` passed all three jobs in [run 45695844553](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45695844553).
+- [x] Latest candidate commit `50cacab0c8ce3aa71c2020463155467eb553d48a` passed all three jobs in [run 45697318725](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45697318725).
 - [x] Web/scientific/geophysics test job passed and production web build completed.
 - [x] Android debug APK built; package identity and debug certificate recorded.
 - [x] Original-identity APK launched in the CI emulator; the smoke test verified the app process and resumed activity and captured screenshot evidence.
@@ -21,13 +21,13 @@ This checklist separates automated build confidence from evidence that the appli
 
 | Artifact | Artifact ID | Size | SHA-256 |
 |---|---:|---:|---|
-| Android debug APK bundle (original + isolated preview, metadata and emulator evidence) | `15060338844` | 8,540,642 bytes | `ab5a4f556c2b996c5c9d0cbcd1d6da7a062bbcecb4bd9b513ae07091ecd31c05` |
-| Windows desktop installer | `15060677919` | 95,619,876 bytes | `62b4f4785515f367d8351260a0cb86726f2cd20356e60a8ecb91ba090053cc84` |
-| Source provenance | `15060288172` | 3,554 bytes | `ee758e500531766a9adc67208b2b164aa82241a20fec77435a3e530e8e90dead` |
-| Integrated web build | `15061475948` | 351,319 bytes | `f75213d88cd5c0c712fc150d6eefdfec1eb25db02a75b67203828b8e80ad7dd1` |
-| Integrated source | `15060043693` | 185,023 bytes | `847e428f346abdd19d3464dcd518b3fa191088c9efc2aba40801bb638e4dde5c` |
+| Android debug APK bundle (original + isolated preview, metadata and emulator evidence) | `15062695488` | 8,540,325 bytes | `6b812afbc7fcf65f453b34e4ee4a382d792a888096ee6bdd86fe5d5c0c00e1d9` |
+| Windows desktop installer | `15060904863` | 95,619,759 bytes | `9ee3708bb11f958ef6d141622d8fb4a44238b77f4aea91a4af6fbfc3f07bf438` |
+| Source provenance | `15061498437` | 3,554 bytes | `b7c57bc47b9f70877ade0d4e46b8d207612cd92eeebaadc9ffd701ce91c454b1` |
+| Integrated web build | `15062087084` | 351,319 bytes | `46d8953e4aea953cd29b94c4f89859370febb5612810cc08de5d50463f07ed4b` |
+| Integrated source | `15061732976` | 185,034 bytes | `839fd7455d80a1d44014ff84c2489b8d9f90aa4ae66f8739dad8508f883ea34a` |
 
-The latest run's three jobs completed successfully. All five artifacts from run 45695844553 were independently downloaded, ZIP-integrity checked, and their SHA-256 digests matched the GitHub artifact digests. The earlier run 45689659045 recorded 262 tests passed, but that count is not carried forward as a measured count for this later commit.
+The latest run's three jobs completed successfully. All five artifacts from run 45697318725 were independently downloaded, ZIP-integrity checked, and their SHA-256 digests matched the GitHub artifact digests. The earlier run 45689659045 recorded 262 tests passed, but that count is not carried forward as a measured count for this later commit.
 
 ## 2. Android safe-update and device acceptance
 
@@ -51,7 +51,7 @@ See [Android signing readiness and safe-update gate](ANDROID-SIGNING-READINESS.m
 ## 3. Windows desktop acceptance
 
 - [ ] Install and launch the candidate in a clean test environment without changing production user data.
-- [ ] Confirm the Windows CI runtime smoke test passes on the final candidate commit: **passed in run 45695844553**. It launches the packaged Electron executable from `release/win-unpacked`, checks that it remains alive for the startup window, and terminates the test process.
+- [ ] Confirm the Windows CI runtime smoke test passes on the final candidate commit: **passed in run 45697318725**. It launches the packaged Electron executable from `release/win-unpacked`, checks that it remains alive for the startup window, and terminates the test process.
 - [ ] Verify startup, navigation, local persistence, backup/restore, file import/export, and graceful offline behavior.
 - [ ] Verify installer identity, version, architecture, dependencies, and upgrade/uninstall behavior in the test environment.
 - [ ] Decide whether code signing is required for distribution; if so, verify the publisher signature and timestamp on the final installer.
@@ -85,7 +85,7 @@ A release may be approved only when every applicable gate above has evidence and
 
 | Gate | Evidence required | Status |
 |---|---|---|
-| Automated CI | Successful run on final candidate SHA | Passed for `506984f61e800da2202c1413d75255af93e2770a`; run 45695844553 |
+| Automated CI | Successful run on final candidate SHA | Passed for `50cacab0c8ce3aa71c2020463155467eb553d48a`; run 45697318725 |
 | Android identity/signing | Installed certificate, signing model, matching release APK | Open |
 | Android physical-device | Non-destructive test record and backup/restore evidence | Open |
 | Windows runtime/signing | Test record and final installer verification | Open |
@@ -93,7 +93,7 @@ A release may be approved only when every applicable gate above has evidence and
 | Scientific review | Independent review and documented limitations | Open |
 | Release authorization | Explicit approval of final artifacts and version | Open |
 
-**Current decision: NOT APPROVED FOR PRODUCTION DISTRIBUTION.** The latest validated candidate (`506984f61e800da2202c1413d75255af93e2770a`) has successful three-platform CI evidence in run 45695844553, including the Windows packaged-app startup smoke test and Android original-identity emulator launch/isolated preview build. Production signing, physical-device acceptance, interactive Windows installer/upgrade/uninstall and signing checks, public deployment, independent scientific review, and release authorization remain open.
+**Current decision: NOT APPROVED FOR PRODUCTION DISTRIBUTION.** The latest validated candidate (`50cacab0c8ce3aa71c2020463155467eb553d48a`) has successful three-platform CI evidence in run 45697318725, including the Windows packaged-app startup smoke test and Android original-identity emulator launch/isolated preview build. Production signing, physical-device acceptance, interactive Windows installer/upgrade/uninstall and signing checks, public deployment, independent scientific review, and release authorization remain open.
 
 ## 7. Safety and scope notes
 
