@@ -272,7 +272,7 @@ test('ERT CSV rejects rows with missing or extra fields instead of silently shif
 
 
 test('VES and ERT validators reject boolean and object values instead of coercing them to numbers', () => {
-  assert.throws(() => validateVES([{ ab2: true, mn2: 2, resistance: 5 }]), /AB\/2 and MN\/2 are required|geometry requires/);
+  assert.throws(() => validateVES([{ ab2: true, mn2: 2, resistance: 5 }]), /AB\/2 and MN\/2 (are required|must be numeric)|geometry requires/);
   assert.throws(() => validateERT([{ x: true, depth: 1, resistivity: 100 }]), /numeric x/);
   assert.throws(() => validateERT([{ x: [], depth: 1, resistivity: 100 }]), /numeric x/);
   assert.throws(() => validateERT([{ x: 0, depth: false, resistivity: 100 }]), /numeric x/);
