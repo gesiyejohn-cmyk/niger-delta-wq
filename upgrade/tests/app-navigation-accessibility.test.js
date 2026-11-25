@@ -21,7 +21,8 @@ test('the route fallback and lazy-page loading remain announced to assistive tec
 
 
 test('the primary navigation is keyboard-focusable and horizontally scrollable on narrow screens', () => {
-  assert.match(source, /<nav aria-label="Primary navigation" tabIndex=\{0\}/);
+  assert.match(source, /<nav aria-label="Primary navigation">/);
+  assert.match(source, /<div tabIndex=\\{0\\} aria-label="Scroll primary navigation links"/);
   assert.match(source, /overflowX: 'auto'/);
   assert.match(source, /flexWrap: 'nowrap'/);
   assert.match(source, /WebkitOverflowScrolling: 'touch'/);
