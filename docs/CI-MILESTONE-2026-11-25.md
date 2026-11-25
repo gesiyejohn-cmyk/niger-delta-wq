@@ -73,3 +73,23 @@ The CI emulator first-screen visual-rendering check is now passed for this exact
 ### What remains open
 
 This does not establish physical-phone acceptance, safe update/signature compatibility with the user's existing installation, production Android signing, physical Windows installation/runtime, Windows code signing, public web deployment, real-device backup/restore, or independent scientific review/calibration. The Android APK is CI debug-signed. Do not install it over the user's existing app, uninstall the app or clear its data. No additional APK installation is requested for this milestone.
+
+
+## Cross-platform accessibility and artifact milestone — 25 November 2026
+
+- Source revision: `9a1724e871fa43a1bfda1e9e074130a852da2804` on `feature/external-reference-validation`.
+- CI run: [45618882659](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45618882659) — **all three jobs passed**: `web-and-tests`, `android`, and `windows-desktop`.
+- Automated suite: **260 test declarations passed, 0 failures**; the count is derived from the exact source snapshot's merged base and upgrade test files. Production web build and source packaging also passed.
+- Accessibility addition in this revision: the primary navigation now has the explicit accessible landmark name `Primary navigation`; three source-contract tests cover the named landmark, the 14 main destinations, and route loading/fallback announcements.
+- Android API 35 emulator: original application ID `com.nigerdeltawq.mobile` built, installed and launched; isolated preview `com.nigerdeltawq.mobile.preview450` also built, installed and launched. Both screenshots were downloaded from the run and visually inspected; both show the actual NDWQ dashboard rather than the Capacitor splash screen.
+- Original-identity APK SHA-256: `c0d24eb45a0702e12774d0ac3a9d6262404b5706b65acc216e878a062942fe41`.
+- Preview APK SHA-256: `5008c49fb1ff1a34361c6aa02cb9253c5afc744d0f2e4698813e5770e2cc236f`.
+- Both APKs are debug-signed with the CI Android Debug certificate (certificate SHA-256: `6c3117c216fdd58d451e27b721e87e1ed0e47dd1906ffbb6d200b921462e1659`). These are validation artifacts, not safe updates for an existing user installation.
+- Windows installer archive: [artifact 15023373034](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45618882659/artifacts/15023373034), 95,615,340 bytes; contains `Niger-Delta-WQ-Setup-1.0.0.exe`.
+- Android archive: [artifact 15023966941](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45618882659/artifacts/15023966941), 8,534,420 bytes.
+- Web archive: [artifact 15023882531](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45618882659/artifacts/15023882531), 350,726 bytes.
+- Source archive: [artifact 15023433331](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45618882659/artifacts/15023433331), 200,818 bytes.
+
+### Release boundaries still open
+
+This closes the cross-platform CI build and emulator visual-smoke milestone for this revision. It does **not** close production signing or signature compatibility with the user's installed Android app, physical Android acceptance, physical Windows installation/runtime and code signing, public web deployment/browser acceptance, real-device backup/restore, independent scientific calibration/review, or formal release sign-off. Preserve the user's existing installation and data; no new APK installation is requested.
