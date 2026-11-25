@@ -142,6 +142,8 @@ jobs:
           path: source/niger-delta-wq/release/*.exe
 
   deploy-pages:
+    # Never publish a feature branch or pull-request build to the production Pages site.
+    if: github.ref == 'refs/heads/main'
     needs: web
     runs-on: ubuntu-latest
     environment:
