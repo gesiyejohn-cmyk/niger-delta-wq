@@ -53,6 +53,11 @@ export function calculateHydrochemistry(sample) {
   const anionPct={hco3Co3:pct(meq.hco3+meq.co3,diagramAnions),so4:pct(meq.so4,diagramAnions),cl:pct(meq.cl,diagramAnions)};
   const balanceError=(cations-anions)/(cations+anions)*100;
   const totalDissolvedIons=Object.keys(IONS).reduce((v,k)=>v+(finite(sample[k])?Number(sample[k]):0),0);
+  const tdsBlank=sample.tdsMgL==null||(typeof sample.tdsMgL==='string'&&sample.tdsMgL.trim()==='');
+  const measuredTDS=tdsBlank?null:Number(sample.tdsMgL);
+  if(!tdsBlank&&(!finite(sample.tdsMgL)||measuredTDS<=0)) throw new Error('Measured TDS must be a finite value greater than zero, or left blank when not measured.');
+  const gibbsDissolvedSolids=measuredTDS??totalDissolvedIons;
+  const gibbsDissolvedSolidsSource=measuredTDS==null?'sum of measured major ions (proxy)':'laboratory-measured TDS';
   const piperProjection=buildPiperProjection(cationPct,anionPct);
   const cationDominant=Object.entries(cationPct).sort((a,b)=>b[1]-a[1])[0][0];
   const anionDominant=Object.entries(anionPct).sort((a,b)=>b[1]-a[1])[0][0];
@@ -73,7 +78,8 @@ export function calculateHydrochemistry(sample) {
     cationPercent: cationPct, anionPercent: anionPct, piper:{...piperProjection,facies},
     durovs:{cation: cationPct, anion: anionPct, central:{x:(meq.hco3+meq.co3+meq.so4/2)/diagramAnions,y:(meq.ca+meq.mg/2)/cations}},
     schoeller:Object.keys(IONS).map(key=>({key,name:IONS[key].name,meqL:meq[key]})),
-    gibbs:{naCaRatio:sodiumCalcium,clHco3Ratio:chlorideBicarbonate,tdsMgL:totalDissolvedIons},
+    gibbs:{naCaRatio:sodiumCalcium,clHco3Ratio:chlorideBicarbonate,dissolvedSolidsMgL:gibbsDissolvedSolids,dissolvedSolidsSource:gibbsDissolvedSolidsSource},
+    measuredTDSMgL:measuredTDS,
     chadha:{x:alkalineEarths==null?null:alkalineEarths-pct(meq.na+meq.k,cations),y:weakAcids==null?null:weakAcids-strongAcids},
     classification:{dominantCation:cationName,dominantAnion:anionName,facies},
     cautions:['Major-ion diagrams require complete and representative laboratory chemistry.','Ionic charge-balance error is a screening check; investigate analytical quality when its absolute value exceeds the study acceptance criterion.','Hydrochemical facies describe relative ionic composition and do not by themselves identify contamination sources.']
@@ -87,6 +93,8 @@ export function validateHydrochemistrySample(sample) {
     if(!finite(clean[key])||Number(clean[key])<0) throw new Error(IONS[key].name+' must be a non-negative mg/L value or left blank if not measured.');
     clean[key]=Number(clean[key]);
   }
+  if(clean.tdsMgL==null||(typeof clean.tdsMgL==='string'&&clean.tdsMgL.trim()==='')) clean.tdsMgL=null;
+  else { if(!finite(clean.tdsMgL)||Number(clean.tdsMgL)<=0) throw new Error('Measured TDS must be a finite value greater than zero, or left blank when not measured.'); clean.tdsMgL=Number(clean.tdsMgL); }
   const result=calculateHydrochemistry(clean);
   return {...clean,calculation:result};
 }
@@ -110,6 +118,7 @@ export function buildHydrochemistryCSV(samples) {
     'Coordinate format','Original latitude','Original longitude',
     'Latitude hemisphere','Longitude hemisphere','Coordinate datum','Coordinate CRS',
     ...HYDROCHEMISTRY_ION_FIELDS.map(key => IONS[key].name + ' (mg/L)'),
+    'Measured TDS (mg/L)','Gibbs dissolved-solids value (mg/L)','Gibbs dissolved-solids source',
     ...HYDROCHEMISTRY_ION_FIELDS.map(key => IONS[key].name + ' (meq/L)'),
     'Total Cations (meq/L)','Total Anions (meq/L)',
     'Charge Balance Error (%)','Dominant Cation','Dominant Anion','Hydrochemical Facies'
@@ -125,6 +134,7 @@ export function buildHydrochemistryCSV(samples) {
       sample.coordinateOriginal?.longitudeHemisphere,
       sample.coordinateDatum, sample.coordinateCRS,
       ...HYDROCHEMISTRY_ION_FIELDS.map(key => sample[key]),
+      result.measuredTDSMgL,result.gibbs.dissolvedSolidsMgL,result.gibbs.dissolvedSolidsSource,
       ...HYDROCHEMISTRY_ION_FIELDS.map(key => result.meqL[key]),
       result.totalCationsMeqL, result.totalAnionsMeqL,
       result.chargeBalanceErrorPercent,
