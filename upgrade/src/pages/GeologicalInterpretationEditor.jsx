@@ -32,7 +32,7 @@ function csvCell(value) {
   return '"' + text.replace(/"/g, '""') + '"';
 }
 
-export default function GeologicalInterpretationEditor({ model, selectedDistance = null, onDistanceChange = () => {} }) {
+export default function GeologicalInterpretationEditor({ model, selectedDistance = null, selectedDepth = null, onDistanceChange = () => {}, onDepthChange = () => {} }) {
   const [draft, setDraft] = useState(null);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -284,14 +284,17 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
     </div>}
     {plot.length > 0 && <div style={{marginTop:16}}>
       <h3>Geological cross-section</h3>
-      <p className="muted">Tap or click the section to select a profile distance. The nearest imported ERT measurement will be selected in the ERT plot above. Use the left/right arrow keys when the section is focused.</p>
+      <p className="muted">Tap or click the section to select profile distance and depth. Both selection guides are shared with the ERT tomogram above. Use arrow keys when the section is focused.</p>
       <div style={{overflowX:'auto',border:'1px solid #cbd5e1',borderRadius:7}}>
         <svg viewBox="0 0 760 390" role="img" aria-label="Manually interpreted geological cross-section with shared ERT distance and depth ranges" onClick={event => {
             if (!onDistanceChange) return;
             const rect = event.currentTarget.getBoundingClientRect();
             const plotX = ((event.clientX - rect.left) / rect.width) * 760;
             const fraction = Math.max(0, Math.min(1, (plotX - 70) / 650));
+            const plotY = ((event.clientY - rect.top) / rect.height) * 390;
+            const depthFraction = Math.max(0, Math.min(1, (plotY - 30) / 300));
             onDistanceChange(xRange[0] + fraction * (xRange[1] - xRange[0]));
+            onDepthChange(range[0] + depthFraction * (range[1] - range[0]));
           }}
           onKeyDown={event => {
             if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
@@ -299,6 +302,11 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
               const current = selectedDistance == null ? xRange[0] : selectedDistance;
               const step = (xRange[1] - xRange[0]) / 20;
               onDistanceChange(Math.max(xRange[0], Math.min(xRange[1], current + (event.key === 'ArrowRight' ? step : -step))));
+            } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+              event.preventDefault();
+              const current = selectedDepth == null ? range[0] : selectedDepth;
+              const step = (range[1] - range[0]) / 20;
+              onDepthChange(Math.max(range[0], Math.min(range[1], current + (event.key === 'ArrowDown' ? step : -step))));
             }
           }}
           tabIndex={0}
@@ -310,6 +318,7 @@ export default function GeologicalInterpretationEditor({ model, selectedDistance
           <text x="390" y="378" textAnchor="middle" fontSize="12" fill="#0f172a">Profile distance (m)</text>
           <text x="15" y="180" transform="rotate(-90 15 180)" textAnchor="middle" fontSize="12" fill="#0f172a">Depth (m)</text>
           {selectedDistance != null && <path d={'M'+(70+(Math.max(xRange[0],Math.min(xRange[1],selectedDistance))-xRange[0])/(xRange[1]-xRange[0])*650)+' 30v300'} stroke="#111827" strokeWidth="2.5"/>}
+          {selectedDepth != null && <path d={'M70 '+(30+(Math.max(range[0],Math.min(range[1],selectedDepth))-range[0])/(range[1]-range[0] || 1)*300)+'h650'} stroke="#111827" strokeWidth="2.5" strokeDasharray="6 4"/>}
         </svg>
       </div>
       <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:8}}>{units.map((unit,i)=><span key={unit.id} style={{fontSize:13}}><span style={{display:'inline-block',width:12,height:12,background:palette[i%palette.length],marginRight:5}}/>{unit.name}</span>)}</div>
