@@ -13,6 +13,7 @@ test('calculates cation and anion charge balance from equivalents',()=>{const r=
 test('returns normalized cation and anion percentages',()=>{const r=calculateHydrochemistry(sample);assert.ok(Math.abs(r.cationPercent.ca+r.cationPercent.mg+r.cationPercent.naK-100)<1e-9);assert.ok(Math.abs(r.anionPercent.hco3Co3+r.anionPercent.so4+r.anionPercent.cl-100)<1e-9);});
 test('does not silently treat missing core ions as zero',()=>{const incomplete={...sample,co3:''};assert.throws(()=>calculateHydrochemistry(incomplete),/require measured values/);});
 test('rejects negative or malformed laboratory concentrations',()=>{assert.throws(()=>validateHydrochemistrySample({...sample,ca:-1}),/non-negative/);assert.throws(()=>validateHydrochemistrySample({...sample,mg:'abc'}),/non-negative/);});
+test('rejects boolean and object laboratory concentrations before numeric coercion',()=>{for(const value of [true,false,{},[]]){assert.throws(()=>validateHydrochemistrySample({...sample,ca:value}),/non-negative mg\/L/);assert.throws(()=>calculateHydrochemistry({...sample,mg:value}),/finite, non-negative mg\/L/);}});
 test('allows optional nitrate to remain missing',()=>{const r=calculateHydrochemistry(sample);assert.equal(r.meqL.no3,null);assert.ok(r.totalAnionsMeqL>0);});
 test('Durov central square coordinates project the normalized cation and anion groups',()=>{const r=calculateHydrochemistry(sample);assert.ok(Math.abs(r.durovs.central.x-.625)<1e-9);assert.ok(Math.abs(r.durovs.central.y-.5)<1e-9);});
 
