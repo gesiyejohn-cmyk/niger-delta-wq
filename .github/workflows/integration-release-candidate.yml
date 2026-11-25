@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
           ref: d81c4fc63398941c5e4ad97c7d34766f54d06db2
@@ -164,6 +165,7 @@ jobs:
     needs: web-and-tests
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
           ref: d81c4fc63398941c5e4ad97c7d34766f54d06db2
@@ -313,6 +315,7 @@ jobs:
     runs-on: windows-latest
     needs: web-and-tests
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
