@@ -21,11 +21,11 @@ This checklist separates automated build confidence from evidence that the appli
 
 | Artifact | Artifact ID | Size | SHA-256 |
 |---|---:|---:|---|
-| Android debug APK bundle (original + isolated preview, metadata and emulator evidence) | `15060417363` | 8,540,611 bytes | `63ea39194ccf6a84d1973baefc3f9b275992ba31cc8b3318eb45651044726374` |
-| Windows desktop installer | `15059893616` | 95,619,725 bytes | `71c26f2b6ae4854473f69117c1519ff91be4d0402582fca7ee90022468916001` |
-| Source provenance | `15059614161` | 3,555 bytes | `4795d6c811cae3a5eb6b3ee7ed8d6600483692e4821a164f9a7d964ae9cece6b` |
-| Integrated web build | `15060521547` | 351,319 bytes | `09e72b66d346bfdea9b7a840384a85dca144d2cf023dd8b09d694d5eeb592fa3` |
-| Integrated source | `15059738943` | 184,898 bytes | `f6cac5c9308f61ebe265410bc8a39a9ee3abb978b0d45157750f59d502366c14` |
+| Android debug APK bundle (original + isolated preview, metadata and emulator evidence) | `15060338844` | 8,540,642 bytes | `ab5a4f556c2b996c5c9d0cbcd1d6da7a062bbcecb4bd9b513ae07091ecd31c05` |
+| Windows desktop installer | `15060677919` | 95,619,876 bytes | `62b4f4785515f367d8351260a0cb86726f2cd20356e60a8ecb91ba090053cc84` |
+| Source provenance | `15060288172` | 3,554 bytes | `ee758e500531766a9adc67208b2b164aa82241a20fec77435a3e530e8e90dead` |
+| Integrated web build | `15061475948` | 351,319 bytes | `f75213d88cd5c0c712fc150d6eefdfec1eb25db02a75b67203828b8e80ad7dd1` |
+| Integrated source | `15060043693` | 185,023 bytes | `847e428f346abdd19d3464dcd518b3fa191088c9efc2aba40801bb638e4dde5c` |
 
 The latest run's three jobs completed successfully. All five artifacts from run 45695844553 were independently downloaded, ZIP-integrity checked, and their SHA-256 digests matched the GitHub artifact digests. The earlier run 45689659045 recorded 262 tests passed, but that count is not carried forward as a measured count for this later commit.
 
