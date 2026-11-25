@@ -181,3 +181,12 @@ test('Schoeller helper rejects malformed input and retains isolated valid measur
  assert.throws(()=>buildSchoellerSegments(null),/Schoeller data/);
  assert.deepEqual(buildSchoellerSegments({cl:0.5},['cl']),[[{key:'cl',index:0,meqL:0.5}]]);
 });
+
+test('charge-balance results disclose whether optional nitrate was measured and included',()=>{
+ const withoutNitrate=calculateHydrochemistry(sample);
+ assert.equal(withoutNitrate.chargeBalanceNitrateIncluded,false);
+ assert.ok(withoutNitrate.chargeBalanceUnmeasuredIons.includes('no3'));
+ const withNitrate=calculateHydrochemistry({...sample,no3:0});
+ assert.equal(withNitrate.chargeBalanceNitrateIncluded,true);
+ assert.ok(!withNitrate.chargeBalanceUnmeasuredIons.includes('no3'));
+});
