@@ -579,3 +579,29 @@ Artifacts for this follow-up run:
 Downloads: [Android](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45596901953/artifacts/15012843296) · [Windows](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45596901953/artifacts/15014260746) · [Web](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45596901953/artifacts/15013506745) · [Source](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45596901953/artifacts/15013013367).
 
 The production web build reports a Vite warning that one or more minified chunks exceed 500 kB. The build succeeds, but bundle splitting and load-performance review remain open. All release limitations recorded above still apply: debug signing, no physical-device acceptance, no proof of existing-installation update compatibility, no physical Windows runtime acceptance, no public deployment, no real-device backup/restore acceptance and no independent scientific/calibration sign-off. This follow-up CI run does not close those gates.
+
+### Latest superseding CI evidence — 25 November 2026
+
+The latest verified integrated source revision is `cc2c75f305fb094060a8f4e51a461b267869f53c` (`perf(web): lazy-load application routes`). Its CI workflow [Run 45599699359](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45599699359) completed successfully with all three jobs passing:
+
+- `web-and-tests`: 250 tests passed, 0 failed; production web build and source packaging passed.
+- `android`: debug APK built; API 35 emulator booted; original-identity package installed and expected launcher activity resumed; isolated preview package also installed and launched.
+- `windows-desktop`: desktop installer generation and artifact upload passed.
+
+The web main JavaScript bundle decreased from 558.32 kB to 171.56 kB (69.3% smaller; 56.15 kB gzip). The spreadsheet library remains a separate 429.02 kB chunk (143.08 kB gzip), and Leaflet is a separate 149.58 kB chunk (43.36 kB gzip).
+
+Android CI metadata:
+- Original package ID: `com.nigerdeltawq.mobile`; label: `Niger Delta WQ`; version code/name: `1` / `1.0`.
+- Original-identity debug APK SHA-256: `b9fbf9b1dd078995965e15c8565a74a2c689101e29274df2e85534921c13e283`.
+- Preview package ID: `com.nigerdeltawq.mobile.preview427`; preview APK SHA-256: `3f1575fa3f67bcdf9b99a407ef9b725db73ed5b00dc3eaad035935237a18e40a`.
+- Debug signing certificate SHA-256: `3c3978f130dbbcfe6619a1b5be6679801ac149ec9b7a4317ad5de649aeef1bab`.
+
+Artifacts from Run 45599699359:
+- Android debug APK archive, ID `15014777914`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45599699359/artifacts/15014777914), archive SHA-256 `0df421b9dd514230dd9e08c13632ef759594771c1ae3dba49c779eebb1de8495`, expires 9 December 2026.
+- Windows installer archive, ID `15014553131`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45599699359/artifacts/15014553131), archive SHA-256 `d65e22731d89326b08adfa19160d1fc4e055bbb6e5c52064f00fd1941b04e160`, expires 9 December 2026.
+- Integrated web archive, ID `15013469333`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45599699359/artifacts/15013469333), archive SHA-256 `02e95eb4c676668e8ed2d6e8134aac3cb1c1eaa0ee6ff0a86972a2d3258fe1cc`, expires 9 December 2026.
+- Integrated source archive, ID `15015520104`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45599699359/artifacts/15015520104), archive SHA-256 `f57099a150126fd2ae263141cc4ebfe8f3b2f851915098046d39346b60bbdfdf`, expires 25 December 2026.
+
+The documentation-only follow-up commit `5805110fa40298a43fd130ae55b0e3e0d98dbec5` also passed all three CI jobs in [Run 45602374988](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45602374988). The workflow change includes the milestone report in the integrated source archive.
+
+**Release restrictions remain unchanged:** this evidence is for CI builds and emulator smoke tests, not production release approval. Android output is debug-signed and signer compatibility with the existing physical-phone installation is not established. Do not install it over the user's existing app, uninstall the current app or clear its data. Physical Android acceptance, Windows installation/runtime acceptance, public web deployment, real-device backup/restore, production signing and independent scientific review remain open.
