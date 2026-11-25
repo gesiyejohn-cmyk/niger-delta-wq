@@ -478,3 +478,19 @@ A workflow reliability cleanup is included with this documentation update: the `
 This is same-commit CI and emulator process/activity evidence, not physical-device acceptance. It does not establish physical Android first-screen/core-workflow acceptance, safe update compatibility, production signing, or backup/restore on actual phone data. The Windows installer has not been installed/runtime-tested on a real Windows machine. The web artifact has not been deployed to an accessible URL or browser-tested there. Scientific reference checks, local DRASTIC calibration justification and formal sign-off remain outstanding. PR #2 remains open and draft.
 
 Retain the scientific limitations: ERT inversion is not implemented; imported inversion results and interpolation are not field-data inversion; DRASTIC bands require local hydrogeological justification; WQI alone does not establish potability. Do not uninstall, clear app data or install a debug APK over an existing phone installation based on CI evidence.
+
+
+### Water-quality sample coordinate capture — 25 November 2026
+
+The water-quality sample workflow now uses the same DD/DMS/DDM coordinate control as the VES, ERT and vulnerability workspaces. This closes a gap found during the sample-entry audit: the original sample form accepted only plain latitude/longitude text and converted it directly with Number(), so it did not preserve the entered format, hemisphere, datum or display CRS.
+
+Implemented in the coordinate-system upgrade branch:
+
+- Manual sample creation and editing accept DD, DMS and DDM, separate N/S and E/W selectors, WGS84 datum selection and a geographic or derived WGS84 UTM display CRS.
+- The sample storage boundary validates coordinate pairs, rejects partial or unsupported datum/CRS values, stores canonical latitude/longitude in WGS84 geographic decimal degrees (EPSG:4326), and retains the original coordinate text, format and hemispheres.
+- When editing an existing record, the original entry is restored into the coordinate controls. Legacy records without coordinate metadata reopen as DD; hemisphere is inferred from the sign of their stored numeric coordinates.
+- Bulk CSV/Excel import can map coordinate format, hemisphere, datum and display-CRS columns. If no coordinate-format column is mapped, DD is assumed. Import validation is performed by the same storage boundary as manual entry.
+- Sample CSV and GeoJSON exports now include coordinate-format/original-entry/CRS metadata while retaining canonical numeric geometry. CSV cells are quoted and formula-like text values are prefixed to reduce spreadsheet formula-injection risk.
+- Regression tests cover DMS storage, DDM south/west import, canonical CRS, edit/clear behavior, invalid metadata, original-value retention and CSV/GeoJSON exports.
+
+The implementation is committed for CI verification. It does not retroactively assign a datum or CRS to historical records that lack those fields; review those records before treating their locations as WGS84 GIS data. The UTM selection is a derived display CRS only; canonical sample storage remains EPSG:4326. CI success will not substitute for checking sample entry, import and export on the physical Android device and supported browsers.
