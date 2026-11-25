@@ -1,7 +1,7 @@
 # Integrated release-candidate acceptance checklist
 
 **Candidate branch:** `integration/ndwq-main-overlay`  
-**Current CI evidence:** [Run 45683684499](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45683684499)  
+**Current CI evidence:** [Run 45686910133](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45686910133)  
 **Acceptance status:** CI-validated candidate; manual and production gates remain open.
 
 This checklist separates automated build confidence from evidence that the application is safe and usable on real devices. A checked CI item must not be treated as proof of physical-device, production-signing, or scientific validation.
@@ -16,7 +16,7 @@ This checklist separates automated build confidence from evidence that the appli
 - [x] Windows desktop installer artifact built.
 - [x] Source-provenance manifest generated with separate overlay and workflow commit identities.
 - [x] All five expected artifacts uploaded by the cited run.
-- [ ] Re-run and record all jobs against the final candidate commit after any subsequent code or workflow change.
+- [ ] Latest candidate commit `98d0e836f5988b1b59d71aa98b1ae50187ef7f1e` passed all three jobs in [run 45686910133](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45686910133); repeat after any subsequent code or workflow change.
 
 ## 2. Android safe-update and device acceptance
 
@@ -67,7 +67,7 @@ A release may be approved only when every applicable gate above has evidence and
 
 | Gate | Evidence required | Status |
 |---|---|---|
-| Automated CI | Successful run on final candidate SHA | Passed for run 45683684499; rerun after later changes |
+| Automated CI | Successful run on final candidate SHA | Passed for final candidate SHA `98d0e836`; run 45686910133 |
 | Android identity/signing | Installed certificate, signing model, matching release APK | Open |
 | Android physical-device | Non-destructive test record and backup/restore evidence | Open |
 | Windows runtime/signing | Test record and final installer verification | Open |
