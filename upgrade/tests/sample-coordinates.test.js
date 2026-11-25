@@ -205,3 +205,26 @@ test('legacy samples without coordinate metadata reopen as DD with hemisphere in
   assert.equal(input.latitudeHemisphere, 'S');
   assert.equal(input.longitudeHemisphere, 'W');
 });
+
+
+test('bulk import infers hemispheres from signed DD strings and canonicalizes format and CRS labels', async () => {
+  await clearSampleStores();
+  const imported = await saveSample({
+    meta: {
+      sampleCode: 'GW-IMPORT-SIGNED-01',
+      latitude: '-4.92',
+      longitude: '-6.26',
+      coordinateFormat: 'dd',
+      coordinateDatum: 'wgs 84',
+      coordinateCRS: 'utm zone 32s (wgs84)'
+    },
+    params: {}
+  });
+
+  assert.equal(imported.latitude, -4.92);
+  assert.equal(imported.longitude, -6.26);
+  assert.equal(imported.coordinateFormat, 'DD');
+  assert.equal(imported.coordinateOriginal.latitudeHemisphere, 'S');
+  assert.equal(imported.coordinateOriginal.longitudeHemisphere, 'W');
+  assert.equal(imported.coordinateCRS, 'UTM Zone 32S (WGS84)');
+});

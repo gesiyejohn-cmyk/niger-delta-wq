@@ -35,9 +35,8 @@ function normalizeDisplayCRS(value) {
     }
   }
 
-  if (/^UTM Zone (?:[1-9]|[1-5]\d|60)[NS] \(WGS84\)$/i.test(crs)) {
-    return crs.replace(/\s+/g, ' ');
-  }
+  const utm = /^UTM\s+Zone\s+([1-9]|[1-5]\d|60)\s*([NS])\s*\(WGS\s*84\)$/i.exec(crs);
+  if (utm) return 'UTM Zone ' + Number(utm[1]) + utm[2].toUpperCase() + ' (WGS84)';
   throw new Error('Coordinate display CRS must be Geographic (WGS84) or a supported WGS84 UTM zone.');
 }
 
@@ -45,9 +44,9 @@ export function buildSampleCoordinateMetadata(input = {}) {
   const pair = validateCoordinatePair({
     latitude: input.latitude,
     longitude: input.longitude,
-    format: input.format || 'DD',
-    latitudeHemisphere: input.latitudeHemisphere || 'N',
-    longitudeHemisphere: input.longitudeHemisphere || 'E'
+    format: String(input.format || 'DD').trim().toUpperCase(),
+    latitudeHemisphere: String(input.latitudeHemisphere || 'N').trim().toUpperCase(),
+    longitudeHemisphere: String(input.longitudeHemisphere || 'E').trim().toUpperCase()
   });
 
   if (!pair) return { latitude: null, longitude: null };
@@ -71,7 +70,8 @@ export function buildSampleCoordinateMetadata(input = {}) {
 }
 
 export function sampleCoordinateInputFromRecord(record = {}) {
-  const format = FORMATS.includes(record.coordinateFormat) ? record.coordinateFormat : 'DD';
+  const requestedFormat = String(record.coordinateFormat || 'DD').trim().toUpperCase();
+  const format = FORMATS.includes(requestedFormat) ? requestedFormat : 'DD';
   const original = record.coordinateOriginal && typeof record.coordinateOriginal === 'object'
     ? record.coordinateOriginal
     : null;

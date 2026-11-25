@@ -494,3 +494,6 @@ Implemented in the coordinate-system upgrade branch:
 - Regression tests cover DMS storage, DDM south/west import, canonical CRS, edit/clear behavior, invalid metadata, original-value retention and CSV/GeoJSON exports.
 
 The implementation is committed for CI verification. It does not retroactively assign a datum or CRS to historical records that lack those fields; review those records before treating their locations as WGS84 GIS data. The UTM selection is a derived display CRS only; canonical sample storage remains EPSG:4326. CI success will not substitute for checking sample entry, import and export on the physical Android device and supported browsers.
+
+
+The sample-import follow-up also normalizes case and spacing in DD/DMS/DDM and WGS84 CRS labels, and infers S/W hemispheres from signed decimal-degree strings when an import file has no separate hemisphere columns. Explicit mapped hemisphere columns still take precedence; conflicting signed values are rejected rather than silently rewritten.

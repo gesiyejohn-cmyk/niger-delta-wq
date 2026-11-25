@@ -17,6 +17,15 @@ async function loadOverrides(db) {
   return (await db.get('settings', 'guidelineOverrides'))?.value || {};
 }
 
+function inferHemisphere(value, axis) {
+  const number = typeof value === 'number'
+    ? value
+    : typeof value === 'string' && value.trim() !== '' ? Number(value.trim()) : NaN;
+  if (!Number.isFinite(number)) return axis === 'latitude' ? 'N' : 'E';
+  if (axis === 'latitude') return number < 0 ? 'S' : 'N';
+  return number < 0 ? 'W' : 'E';
+}
+
 function normalizeSampleMetadata(meta = {}) {
   const {
     latitude,
@@ -33,19 +42,19 @@ function normalizeSampleMetadata(meta = {}) {
 
   const hasOriginal = coordinateOriginal && typeof coordinateOriginal === 'object'
     && !Array.isArray(coordinateOriginal);
-  const inputLatitude = hasOriginal ? coordinateOriginal.latitude : latitude;
-  const inputLongitude = hasOriginal ? coordinateOriginal.longitude : longitude;
-  const format = coordinateFormat || 'DD';
+  const inputLatitude = hasOriginal && coordinateOriginal.latitude != null ? coordinateOriginal.latitude : latitude;
+  const inputLongitude = hasOriginal && coordinateOriginal.longitude != null ? coordinateOriginal.longitude : longitude;
+  const format = String(coordinateFormat || 'DD').trim().toUpperCase();
   const normalized = buildSampleCoordinateMetadata({
     latitude: inputLatitude,
     longitude: inputLongitude,
     format,
     latitudeHemisphere: (hasOriginal && coordinateOriginal.latitudeHemisphere)
       || latitudeHemisphere
-      || (format === 'DD' && typeof latitude === 'number' && latitude < 0 ? 'S' : undefined),
+      || inferHemisphere(latitude ?? inputLatitude, 'latitude'),
     longitudeHemisphere: (hasOriginal && coordinateOriginal.longitudeHemisphere)
       || longitudeHemisphere
-      || (format === 'DD' && typeof longitude === 'number' && longitude < 0 ? 'W' : undefined),
+      || inferHemisphere(longitude ?? inputLongitude, 'longitude'),
     datum: coordinateDatum,
     crs: coordinateCRS
   });
