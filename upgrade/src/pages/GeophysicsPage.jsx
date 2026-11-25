@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Papa from 'papaparse';
 import { calculateVES, validateVES, validateERT, isCompleteVESReading } from '../engine/geophysics.js';
+import { parseERTCSV } from '../engine/ertCsv.js';
 import VESInterpretation from './VESInterpretation.jsx';
 import CoordinateFields from './CoordinateFields.jsx';
 import ERTTomogram from './ERTTomogram.jsx';
@@ -122,14 +122,7 @@ export default function GeophysicsPage() {
     try {
       const sourceText = await file.text();
       if (sourceText.length > 10 * 1024 * 1024) throw new Error('ERT CSV is larger than the 10 MB import limit.');
-      const parsed = Papa.parse(sourceText, { header: true, skipEmptyLines: true, dynamicTyping: true });
-      if (parsed.errors.length) throw new Error(parsed.errors[0].message);
-      const rows = parsed.data.map(row => ({
-        x: row.x ?? row.X ?? row.electrode_x ?? row.distance,
-        depth: row.depth ?? row.Depth ?? row.depth_m,
-        resistivity: row.resistivity ?? row.Resistivity ?? row.resistivity_ohm_m
-      }));
-      const clean = validateERT(rows);
+      const clean = parseERTCSV(sourceText);
       setCells(clean);
       setSourceImport({ fileName: file.name, content: sourceText, importedAt: new Date().toISOString() });
       setSelectedCell(clean[0] || null);
