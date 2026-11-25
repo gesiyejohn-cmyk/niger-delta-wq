@@ -278,3 +278,14 @@ test('VES and ERT validators reject boolean and object values instead of coercin
   assert.throws(() => validateERT([{ x: 0, depth: false, resistivity: 100 }]), /numeric x/);
   assert.throws(() => validateERT([{ x: 0, depth: 1, resistivity: true }]), /numeric x/);
 });
+
+
+test('VES calculation and geometry functions reject raw boolean and object inputs before numeric coercion', () => {
+  assert.throws(() => schlumbergerGeometricFactor(true, 1), /numeric AB\/2 and MN\/2/);
+  assert.throws(() => schlumbergerGeometricFactor(10, []), /numeric AB\/2 and MN\/2/);
+  assert.throws(() => wennerGeometricFactor(false), /must be numeric/);
+  assert.throws(() => calculateVES({ ab2: 10, mn2: 2, resistance: true }), /Measured resistance/);
+  assert.throws(() => calculateVES({ ab2: {}, mn2: 2, resistance: 5 }), /numeric AB\/2 and MN\/2/);
+  assert.throws(() => validateVES([{ ab2: 10, mn2: 2, resistance: true }]), /positive numeric resistance/);
+  assert.throws(() => validateVES([{ spacing: true, resistance: 5 }], 'Wenner alpha'), /spacing a must be numeric/);
+});
