@@ -33,7 +33,7 @@ test('Android emulator smoke test captures and validates a PNG screenshot after 
 
 test('Android emulator smoke test waits for the WebView screen after Activity resume', () => {
   assert.match(smokeScript, /NDWQ_SCREEN_SETTLE_SECONDS:-15/);
-  assert.match(smokeScript, /Waiting \\${SCREEN_SETTLE_SECONDS\\}s for the WebView/);
+  assert.match(smokeScript, /Waiting \\$\\{SCREEN_SETTLE_SECONDS\\}s for the WebView/);
   assert.match(smokeScript, /sleep "\\$SCREEN_SETTLE_SECONDS"/);
 });
 
