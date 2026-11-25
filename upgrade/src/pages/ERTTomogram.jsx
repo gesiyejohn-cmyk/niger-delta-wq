@@ -12,7 +12,7 @@ function colour(value, min, max) {
 }
 
 const initialView = { x: 0, y: 0, w: 760, h: 390 };
-export default function ERTTomogram({ models = [], selectedDistance = null, selectedDepth = null, onCellSelect = () => {} }) {
+export default function ERTTomogram({ models = [], selectedDistance = null, onCellSelect = () => {}, selectedDepth = null }) {
   const [view, setView] = useState(initialView);
   const [drag, setDrag] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
