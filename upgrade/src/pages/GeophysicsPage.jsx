@@ -180,7 +180,6 @@ export default function GeophysicsPage() {
   function selectERTCell(cell) {
     setSelectedCell(cell);
     setSelectedERTDistance(cell.x);
-    setSelectedERTDepth(cell.depth);
   }
 
   function selectERTCoordinates(distance, depth) {
@@ -277,7 +276,7 @@ export default function GeophysicsPage() {
         <h2>Saved ERT lines</h2>
         {ert.map(record => <div key={record.id} style={{ padding: 8, borderTop: '1px solid #e2e8f0' }}>
           <strong>{record.lineId || 'Unlabelled line'}</strong> · {record.cells.length} points · RMS {record.rms || 'not recorded'}%
-          <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); setSelectedERTDistance(null); setSelectedERTDepth(null); } await refresh(); }}>Delete</button>
+          <button onClick={async () => { await deleteERT(record.id); if (selectedErtModelId === record.id) { setSelectedErtModelId(''); setSelectedCell(null); setSelectedERTDistance(null); } setSelectedERTDepth(null); await refresh(); }}>Delete</button>
         </div>)}
         {activeERTModel && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 16, alignItems: 'start', minWidth: 0 }} aria-label="Linked ERT and geological interpretation views">
           <div style={{ minWidth: 0 }}>
