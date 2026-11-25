@@ -660,3 +660,27 @@ Artifacts from run 45609820608:
 - Integrated source archive, ID `15019283311`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45609820608/artifacts/15019283311), 194,932 bytes, expires 25 December 2026; archive SHA-256 `1a1f9b0fc0a3cd0bdadf414a34dfb453488a9ca6e4db68c2f173c483cc254e1f`.
 
 **Release restrictions remain:** Android artifact is debug-signed; safe update/signature compatibility with the user's installed copy is unverified; physical Android acceptance, physical Windows acceptance, public web deployment, real-device backup/restore, production signing and independent scientific review/calibration remain open. Do not install this CI APK over the existing phone app or uninstall/clear its data.
+
+
+### Latest superseding CI evidence — 25 November 2026 (run 45610888124)
+
+Commit `036f9ae4ba13e463b8401bcf0010731487e68e58` on `feature/external-reference-validation` completed [workflow run 45610888124](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45610888124). All three jobs and all release-build workflow steps completed successfully.
+
+- `web-and-tests`: **250 tests passed, 0 failed**; Vite production build completed; integrated source ZIP passed `unzip -t`.
+- `android`: debug APK built; API 35 emulator booted and launched the original package identity; isolated preview package `com.nigerdeltawq.mobile.preview433` also built and launched; Android artifact uploaded.
+- `windows-desktop`: NSIS installer generated and uploaded. This remains an unsigned CI installer; real Windows installation/runtime acceptance and code signing are outstanding.
+
+Android identity and signing evidence extracted from the uploaded artifact:
+- Original package: `com.nigerdeltawq.mobile`; label: `Niger Delta WQ`; version code: `1`; version name: `1.0`; launcher: `com.nigerdeltawq.mobile.MainActivity`.
+- Original debug APK SHA-256: `762aa5b38a71517bb8246859acfdfaf2a9399b5654e43862276891e4b178f17e`.
+- CI debug certificate SHA-256: `b93e5dc45026bbde8783ea44a727f597b036b0679cfbc07c3f27e850be40fcea`.
+- Preview package: `com.nigerdeltawq.mobile.preview433`; preview APK SHA-256: `15e79c4d79d0156aa761413d2cdae5164fd2a0526b414790784d7de330aa4620`.
+- Both APKs are debug-signed with the CI Android debug certificate. This fingerprint is **not** evidence of the signing key used by an existing installation or a production signing key. Do not install over, uninstall, or clear data from the user's current phone app based on this CI result.
+
+Artifacts from this run (GitHub-hosted temporary artifacts):
+- Android debug APK bundle: ID `15019644437`, 8,184,432 bytes, archive SHA-256 `084d75e706fd2a75c3a79e119ef3f41de1e1c9e4c0c47eb09944803cdc45f37b`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45610888124/artifacts/15019644437); expires 9 December 2026 at 12:12:42 UTC.
+- Web production build: ID `15020350989`, 350,158 bytes, archive SHA-256 `ca36339546be0b21c1589735347db5293867eb329de1238b59086614a5b17fcf`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45610888124/artifacts/15020350989); expires 9 December 2026 at 12:08:42 UTC.
+- Windows installer: ID `15020735080`, 95,614,709 bytes, archive SHA-256 `fd0ea333517806aa3a38970e4f7f26a8557e659686a7fa4463e244670bc2fa4f`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45610888124/artifacts/15020735080); expires 9 December 2026 at 12:10:03 UTC.
+- Integrated source snapshot: ID `15019793240`, 195,524 bytes, archive SHA-256 `3bb09e407f7d8dd650dd94cc489e074747310e1dcf7c0e08d2cb7f8d8a9e947d`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45610888124/artifacts/15019793240); expires 25 December 2026 at 12:08:40 UTC.
+
+This is the latest verified integrated **CI milestone**, not production approval. Physical Android acceptance, comparison against the installed app's actual signer, production Android signing, safe in-place update/data migration, physical Windows installation/runtime, public web deployment, real-device backup/restore, and independent scientific review remain open. Preserve artifacts before expiry if they are needed for audit or comparison.
