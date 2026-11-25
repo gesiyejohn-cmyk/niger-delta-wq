@@ -131,7 +131,7 @@ jobs:
           cp NDWQ-Source-Compact.zip ndwq-integrated-source/
           cp -R upgrade ndwq-integrated-source/
           cp NDWQ-SOURCE-MANIFEST.txt ndwq-integrated-source/
-          cp .github/workflows/upgrade-build.yml ndwq-integrated-source/.github/workflows/
+          cp overlay/.github/workflows/upgrade-build.yml ndwq-integrated-source/.github/workflows/
           cp README.md ndwq-integrated-source/
           if [ -f docs/DEVICE-ACCEPTANCE-AND-RELEASE.md ]; then
             mkdir -p ndwq-integrated-source/docs
