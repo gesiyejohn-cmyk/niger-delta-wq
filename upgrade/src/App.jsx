@@ -36,7 +36,7 @@ export default function App() {
             <small>Groundwater &amp; environmental monitoring</small>
           </span>
         </div>
-        <nav>
+        <nav aria-label="Primary navigation">
           <NavLink to="/" end>Dashboard</NavLink>
           <NavLink to="/new">New sample</NavLink>
           <NavLink to="/map">GIS map</NavLink>
