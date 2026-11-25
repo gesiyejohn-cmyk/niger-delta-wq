@@ -50,7 +50,8 @@ See [Android signing readiness and safe-update gate](ANDROID-SIGNING-READINESS.m
 
 ## 3. Windows desktop acceptance
 
-- [ ] Install and launch the candidate in a clean test environment without changing production user data.\n- [ ] Confirm the Windows CI runtime smoke test passes on the final candidate commit: it launches the packaged Electron executable from `release/win-unpacked`, checks that it remains alive for the startup window, and terminates the test process.
+- [ ] Install and launch the candidate in a clean test environment without changing production user data.
+- [ ] Confirm the Windows CI runtime smoke test passes on the final candidate commit: it launches the packaged Electron executable from `release/win-unpacked`, checks that it remains alive for the startup window, and terminates the test process.
 - [ ] Verify startup, navigation, local persistence, backup/restore, file import/export, and graceful offline behavior.
 - [ ] Verify installer identity, version, architecture, dependencies, and upgrade/uninstall behavior in the test environment.
 - [ ] Decide whether code signing is required for distribution; if so, verify the publisher signature and timestamp on the final installer.
@@ -66,7 +67,7 @@ The Windows CI job now adds a bounded packaged-application startup smoke test be
 - [ ] Verify the production deployment workflow is restricted to the intended production branch.
 - [ ] Perform a controlled deployment only after review approval; verify the public URL and retain rollback evidence.
 
-The integration candidate has not been deployed to production. The repository's Pages deployment job is guarded to run only for `refs/heads/main`.
+The integration candidate has not been deployed to production. The repository's Pages deployment job is guarded to run only for `refs/heads/main`. A manual `workflow_dispatch` from `main` can also reach that deployment job; dispatching the workflow from another branch builds and uploads artifacts but does not deploy Pages. Treat a manual dispatch on `main` as a production deployment action and require the same review and approval as a main-branch push.
 
 ## 5. Scientific, GIS, and data-quality review
 
