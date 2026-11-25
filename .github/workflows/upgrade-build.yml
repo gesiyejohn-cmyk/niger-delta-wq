@@ -219,6 +219,8 @@ jobs:
           path: |
             source/niger-delta-wq/android/ndwq-artifacts/*.apk
             source/niger-delta-wq/android/ndwq-artifacts/*.txt
+            source/niger-delta-wq/android/ndwq-artifacts/*.png
+            source/niger-delta-wq/android/ndwq-artifacts/*.xml
           retention-days: 14
   windows-desktop:
     runs-on: windows-latest
