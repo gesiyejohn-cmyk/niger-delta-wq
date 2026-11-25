@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
-          ref: 2c2aa6ce8cce48962c036cbaf09d7b8c6a934bee
+          ref: 62e45d12bb1fa686b664fdde6fe7e90f66662c25
           path: overlay
       - name: Stage pinned upgrade overlay
         shell: bash
@@ -208,7 +208,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
-          ref: 2c2aa6ce8cce48962c036cbaf09d7b8c6a934bee
+          ref: 62e45d12bb1fa686b664fdde6fe7e90f66662c25
           path: overlay
       - name: Stage pinned upgrade overlay
         shell: bash
@@ -392,7 +392,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: gesiyejohn-cmyk/niger-delta-wq
-          ref: 2c2aa6ce8cce48962c036cbaf09d7b8c6a934bee
+          ref: 62e45d12bb1fa686b664fdde6fe7e90f66662c25
           path: overlay
       - name: Stage pinned upgrade overlay
         shell: pwsh
