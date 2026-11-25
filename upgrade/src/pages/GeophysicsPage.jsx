@@ -183,6 +183,20 @@ export default function GeophysicsPage() {
     setSelectedERTDepth(cell.depth);
   }
 
+  function selectERTCoordinates(distance, depth) {
+    setSelectedERTDistance(distance);
+    setSelectedERTDepth(depth);
+    const nearest = displayCells.reduce((best, cell) => {
+      const score = Math.hypot(
+        (cell.x - distance) / (maxX - minX || 1),
+        (cell.depth - depth) / (maxDepth - minDepth || 1)
+      );
+      if (!best || score < best.score) return { cell, score };
+      return best;
+    }, null);
+    if (nearest) setSelectedCell(nearest.cell);
+  }
+
   return <div className="page">
     <p className="eyebrow">INTEGRATED GEOPHYSICAL DATA</p>
     <h1>VES &amp; ERT workspace</h1>
@@ -271,8 +285,7 @@ export default function GeophysicsPage() {
           </div>
           <div style={{ minWidth: 0 }}>
             <GeologicalInterpretationEditor model={activeERTModel} selectedDistance={selectedERTDistance} selectedDepth={selectedERTDepth}
-              onDistanceChange={distance => { setSelectedERTDistance(distance); const nearest = displayCells.reduce((best, cell) => !best || Math.hypot((cell.x-distance)/(maxX-minX || 1),(cell.depth-(selectedERTDepth ?? minDepth))/(maxDepth-minDepth || 1)) < Math.hypot((best.x-distance)/(maxX-minX || 1),(best.depth-(selectedERTDepth ?? minDepth))/(maxDepth-minDepth || 1)) ? cell : best, null); if (nearest) setSelectedCell(nearest); }}
-              onDepthChange={depth => { setSelectedERTDepth(depth); const nearest = displayCells.reduce((best, cell) => !best || Math.hypot((cell.x-(selectedERTDistance ?? minX))/(maxX-minX || 1),(cell.depth-depth)/(maxDepth-minDepth || 1)) < Math.hypot((best.x-(selectedERTDistance ?? minX))/(maxX-minX || 1),(best.depth-depth)/(maxDepth-minDepth || 1)) ? cell : best, null); if (nearest) setSelectedCell(nearest); }} />
+              onSelectionChange={({ distance, depth }) => selectERTCoordinates(distance, depth)} />
           </div>
         </div>}
         {allCells.length > 0 && <>
