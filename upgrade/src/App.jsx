@@ -36,21 +36,21 @@ export default function App() {
             <small>Groundwater &amp; environmental monitoring</small>
           </span>
         </div>
-        <nav aria-label="Primary navigation">
-          <NavLink to="/" end>Dashboard</NavLink>
-          <NavLink to="/new">New sample</NavLink>
-          <NavLink to="/map">GIS map</NavLink>
-          <NavLink to="/geophysics">VES / ERT</NavLink>
-          <NavLink to="/analytics">Analytics</NavLink>
-          <NavLink to="/import">Import</NavLink>
-          <NavLink to="/reports">Reports</NavLink>
-          <NavLink to="/settings">Settings</NavLink>
-          <NavLink to="/data-backup">Backup &amp; restore</NavLink>
-          <NavLink to="/vulnerability">Vulnerability</NavLink>
-          <NavLink to="/wqi">WQI</NavLink>
-          <NavLink to="/external-validation">External validation</NavLink>
-          <NavLink to="/hydrochemistry">Hydrochemistry diagrams</NavLink>
-          <NavLink to="/spatial-analysis">IDW spatial analysis</NavLink>
+        <nav aria-label="Primary navigation" tabIndex={0} style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', overflowY: 'hidden', maxWidth: '100%', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin' }}>
+          <NavLink to="/" end style={{ flex: '0 0 auto' }}>Dashboard</NavLink>
+          <NavLink to="/new" style={{ flex: '0 0 auto' }}>New sample</NavLink>
+          <NavLink to="/map" style={{ flex: '0 0 auto' }}>GIS map</NavLink>
+          <NavLink to="/geophysics" style={{ flex: '0 0 auto' }}>VES / ERT</NavLink>
+          <NavLink to="/analytics" style={{ flex: '0 0 auto' }}>Analytics</NavLink>
+          <NavLink to="/import" style={{ flex: '0 0 auto' }}>Import</NavLink>
+          <NavLink to="/reports" style={{ flex: '0 0 auto' }}>Reports</NavLink>
+          <NavLink to="/settings" style={{ flex: '0 0 auto' }}>Settings</NavLink>
+          <NavLink to="/data-backup" style={{ flex: '0 0 auto' }}>Backup &amp; restore</NavLink>
+          <NavLink to="/vulnerability" style={{ flex: '0 0 auto' }}>Vulnerability</NavLink>
+          <NavLink to="/wqi" style={{ flex: '0 0 auto' }}>WQI</NavLink>
+          <NavLink to="/external-validation" style={{ flex: '0 0 auto' }}>External validation</NavLink>
+          <NavLink to="/hydrochemistry" style={{ flex: '0 0 auto' }}>Hydrochemistry diagrams</NavLink>
+          <NavLink to="/spatial-analysis" style={{ flex: '0 0 auto' }}>IDW spatial analysis</NavLink>
         </nav>
       </header>
       <main>
