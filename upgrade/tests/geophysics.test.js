@@ -233,7 +233,7 @@ test('ERT interpolation rejects duplicate source cells and invalid depth or resi
 import { parseERTCSV } from '../src/engine/ertCsv.js';
 
 test('ERT CSV recognises case, spacing, punctuation and BOM in headers', () => {
-  const csv = '\\uFEFFElectrode Distance (m),Depth (m),Resistivity (ohm-m)\\n0,1,100\\n10,2,250';
+  const csv = '\uFEFFElectrode Distance (m),Depth (m),Resistivity (ohm-m)\n0,1,100\n10,2,250';
   assert.deepEqual(parseERTCSV(csv), [
     { x: 0, depth: 1, resistivity: 100 },
     { x: 10, depth: 2, resistivity: 250 }
@@ -241,24 +241,24 @@ test('ERT CSV recognises case, spacing, punctuation and BOM in headers', () => {
 });
 
 test('ERT CSV accepts documented alternate scientific column names', () => {
-  assert.deepEqual(parseERTCSV('X_m,Z_m,Rho_ohm_m\\n5,0,75'), [
+  assert.deepEqual(parseERTCSV('X_m,Z_m,Rho_ohm_m\n5,0,75'), [
     { x: 5, depth: 0, resistivity: 75 }
   ]);
 });
 
 test('ERT CSV reports missing required columns before validating rows', () => {
-  assert.throws(() => parseERTCSV('distance,depth\\n0,1'), /missing a required resistivity column/);
+  assert.throws(() => parseERTCSV('distance,depth\n0,1'), /missing a required resistivity column/);
 });
 
 test('ERT CSV rejects ambiguous duplicate aliases for a required field', () => {
-  assert.throws(() => parseERTCSV('x,distance,depth,resistivity\\n0,0,1,100'),
+  assert.throws(() => parseERTCSV('x,distance,depth,resistivity\n0,0,1,100'),
     /multiple columns matching x/);
 });
 
 test('ERT CSV rejects duplicate cells and invalid physical values', () => {
-  assert.throws(() => parseERTCSV('x,depth,resistivity\\n0,1,100\\n0,1,200'), /duplicate distance\\/depth cells/);
-  assert.throws(() => parseERTCSV('x,depth,resistivity\\n0,-1,100'), /non-negative depth/);
-  assert.throws(() => parseERTCSV('x,depth,resistivity\\n0,1,0'), /positive resistivity/);
+  assert.throws(() => parseERTCSV('x,depth,resistivity\n0,1,100\n0,1,200'), /duplicate distance\/depth cells/);
+  assert.throws(() => parseERTCSV('x,depth,resistivity\n0,-1,100'), /non-negative depth/);
+  assert.throws(() => parseERTCSV('x,depth,resistivity\n0,1,0'), /positive resistivity/);
 });
 
 test('ERT CSV rejects a header-only file', () => {
