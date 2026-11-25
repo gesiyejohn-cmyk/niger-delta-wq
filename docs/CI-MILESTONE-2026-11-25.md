@@ -112,3 +112,17 @@ This closes the cross-platform CI build and emulator visual-smoke milestone for 
 ### Release boundaries still open
 
 This milestone verifies CI builds, automated tests, artifact integrity and Android emulator dashboard rendering. It does **not** establish production Android signing or signer compatibility with the user's existing installation, physical Android acceptance, physical Windows installation/runtime or code signing, public web deployment/browser acceptance, real-device backup/restore, independent scientific calibration/review, or formal release sign-off. Preserve the existing installation and its data. **No additional APK installation is requested.**
+
+
+## Pages deployment safety audit and latest CI confirmation — 25 November 2026
+
+- Source revision: `521a86c77b5c429b2e07d002378a4220bf053fad` on `feature/external-reference-validation`.
+- CI run: [45661514212](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45661514212) — completed successfully; `web-and-tests`, `android`, and `windows-desktop` all passed.
+- The feature-branch `.github/workflows/build.yml` now gates the `deploy-pages` job with `if: github.ref == 'refs/heads/main'`, preventing feature-branch and pull-request refs from deploying the production Pages site when this workflow version is used.
+- **Important integration finding:** the current `main` branch still has the older `.github/workflows/build.yml` without this guard. That workflow extracts the root `NDWQ-Source-Compact.zip` for web, Android, and Windows builds. The integrated feature branch is substantially divergent from main (441 commits ahead, 4 behind at audit time), and its `upgrade-build.yml` does not exist on main. Therefore, the feature-branch Pages guard and integrated build pipeline have not been adopted by production main.
+- Do not merge the divergent branch wholesale or deploy it automatically. A controlled integration plan and a verified source-of-truth decision are required before changing the production Pages workflow.
+- GitHub Pages configuration could not be confirmed through the available repository API response in this audit; no claim of a live public deployment or browser acceptance is made.
+
+### Release boundaries
+
+This confirms CI for the Pages guard commit and records the production deployment blocker. It does **not** close public web deployment/browser acceptance, production Android signing or existing-app signer compatibility, physical Android acceptance, physical Windows installation/runtime and code signing, real-device backup/restore, independent scientific calibration/review, or formal release sign-off. Preserve the user's existing installation and data; no additional APK installation is requested.
