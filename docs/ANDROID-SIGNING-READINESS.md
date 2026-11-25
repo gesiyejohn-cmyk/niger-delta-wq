@@ -13,11 +13,12 @@ The integrated CI APKs are debug-signed and intended for automated emulator chec
    - **Google Play App Signing:** verify Play Console ownership and the Play app-signing certificate. The upload key authenticates uploads; it is not necessarily the certificate on APKs delivered to devices.
 4. Store production keystore material and passwords only in protected CI secrets. Never commit, paste into chat, print, or upload keystore material or passwords.
 5. Run the reviewed preflight script from the pinned upgrade overlay with these protected variables:
+   - `NDWQ_DISTRIBUTION_MODEL` (must be `direct-apk` for this certificate-equality preflight)
    - `ANDROID_KEYSTORE_BASE64`
    - `ANDROID_KEYSTORE_PASSWORD`
    - `ANDROID_KEY_ALIAS`
    - `NDWQ_EXISTING_APP_CERT_SHA256`
-6. The preflight validates the supplied keystore alias certificate against the supplied fingerprint. It does not build, install, replace, or upload an APK, and a passing check alone does not approve a release.
+6. The preflight is deliberately limited to `NDWQ_DISTRIBUTION_MODEL=direct-apk`: it validates that the direct-APK signing keystore alias matches the exact installed-app signer fingerprint. It refuses `play-app-signing` because a Play upload key may differ from the app-signing certificate delivered to devices. For Google Play, verify the upload certificate and Play app-signing certificate separately in Play Console; this script does not perform that verification. It does not build, install, replace, or upload an APK, and a passing check alone does not approve a release.
 7. After the signing model and identity are independently confirmed, configure the release build, increment `versionCode`, verify package ID, inspect the final APK using `apksigner verify --print-certs`, and compare its certificate with the correct installed-app signing identity.
 8. Conduct update and backup/restore acceptance on a separate test device or isolated test installation first. Preserve the existing installation and its data.
 
