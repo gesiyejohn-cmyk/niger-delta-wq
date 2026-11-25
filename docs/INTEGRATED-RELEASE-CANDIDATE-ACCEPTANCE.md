@@ -20,6 +20,8 @@ This checklist separates automated build confidence from evidence that the appli
 
 ## 2. Android safe-update and device acceptance
 
+See [Android signing readiness and safe-update gate](ANDROID-SIGNING-READINESS.md) for the detailed signing-model distinction, required evidence, and stop conditions.
+
 **Do not install a CI debug APK as an update to the existing app. Do not uninstall the existing app, clear its data, or overwrite its storage to perform these checks.**
 
 - [ ] Identify the exact installed package ID and version on the target device; expected package ID: `com.nigerdeltawq.mobile`.
