@@ -1,16 +1,32 @@
 const finite=(v)=>v!=null&&typeof v!=='boolean'&&typeof v!=='object'&&!(typeof v==='string'&&v.trim()==='')&&Number.isFinite(Number(v));
 export function schlumbergerGeometricFactor(ab2,mn2){if(!finite(ab2)||!finite(mn2))throw new Error('Schlumberger geometry requires numeric AB/2 and MN/2 values.');const a=Number(ab2),m=Number(mn2);if(a<=m||m<=0)throw new Error('Schlumberger geometry requires AB/2 > MN/2 > 0.');const factor=Math.PI*(a*a-m*m)/(2*m);if(!Number.isFinite(factor)||factor<=0)throw new Error('Schlumberger geometric factor is outside the supported numeric range.');return factor;}
 export function wennerGeometricFactor(spacing){if(!finite(spacing))throw new Error('Wenner alpha electrode spacing must be numeric.');const a=Number(spacing);if(a<=0)throw new Error('Wenner alpha electrode spacing must be greater than zero.');const factor=2*Math.PI*a;if(!Number.isFinite(factor)||factor<=0)throw new Error('Wenner geometric factor is outside the supported numeric range.');return factor;}
-export function calculateVES({array='Schlumberger',ab2,mn2,spacing,a,resistance}){if(!finite(resistance)||Number(resistance)<=0)throw new Error('Measured resistance must be greater than zero.');const configuration=String(array).toLowerCase();const k=configuration.startsWith('wenner')?wennerGeometricFactor(spacing??a):schlumbergerGeometricFactor(ab2,mn2);const apparentResistivity=k*Number(resistance);if(!Number.isFinite(apparentResistivity)||apparentResistivity<=0)throw new Error('Calculated apparent resistivity is outside the supported numeric range.');return{array:configuration.startsWith('wenner')?'Wenner alpha':'Schlumberger',geometricFactor:k,apparentResistivity};}
+function normalizeVESArray(array = 'Schlumberger') {
+  const value = String(array ?? 'Schlumberger').trim().toLowerCase().replace(/\s+/g, ' ');
+  if (value === 'schlumberger') return 'Schlumberger';
+  if (value === 'wenner alpha') return 'Wenner alpha';
+  throw new Error("Unsupported VES array. Choose 'Schlumberger' or 'Wenner alpha'.");
+}
+export function calculateVES({array='Schlumberger',ab2,mn2,spacing,a,resistance}) {
+  const normalizedArray = normalizeVESArray(array);
+  if (!finite(resistance) || Number(resistance) <= 0) throw new Error('Measured resistance must be greater than zero.');
+  const wenner = normalizedArray === 'Wenner alpha';
+  const k = wenner ? wennerGeometricFactor(spacing ?? a) : schlumbergerGeometricFactor(ab2, mn2);
+  const apparentResistivity = k * Number(resistance);
+  if (!Number.isFinite(apparentResistivity) || apparentResistivity <= 0) throw new Error('Calculated apparent resistivity is outside the supported numeric range.');
+  return { array: normalizedArray, geometricFactor: k, apparentResistivity };
+}
 export function isCompleteVESReading(row, array = 'Schlumberger') {
   if (!row || typeof row !== 'object' || Array.isArray(row)) return false;
-  const wenner = String(array).toLowerCase().startsWith('wenner');
+  let wenner;
+  try { wenner = normalizeVESArray(array) === 'Wenner alpha'; }
+  catch { return false; }
   const required = wenner ? ['spacing', 'resistance'] : ['ab2', 'mn2', 'resistance'];
   return required.every(key => row[key] != null
     && !(typeof row[key] === 'string' && row[key].trim() === ''));
 }
 
-export function validateVES(rows,array='Schlumberger'){if(!Array.isArray(rows)||rows.length<1)throw new Error('Enter at least one complete VES reading.');const wenner=String(array).toLowerCase().startsWith('wenner');const clean=rows.map((r,i)=>{if(!finite(r?.resistance))throw new Error(`VES row ${i+1}: positive numeric resistance is required.`);const resistance=Number(r.resistance);if(resistance<=0)throw new Error(`VES row ${i+1}: positive resistance is required.`);if(wenner){if(!finite(r.spacing??r.a))throw new Error(`Wenner row ${i+1}: equal electrode spacing a must be numeric and greater than zero.`);const spacing=Number(r.spacing??r.a);if(spacing<=0)throw new Error(`Wenner row ${i+1}: equal electrode spacing a must be greater than zero.`);const calc=calculateVES({array,spacing,resistance});return{...r,...calc,spacing,a:spacing,resistance};}if(!finite(r.ab2)||!finite(r.mn2))throw new Error(`Schlumberger row ${i+1}: AB/2 and MN/2 must be numeric.`);const ab2=Number(r.ab2),mn2=Number(r.mn2);if(!finite(ab2)||!finite(mn2))throw new Error(`Schlumberger row ${i+1}: AB/2 and MN/2 are required.`);const calc=calculateVES({array,ab2,mn2,resistance});return{...r,...calc,ab2,mn2,resistance};});const x=clean.map(r=>wenner?r.spacing:r.ab2);if(clean.some((r,i)=>i&&x[i]<=x[i-1]))throw new Error(wenner?'Wenner electrode spacing values must be entered in strictly increasing order.':'VES AB/2 values must be entered in strictly increasing order.');return clean;}
+export function validateVES(rows,array='Schlumberger'){const normalizedArray=normalizeVESArray(array);if(!Array.isArray(rows)||rows.length<1)throw new Error('Enter at least one complete VES reading.');const wenner=normalizedArray==='Wenner alpha';const clean=rows.map((r,i)=>{if(!finite(r?.resistance))throw new Error(`VES row ${i+1}: positive numeric resistance is required.`);const resistance=Number(r.resistance);if(resistance<=0)throw new Error(`VES row ${i+1}: positive resistance is required.`);if(wenner){if(!finite(r.spacing??r.a))throw new Error(`Wenner row ${i+1}: equal electrode spacing a must be numeric and greater than zero.`);const spacing=Number(r.spacing??r.a);if(spacing<=0)throw new Error(`Wenner row ${i+1}: equal electrode spacing a must be greater than zero.`);const calc=calculateVES({array:normalizedArray,spacing,resistance});return{...r,...calc,spacing,a:spacing,resistance};}if(!finite(r.ab2)||!finite(r.mn2))throw new Error(`Schlumberger row ${i+1}: AB/2 and MN/2 must be numeric.`);const ab2=Number(r.ab2),mn2=Number(r.mn2);if(!finite(ab2)||!finite(mn2))throw new Error(`Schlumberger row ${i+1}: AB/2 and MN/2 are required.`);const calc=calculateVES({array:normalizedArray,ab2,mn2,resistance});return{...r,...calc,ab2,mn2,resistance};});const x=clean.map(r=>wenner?r.spacing:r.ab2);if(clean.some((r,i)=>i&&x[i]<=x[i-1]))throw new Error(wenner?'Wenner electrode spacing values must be entered in strictly increasing order.':'VES AB/2 values must be entered in strictly increasing order.');return clean;}
 
 
 export function validateERT(points){if(!Array.isArray(points)||!points.length)throw new Error('No ERT model cells were supplied.');const seen=new Set();return points.map((p,i)=>{const x=Number(p.x),depth=Number(p.depth),resistivity=Number(p.resistivity);if(!finite(p.x)||!finite(p.depth)||!finite(p.resistivity)||depth<0||resistivity<=0)throw new Error(`ERT cell ${i+1}: provide numeric x, non-negative depth and positive resistivity.`);const key=x+'|'+depth;if(seen.has(key))throw new Error('ERT import contains duplicate distance/depth cells; resolve duplicate coordinates before saving.');seen.add(key);return{x,depth,resistivity};});}

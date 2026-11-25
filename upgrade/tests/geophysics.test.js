@@ -137,6 +137,18 @@ test('Wenner alpha apparent resistivity is 2πa times measured resistance', () =
   assert.ok(Math.abs(result.apparentResistivity - 100 * Math.PI) < 1e-10);
   assert.equal(result.array, 'Wenner alpha');
 });
+test('VES calculation rejects unknown array names instead of silently applying Schlumberger geometry', () => {
+  assert.throws(() => calculateVES({ array: 'Wenner beta', spacing: 5, resistance: 10 }), /Unsupported VES array/);
+  assert.throws(() => calculateVES({ array: 'Dipole-dipole', ab2: 10, mn2: 2, resistance: 10 }), /Unsupported VES array/);
+  assert.throws(() => validateVES([{ spacing: 5, resistance: 10 }], 'Wenner beta'), /Unsupported VES array/);
+  assert.equal(isCompleteVESReading({ spacing: 5, resistance: 10 }, 'Wenner beta'), false);
+});
+
+test('VES array names are whitespace and case normalised for the two supported configurations', () => {
+  assert.equal(calculateVES({ array: '  WENNER   ALPHA ', spacing: 5, resistance: 10 }).array, 'Wenner alpha');
+  assert.equal(calculateVES({ array: ' schlumberger ', ab2: 10, mn2: 2, resistance: 10 }).array, 'Schlumberger');
+});
+
 test('Wenner alpha validation requires positive, increasing electrode spacing', () => {
   assert.throws(() => validateVES([{ spacing: 0, resistance: 10 }], 'Wenner alpha'));
   assert.throws(() => validateVES([
