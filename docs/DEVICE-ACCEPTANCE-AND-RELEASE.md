@@ -684,3 +684,22 @@ Artifacts from this run (GitHub-hosted temporary artifacts):
 - Integrated source snapshot: ID `15019793240`, 195,524 bytes, archive SHA-256 `3bb09e407f7d8dd650dd94cc489e074747310e1dcf7c0e08d2cb7f8d8a9e947d`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45610888124/artifacts/15019793240); expires 25 December 2026 at 12:08:40 UTC.
 
 This is the latest verified integrated **CI milestone**, not production approval. Physical Android acceptance, comparison against the installed app's actual signer, production Android signing, safe in-place update/data migration, physical Windows installation/runtime, public web deployment, real-device backup/restore, and independent scientific review remain open. Preserve artifacts before expiry if they are needed for audit or comparison.
+
+
+### Android first-screen visual acceptance and cross-platform CI — 25 November 2026, run 45613215677
+
+Commit `43b72c111a71f66321e61c396abfd90414282845` completed successfully in [Actions run 45613215677](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45613215677). All three jobs passed on this exact commit:
+
+- `web-and-tests`: **253 tests passed, 0 failed**; production web build and integrated source packaging passed.
+- `android`: debug APK build passed; API 35 emulator booted; original package `com.nigerdeltawq.mobile` installed and launched; the smoke script waited for the WebView settling window and captured a screenshot. The screenshot was downloaded and visually inspected: it shows the actual NDWQ dashboard (navigation, “Water quality dashboard”, Add sample action, sample/station counters and sampling-record controls), not the Capacitor splash screen. The side-by-side preview package `com.nigerdeltawq.mobile.preview443` also built, installed, launched and produced a screenshot.
+- `windows-desktop`: installer generation and artifact upload passed. Physical Windows installation/runtime and code signing remain outstanding.
+
+Original Android APK signer certificate SHA-256: `50ce1d4d8e589d61e3760b5fc08e32150f60abbb8a9950ab5878eb942f48cc05`. This is the CI debug certificate, not a production key and not evidence of compatibility with the user's existing installed app.
+
+Artifacts:
+- Android debug APK bundle, ID `15020153658`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45613215677/artifacts/15020153658), 8,533,319 bytes.
+- Windows desktop installer bundle, ID `15020288946`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45613215677/artifacts/15020288946), 95,614,749 bytes.
+- Integrated web build, ID `15020748104`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45613215677/artifacts/15020748104), 350,158 bytes.
+- Integrated source snapshot, ID `15020438742`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45613215677/artifacts/15020438742), 197,677 bytes.
+
+This closes the **CI emulator first-screen visual check** for this revision. It does not close physical Android acceptance, signer compatibility/safe in-place update, production Android signing, physical Windows installation/runtime, public web deployment, real-device backup/restore, or independent scientific review/calibration. Do not install this debug APK over the user's current phone app, uninstall it or clear its data.
