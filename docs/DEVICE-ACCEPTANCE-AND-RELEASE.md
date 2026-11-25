@@ -643,3 +643,20 @@ Artifacts from run 45608368102:
 - Integrated source archive, ID `15019331670`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45608368102/artifacts/15019331670), 194,334 bytes, expires 25 December 2026.
 
 **Release restrictions remain:** debug-only Android signing; no verified signature compatibility with the user's current phone installation; no physical Android acceptance; no signed Windows installer or physical Windows runtime acceptance; no public web deployment; no real-device backup/restore verification; and independent scientific review/calibration remains required. Do not install this CI APK over the existing phone app or uninstall/clear its data.
+
+
+### Superseding verification on current branch head — 25 November 2026, run 45609820608
+
+Commit `44e641670a2218e2771a98ffe27eb7f58931a898` completed successfully in [workflow run 45609820608](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45609820608). All three jobs passed on this exact commit:
+
+- Web/tests: 250 tests passed, 0 failed, 0 skipped; production web build passed; integrated source ZIP integrity check passed. Main JavaScript bundle: 171.56 kB (56.15 kB gzip); XLSX: 429.02 kB (143.08 kB gzip); Leaflet: 149.58 kB (43.36 kB gzip).
+- Android: original package `com.nigerdeltawq.mobile`, version `1.0` (version code 1), built and launched in API 35 emulator. APK SHA-256: `839b35d2fc984ec670805cd4382e913d2d620be39a87db262bf9be5ed4694aa9`. Debug signer certificate SHA-256: `b1965e67b1ebf2768d93708e1e0757878fa6ec2225f6c8fbfc1b7b8d2323abc9`. Side-by-side preview package `com.nigerdeltawq.mobile.preview432` also installed and launched. Preview APK SHA-256: `95ba7c339f866ef349045ba6ea4910fc0e3c6d3ea74791e1032185583e198cd9`. These are emulator checks only; no physical-device or existing-install update compatibility is implied.
+- Windows: installer generated and uploaded. CI explicitly reports that no code-signing certificate is configured and signing was skipped; physical installation/runtime acceptance remains outstanding.
+
+Artifacts from run 45609820608:
+- Android debug APK archive, ID `15019293445`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45609820608/artifacts/15019293445), 8,184,435 bytes, expires 9 December 2026; archive SHA-256 `1435612b3c68061a73e8c8c150dfcc53d05fbe4e26c105c409395eac17c0a73c`.
+- Windows installer archive, ID `15018333928`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45609820608/artifacts/15018333928), 95,614,600 bytes, expires 9 December 2026; archive SHA-256 `8438e8c09fba9072b4fb56f02e3d0f4aff38e7fe0bbec13b3b410a01df3a0fef`.
+- Integrated web archive, ID `15018979353`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45609820608/artifacts/15018979353), 350,158 bytes, expires 9 December 2026; archive SHA-256 `09bbf18ed78e9c5517be243d83e5a1fac5ff8f91defba03ae4103cfaf8d70271`.
+- Integrated source archive, ID `15019283311`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45609820608/artifacts/15019283311), 194,932 bytes, expires 25 December 2026; archive SHA-256 `1a1f9b0fc0a3cd0bdadf414a34dfb453488a9ca6e4db68c2f173c483cc254e1f`.
+
+**Release restrictions remain:** Android artifact is debug-signed; safe update/signature compatibility with the user's installed copy is unverified; physical Android acceptance, physical Windows acceptance, public web deployment, real-device backup/restore, production signing and independent scientific review/calibration remain open. Do not install this CI APK over the existing phone app or uninstall/clear its data.
