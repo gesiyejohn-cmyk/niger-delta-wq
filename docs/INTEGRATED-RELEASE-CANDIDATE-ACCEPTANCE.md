@@ -1,14 +1,14 @@
 # Integrated release-candidate acceptance checklist
 
 **Candidate branch:** `integration/ndwq-main-overlay`  
-**Latest completed CI evidence:** [Run 45694488632](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45694488632) — commit `22434122d176c53d6c7f9ddf151c6f8d7dce3b42`, completed successfully on 25 November 2026. All three jobs passed, including the Windows packaged-app runtime smoke test and Android original-identity emulator launch plus isolated preview APK build.  
+**Latest integrated candidate validation:** [Run 45695844553](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45695844553) — candidate commit `506984f61e800da2202c1413d75255af93e2770a`, completed successfully on 25 November 2026. All three jobs passed, including the Windows packaged-app runtime smoke test and Android original-identity emulator launch plus isolated preview APK build. This checklist update is documentation-only; the validated application source and pinned overlay are unchanged.  
 **Acceptance status:** Automated three-platform candidate CI passed; manual, production-signing, scientific-review, and release-authorization gates remain open.
 
 This checklist separates automated build confidence from evidence that the application is safe and usable on real devices. A checked CI item must not be treated as proof of physical-device, production-signing, or scientific validation.
 
 ## 1. Automated candidate evidence
 
-- [x] Latest candidate commit `22434122d176c53d6c7f9ddf151c6f8d7dce3b42` passed all three jobs in [run 45694488632](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45694488632).
+- [x] Latest candidate commit `506984f61e800da2202c1413d75255af93e2770a` passed all three jobs in [run 45695844553](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45695844553).
 - [x] Web/scientific/geophysics test job passed and production web build completed.
 - [x] Android debug APK built; package identity and debug certificate recorded.
 - [x] Original-identity APK launched in the CI emulator; the smoke test verified the app process and resumed activity and captured screenshot evidence.
@@ -27,7 +27,7 @@ This checklist separates automated build confidence from evidence that the appli
 | Integrated web build | `15060521547` | 351,319 bytes | `09e72b66d346bfdea9b7a840384a85dca144d2cf023dd8b09d694d5eeb592fa3` |
 | Integrated source | `15059738943` | 184,898 bytes | `f6cac5c9308f61ebe265410bc8a39a9ee3abb978b0d45157750f59d502366c14` |
 
-The latest run's three jobs completed successfully. The earlier run 45689659045 recorded 262 tests passed, but that count is not carried forward as a measured count for this later commit.
+The latest run's three jobs completed successfully. All five artifacts from run 45695844553 were independently downloaded, ZIP-integrity checked, and their SHA-256 digests matched the GitHub artifact digests. The earlier run 45689659045 recorded 262 tests passed, but that count is not carried forward as a measured count for this later commit.
 
 ## 2. Android safe-update and device acceptance
 
@@ -51,7 +51,7 @@ See [Android signing readiness and safe-update gate](ANDROID-SIGNING-READINESS.m
 ## 3. Windows desktop acceptance
 
 - [ ] Install and launch the candidate in a clean test environment without changing production user data.
-- [ ] Confirm the Windows CI runtime smoke test passes on the final candidate commit: **passed in run 45694488632**. It launches the packaged Electron executable from `release/win-unpacked`, checks that it remains alive for the startup window, and terminates the test process.
+- [ ] Confirm the Windows CI runtime smoke test passes on the final candidate commit: **passed in run 45695844553**. It launches the packaged Electron executable from `release/win-unpacked`, checks that it remains alive for the startup window, and terminates the test process.
 - [ ] Verify startup, navigation, local persistence, backup/restore, file import/export, and graceful offline behavior.
 - [ ] Verify installer identity, version, architecture, dependencies, and upgrade/uninstall behavior in the test environment.
 - [ ] Decide whether code signing is required for distribution; if so, verify the publisher signature and timestamp on the final installer.
@@ -85,7 +85,7 @@ A release may be approved only when every applicable gate above has evidence and
 
 | Gate | Evidence required | Status |
 |---|---|---|
-| Automated CI | Successful run on final candidate SHA | Passed for `22434122d176c53d6c7f9ddf151c6f8d7dce3b42`; run 45694488632 |
+| Automated CI | Successful run on final candidate SHA | Passed for `506984f61e800da2202c1413d75255af93e2770a`; run 45695844553 |
 | Android identity/signing | Installed certificate, signing model, matching release APK | Open |
 | Android physical-device | Non-destructive test record and backup/restore evidence | Open |
 | Windows runtime/signing | Test record and final installer verification | Open |
@@ -93,7 +93,7 @@ A release may be approved only when every applicable gate above has evidence and
 | Scientific review | Independent review and documented limitations | Open |
 | Release authorization | Explicit approval of final artifacts and version | Open |
 
-**Current decision: NOT APPROVED FOR PRODUCTION DISTRIBUTION.** The latest candidate has successful three-platform CI evidence, including the Windows packaged-app startup smoke test and Android original-identity emulator launch/isolated preview build. Production signing, physical-device acceptance, interactive Windows installer/upgrade/uninstall and signing checks, public deployment, independent scientific review, and release authorization remain open.
+**Current decision: NOT APPROVED FOR PRODUCTION DISTRIBUTION.** The latest validated candidate (`506984f61e800da2202c1413d75255af93e2770a`) has successful three-platform CI evidence in run 45695844553, including the Windows packaged-app startup smoke test and Android original-identity emulator launch/isolated preview build. Production signing, physical-device acceptance, interactive Windows installer/upgrade/uninstall and signing checks, public deployment, independent scientific review, and release authorization remain open.
 
 ## 7. Safety and scope notes
 
