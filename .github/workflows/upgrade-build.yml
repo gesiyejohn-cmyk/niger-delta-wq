@@ -97,6 +97,13 @@ jobs:
           cp -R upgrade/tests/. source/niger-delta-wq/tests/
           node upgrade/scripts/integrate-ert-tomogram.mjs
           test -f source/niger-delta-wq/src/pages/GeophysicsPage.jsx
+      - name: Create reproducible source provenance manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n upgrade/scripts/create-source-manifest.sh
+          bash upgrade/scripts/create-source-manifest.sh . NDWQ-Source-Compact.zip NDWQ-SOURCE-MANIFEST.txt
+          cat NDWQ-SOURCE-MANIFEST.txt
       - name: Install dependencies
         working-directory: source/niger-delta-wq
         run: |
@@ -115,6 +122,7 @@ jobs:
           mkdir -p ndwq-integrated-source/.github/workflows
           cp NDWQ-Source-Compact.zip ndwq-integrated-source/
           cp -R upgrade ndwq-integrated-source/
+          cp NDWQ-SOURCE-MANIFEST.txt ndwq-integrated-source/
           cp .github/workflows/upgrade-build.yml ndwq-integrated-source/.github/workflows/
           cp README.md ndwq-integrated-source/
           if [ -f docs/DEVICE-ACCEPTANCE-AND-RELEASE.md ]; then
@@ -132,6 +140,11 @@ jobs:
         with:
           name: ndwq-integrated-source
           path: NDWQ-Integrated-Source.zip
+          retention-days: 30
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: ndwq-source-provenance
+          path: NDWQ-SOURCE-MANIFEST.txt
           retention-days: 30
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
