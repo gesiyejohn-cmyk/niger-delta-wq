@@ -605,3 +605,24 @@ Artifacts from Run 45599699359:
 The documentation-only follow-up commit `5805110fa40298a43fd130ae55b0e3e0d98dbec5` also passed all three CI jobs in [Run 45602374988](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45602374988). The workflow change includes the milestone report in the integrated source archive.
 
 **Release restrictions remain unchanged:** this evidence is for CI builds and emulator smoke tests, not production release approval. Android output is debug-signed and signer compatibility with the existing physical-phone installation is not established. Do not install it over the user's existing app, uninstall the current app or clear its data. Physical Android acceptance, Windows installation/runtime acceptance, public web deployment, real-device backup/restore, production signing and independent scientific review remain open.
+
+
+### Latest superseding CI evidence — 25 November 2026, run 45603361776
+
+Commit `c1970197122e1d6b7ed18dceadd36eadb872bde6` (`docs(release): update device acceptance with latest CI evidence`) completed successfully in [workflow run 45603361776](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45603361776). All three jobs passed:
+
+- `web-and-tests`: 250 tests passed, 0 failed; production web build passed; integrated source ZIP passed its integrity check.
+- `android`: Android debug APK built; API 35 emulator booted; original package `com.nigerdeltawq.mobile` installed and its `MainActivity` resumed; isolated preview package `com.nigerdeltawq.mobile.preview430` also installed and launched. Both are CI emulator checks, not physical-device acceptance.
+- `windows-desktop`: Windows desktop installer `Niger-Delta-WQ-Setup-1.0.0.exe` was generated and uploaded. Physical Windows installation/runtime acceptance remains outstanding.
+
+The web build retains the 171.56 kB main JavaScript chunk (56.15 kB gzip), with the spreadsheet library in a separate 429.02 kB chunk (143.08 kB gzip) and Leaflet in a separate 149.58 kB chunk (43.36 kB gzip).
+
+Artifacts from run 45603361776 (GitHub Actions retention applies):
+- Android debug APK archive, ID `15016702574`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45603361776/artifacts/15016702574), 8,184,417 bytes, expires 9 December 2026; uploaded archive SHA-256 `22ea4d0a376b064b0068c8177f056ee322548bf60e8c4aa435f34b09cab0e827`.
+- Windows desktop installer archive, ID `15016228108`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45603361776/artifacts/15016228108), 95,614,578 bytes, expires 9 December 2026; uploaded archive SHA-256 `7036d78b6da372415ee1ceac8e675bc4b0aa6f799ee9ee047035b69f1288362d`.
+- Integrated web archive, ID `15016552829`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45603361776/artifacts/15016552829), 350,158 bytes, expires 9 December 2026.
+- Integrated source archive, ID `15016083709`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45603361776/artifacts/15016083709), 193,693 bytes, expires 25 December 2026.
+
+The Android CI log confirms the original package ID, version code/name `1`/`1.0`, and debug signer certificate SHA-256 `c18797f7a83d851128e1587dd29f211d35060f57415bd9023535798f1f91ea0a`. The same debug certificate was used for the preview package. This is not a production signing identity and does not establish compatibility with the debug or release signer on the user's existing phone installation.
+
+**Open release gates:** physical Android acceptance; safe update/signature compatibility; Windows installation and runtime acceptance; public web deployment; real-device backup/restore verification; production signing; and independent scientific review/calibration. Do not install this CI APK over the existing phone app or uninstall/clear the existing app. No new phone installation is requested at this milestone.
