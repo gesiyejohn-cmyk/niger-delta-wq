@@ -45,6 +45,33 @@ jobs:
             exit 1
           fi
 
+          # Play App Signing uses a distinct upload key and app-signing key.
+          # The direct-APK equality preflight must refuse that model explicitly.
+          set +e
+          env NDWQ_DISTRIBUTION_MODEL="play-app-signing" \
+            ANDROID_KEYSTORE_BASE64="not-used" ANDROID_KEYSTORE_PASSWORD="not-used" \
+            ANDROID_KEY_ALIAS="not-used" NDWQ_EXISTING_APP_CERT_SHA256="$(printf '0%.0s' {1..64})" \
+            bash "$SCRIPT" >"$TMP_PLAY_LOG" 2>&1
+          status=$?
+          set -e
+          if [ "$status" -ne 2 ] || ! grep -q "cannot compare a Play upload key" "$TMP_PLAY_LOG"; then
+            echo "Signing preflight must explicitly refuse Play App Signing."
+            cat "$TMP_PLAY_LOG"
+            exit 1
+          fi
+
+          # Unknown distribution models must also fail closed.
+          set +e
+          env NDWQ_DISTRIBUTION_MODEL="unknown" ANDROID_KEYSTORE_BASE64="not-used" \
+            ANDROID_KEYSTORE_PASSWORD="not-used" ANDROID_KEY_ALIAS="not-used" \
+            NDWQ_EXISTING_APP_CERT_SHA256="$(printf '0%.0s' {1..64})" bash "$SCRIPT" >/dev/null 2>&1
+          status=$?
+          set -e
+          if [ "$status" -ne 2 ]; then
+            echo "Signing preflight must reject unknown distribution models."
+            exit 1
+          fi
+
           # Generate an ephemeral CI-only keystore to exercise both match and mismatch paths.
           TMP="$(mktemp -d)"
           trap 'rm -rf "$TMP"' EXIT
