@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { buildERTGrid } from '../engine/ert.js';
 
 function colour(value, min, max) {
@@ -13,6 +13,8 @@ function colour(value, min, max) {
 }
 
 export default function ERTTomogram({ models = [] }) {
+  const [view, setView] = useState({ x: 0, y: 0, zoom: 1 });
+  const drag = useRef(null);
   const points = useMemo(() => models.flatMap(model =>
     (model.cells || []).map(p => ({...p, lineId: model.lineId || 'Unlabelled line'}))
   ), [models]);
@@ -20,6 +22,43 @@ export default function ERTTomogram({ models = [] }) {
   if (!points.length) return null;
   const min = Math.min(...points.map(p => p.resistivity));
   const max = Math.max(...points.map(p => p.resistivity));
+  const viewWidth = 760 / view.zoom;
+  const viewHeight = 390 / view.zoom;
+  const clamp = (value, limit) => Math.max(0, Math.min(limit, value));
+
+  function zoom(factor) {
+    setView(current => {
+      const nextZoom = Math.max(1, Math.min(5, current.zoom * factor));
+      const width = 760 / nextZoom, height = 390 / nextZoom;
+      return {
+        zoom: nextZoom,
+        x: clamp(current.x + (760 / current.zoom - width) / 2, 760 - width),
+        y: clamp(current.y + (390 / current.zoom - height) / 2, 390 - height)
+      };
+    });
+  }
+
+  function startPan(event) {
+    if (view.zoom <= 1) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    drag.current = { clientX: event.clientX, clientY: event.clientY, x: view.x, y: view.y };
+  }
+
+  function movePan(event) {
+    if (!drag.current) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const dx = (event.clientX - drag.current.clientX) * viewWidth / rect.width;
+    const dy = (event.clientY - drag.current.clientY) * viewHeight / rect.height;
+    const start = drag.current;
+    setView(current => ({
+      ...current,
+      x: clamp(start.x - dx, 760 - viewWidth),
+      y: clamp(start.y - dy, 390 - viewHeight)
+    }));
+  }
+
+  function endPan() { drag.current = null; }
+
   return <section aria-label="Interpolated ERT resistivity section" style={{marginTop:20}}>
     <h2>2D resistivity section (interpolated imported model)</h2>
     {!grid ? <p role="status" className="notice">
@@ -27,7 +66,13 @@ export default function ERTTomogram({ models = [] }) {
       Import a gridded inversion export with multiple distance positions at multiple depths. The original points remain available above.
     </p> : <>
       <p className="muted">Log-resistivity inverse-distance interpolation of imported inversion cells. This is visualisation only; no inversion is performed by this app. Interpret with the original inversion report and geological control.</p>
-      <svg viewBox="0 0 760 390" role="img" aria-label="Interpolated resistivity tomogram" style={{width:'100%',background:'#fff',border:'1px solid #cbd5e1'}}>
+      <div className="button-row" role="group" aria-label="ERT tomogram navigation" style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:8}}>
+        <button type="button" onClick={() => zoom(1.25)} disabled={view.zoom >= 5} aria-label="Zoom in on ERT tomogram">Zoom in +</button>
+        <button type="button" onClick={() => zoom(0.8)} disabled={view.zoom <= 1} aria-label="Zoom out on ERT tomogram">Zoom out −</button>
+        <button type="button" onClick={() => { drag.current = null; setView({x:0,y:0,zoom:1}); }} disabled={view.zoom === 1 && view.x === 0 && view.y === 0}>Reset view</button>
+        <span className="muted" aria-live="polite">{Math.round(view.zoom * 100)}% zoom · drag to pan when zoomed</span>
+      </div>
+      <svg viewBox={`${view.x} ${view.y} ${viewWidth} ${viewHeight}`} role="img" aria-label="Interpolated resistivity tomogram. Use zoom controls and drag to pan." onPointerDown={startPan} onPointerMove={movePan} onPointerUp={endPan} onPointerCancel={endPan} style={{width:'100%',background:'#fff',border:'1px solid #cbd5e1',touchAction:'none',cursor:view.zoom > 1 ? 'grab' : 'default',userSelect:'none'}}>
         <text x="65" y="16" fontSize="12" fill="#334155">Depth (m)</text>
         <text x="350" y="375" fontSize="12" fill="#334155">Distance along line (m)</text>
         <g transform="translate(65 28)">
