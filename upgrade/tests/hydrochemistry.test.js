@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mgLToMeqL, convertIonConcentrations, calculateChargeBalance, calculatePiperPercentages } from '../src/engine/hydrochemistry.js';
+import { mgLToMeqL, convertIonConcentrations, calculateChargeBalance, calculatePiperPercentages, calculateDurovDiagram, calculateSchoellerSeries } from '../src/engine/hydrochemistry.js';
 
 test('mg/L converts to meq/L using ionic charge and molar mass', () => {
   assert.ok(Math.abs(mgLToMeqL('Ca', 40.078) - 2) < 1e-10);
@@ -117,4 +117,38 @@ test('Piper coordinate results stay finite for a fully measured mixed sample', a
     assert.ok(Number.isFinite(point.x));
     assert.ok(Number.isFinite(point.y));
   }
+});
+
+
+test('Durov projection locates pure Ca-HCO3 water at the corresponding square corner', () => {
+  const result = calculateDurovDiagram({
+    Ca: 40.078, Mg: 0, Na: 0, K: 0,
+    Cl: 0, SO4: 0, HCO3: 61.0168, CO3: 0
+  }, { pH: 7.2, tds: 250 });
+  assert.deepEqual(result.coordinates.square, { x: 1, y: 1 });
+  assert.equal(result.auxiliary.pH, 7.2);
+  assert.equal(result.auxiliary.tds, 250);
+  assert.equal(result.extended, true);
+});
+
+test('Durov diagram does not infer missing major-ion groups or auxiliary pH/TDS', () => {
+  const result = calculateDurovDiagram({ Ca: 40.078, Cl: 35.45 }, { pH: '', tds: null });
+  assert.equal(result.coordinates.square, null);
+  assert.equal(result.auxiliary.pH, null);
+  assert.equal(result.auxiliary.tds, null);
+  assert.equal(result.extended, false);
+  assert.equal(result.status, 'insufficient-major-ion-data');
+});
+
+test('Schoeller series uses log10 meq/L and keeps zero and missing values distinct', () => {
+  const result = calculateSchoellerSeries({
+    Ca: 20.039, Mg: 24.305, Na: 22.989769, K: 0,
+    Cl: 35.45, SO4: 0, HCO3: 61.0168, CO3: 0,
+    NO3: '', F: null
+  });
+  assert.equal(result.find(x => x.key === 'Ca').log10MeqL, 0);
+  assert.equal(result.find(x => x.key === 'Na+K').status, 'plottable');
+  assert.equal(result.find(x => x.key === 'SO4').status, 'measured-zero-not-plottable-on-log-axis');
+  assert.equal(result.find(x => x.key === 'NO3').status, 'unmeasured');
+  assert.equal(result.find(x => x.key === 'F').log10MeqL, null);
 });
