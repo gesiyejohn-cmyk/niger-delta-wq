@@ -17,7 +17,7 @@ test('charge-balance table labels cation and anion sums explicitly as totals', (
   const source = readFileSync(new URL('../src/pages/HydrochemistryPage.jsx', import.meta.url), 'utf8');
   assert.match(source, /Total Cations \(meq\/L\)/);
   assert.match(source, /Total Anions \(meq\/L\)/);
-  assert.match(source, /sum of all measured major-ion equivalents for each sample/);
+  assert.match(source, /cation and anion columns are the sum of measured major-ion equivalents/);
 });
 
 
