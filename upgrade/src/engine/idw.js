@@ -1,7 +1,9 @@
 // Exploratory inverse-distance weighting. Coordinates must be in a projected
 // CRS whose linear units are metres. Results are masked to the sample convex hull.
-const finite = value => value !== null && value !== undefined &&
-  !(typeof value === 'string' && value.trim() === '') && Number.isFinite(Number(value));
+const finite = value => value !== null && value !== undefined
+  && typeof value !== 'boolean' && typeof value !== 'object'
+  && !(typeof value === 'string' && value.trim() === '')
+  && Number.isFinite(Number(value));
 
 function cleanSamples(samples, valueKey) {
   if (!Array.isArray(samples)) throw new Error('Samples must be an array.');
