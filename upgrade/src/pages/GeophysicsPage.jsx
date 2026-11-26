@@ -46,7 +46,7 @@ export default function GeophysicsPage() {
     setReadings(old => old.map((row, index) => index === i ? { ...row, [key]: value } : row));
   }
   function rowPreview(row) {
-    if (row.ab2 === '' || row.mn2 === '' || row.resistance === '') return null;
+    if (row.resistance === '' || (meta.array === 'Wenner' ? row.spacing === '' : row.ab2 === '' || row.mn2 === '')) return null;
     try {
       return calculateVES({ ...row, array: meta.array });
     } catch {
@@ -195,7 +195,7 @@ export default function GeophysicsPage() {
           </div>;
         })}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button type="button" onClick={() => setReadings(old => [...old, { ab2: '', mn2: '', resistance: '' }])}>Add reading</button>
+          <button type="button" onClick={() => setReadings(old => [...old, { ab2: '', mn2: '', spacing: '', resistance: '' }])}>Add reading</button>
           <button type="button" className="primary" onClick={saveSounding}>Save VES sounding</button>
         </div>
         <h2>Saved VES soundings</h2>
@@ -293,7 +293,7 @@ function VESPlot({ record }) {
       <path d="M55 15V255H700" fill="none" stroke="#64748b" />
       {points.map((point, index) => <g key={index}>
         <circle cx={55 + (point.spread ?? point.ab2) / maxX * 630} cy={255 - point.apparentResistivity / maxY * 220} r="4" fill="#2563eb" />
-        <title>AB/2 {point.ab2} m; apparent resistivity {point.apparentResistivity.toFixed(2)} Ωm</title>
+        <title>{record.method === 'Wenner' ? 'Electrode spacing a ' + point.spacing : 'AB/2 ' + point.ab2} m; apparent resistivity {point.apparentResistivity.toFixed(2)} Ωm</title>
       </g>)}
     </svg>
     <p className="muted">Linear axes for quick review only. Formal VES interpretation requires appropriate log-log plotting and a validated layered-earth interpretation workflow.</p>
