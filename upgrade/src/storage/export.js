@@ -1,5 +1,6 @@
 import { listSamples } from './samples.js';
 import { PARAMETER_REGISTRY } from '../engine/parameters.js';
+import { WGS84_GEOGRAPHIC_CRS } from '../engine/coordinates.js';
 
 function csv(value) {
   if (value == null) return '""';
@@ -65,7 +66,9 @@ export async function exportSamplesGeoJSON() {
   return {
     type: 'FeatureCollection',
     features: samples
-      .filter(sample => Number.isFinite(sample.latitude)
+      .filter(sample => sample.coordinateDatum === 'WGS84'
+        && sample.coordinateStorageCRS === WGS84_GEOGRAPHIC_CRS
+        && Number.isFinite(sample.latitude)
         && Number.isFinite(sample.longitude)
         && Math.abs(sample.latitude) <= 90
         && Math.abs(sample.longitude) <= 180)
