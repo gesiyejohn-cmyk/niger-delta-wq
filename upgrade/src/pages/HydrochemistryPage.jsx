@@ -77,7 +77,7 @@ export default function HydrochemistryPage() {
         <p className="muted">Each triangle group is normalized independently from measured equivalents. These are the plotted ternary coordinates, not a completed Piper diagram or facies classification.</p>
         <div className="form-grid">
           <div><h3>Cation triangle (%)</h3>{pct(chemistry.piper.cations).map(item => <p key={item.key}>{GROUP_LABELS[item.key] || item.key}: <strong>{item.value.toFixed(1)}%</strong></p>)}</div>
-          <div><h3>Anion triangle (%)</h3>{pct(chemistry.piper.anions).map(item => <p key={item.key}>{item.key}: <strong>{item.value.toFixed(1)}%</strong></p>)}</div>
+          <div><h3>Anion triangle (%)</h3>{pct(chemistry.piper.anions).map(item => <p key={item.key}>{GROUP_LABELS[item.key] || ION_SYMBOLS[item.key] || item.key}: <strong>{item.value.toFixed(1)}%</strong></p>)}</div>
         </div>
         <button type="button" className="primary" onClick={exportCSV}>Export hydrochemistry CSV</button>
       </>}
