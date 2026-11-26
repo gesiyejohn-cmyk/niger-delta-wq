@@ -33,12 +33,16 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
   let utm = null;
   let standardZone = null;
   let selectedZone = null;
+  let utmCRSError = '';
   if (converted && value.crs.startsWith('UTM Zone')) {
-    selectedZone = Number(value.crs.match(/Zone (\d+)/)?.[1]);
     try {
+      selectedZone = validateUTMDisplayCRS(converted.latitude, value.crs);
       utm = decimalToUTM(converted.latitude, converted.longitude, selectedZone);
       standardZone = getStandardUTMZone(converted.latitude, converted.longitude);
-    } catch { utm = null; }
+    } catch (error) {
+      utm = null;
+      utmCRSError = error instanceof Error ? error.message : 'The selected UTM coordinate reference system is invalid.';
+    }
   }
   const set = (key, next) => {
     setFormatMessage('');
