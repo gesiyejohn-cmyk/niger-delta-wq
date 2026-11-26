@@ -7,10 +7,8 @@ test('geophysics page exposes separate raw four-electrode ERT acquisition and in
   assert.match(source, /calculateERTMeasurement/);
   assert.match(source, /saveERTFieldReadings/);
   assert.match(source, /listERTFieldReadings/);
-  assert.match(source, /Electrode A position/);
-  assert.match(source, /Electrode B position/);
-  assert.match(source, /Electrode M position/);
-  assert.match(source, /Electrode N position/);
+  assert.match(source, /\['A', 'B', 'M', 'N'\]/);
+  assert.match(source, /Electrode \{key\} position/);
   assert.match(source, /Save raw ERT field readings/);
   assert.match(source, /Import an inverted ERT model/);
   assert.match(source, /raw field observations, not an inverted subsurface model/);
