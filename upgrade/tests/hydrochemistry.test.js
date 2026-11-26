@@ -147,8 +147,11 @@ test('Schoeller series uses log10 meq/L and keeps zero and missing values distin
     NO3: '', F: null
   });
   assert.equal(result.find(x => x.key === 'Ca').log10MeqL, 0);
-  assert.equal(result.find(x => x.key === 'Na+K').status, 'plottable');
+  assert.equal(result.find(x => x.key === 'Na').status, 'plottable');
+  assert.equal(result.find(x => x.key === 'K').status, 'measured-zero-not-plottable-on-log-axis');
   assert.equal(result.find(x => x.key === 'SO4').status, 'measured-zero-not-plottable-on-log-axis');
+  assert.equal(result.find(x => x.key === 'HCO3').status, 'plottable');
+  assert.equal(result.find(x => x.key === 'CO3').status, 'measured-zero-not-plottable-on-log-axis');
   assert.equal(result.find(x => x.key === 'NO3').status, 'unmeasured');
   assert.equal(result.find(x => x.key === 'F').log10MeqL, null);
 });
