@@ -169,13 +169,18 @@ export function calculateDurovDiagram(sample, auxiliary = {}) {
 // replaced with an arbitrary epsilon); an unmeasured value remains missing.
 export function calculateSchoellerSeries(sample) {
   const meq = convertIonConcentrations(sample);
+  // Schoeller-Berkaloff plots individual dissolved-ion concentrations.
+  // Do not aggregate Na/K or HCO3/CO3: separate series preserve analytical
+  // distinctions and make the plotted species explicit.
   const groups = [
     ['Ca', 'Ca', meq.Ca],
     ['Mg', 'Mg', meq.Mg],
-    ['Na+K', 'Na + K', meq.Na !== null && meq.K !== null ? meq.Na + meq.K : null],
+    ['Na', 'Na', meq.Na],
+    ['K', 'K', meq.K],
     ['Cl', 'Cl', meq.Cl],
     ['SO4', 'SO4', meq.SO4],
-    ['HCO3+CO3', 'HCO3 + CO3', meq.HCO3 !== null && meq.CO3 !== null ? meq.HCO3 + meq.CO3 : null],
+    ['HCO3', 'HCO3', meq.HCO3],
+    ['CO3', 'CO3', meq.CO3],
     ['NO3', 'NO3', meq.NO3],
     ['F', 'F', meq.F]
   ];
