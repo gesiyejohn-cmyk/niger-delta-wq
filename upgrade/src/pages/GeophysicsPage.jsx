@@ -278,7 +278,7 @@ export default function GeophysicsPage() {
               </tr>)}</tbody>
             </table>
           </div>
-          {activeERTModel && <ERTTomogram models={[activeERTModel]} />}
+          <ERTTomogram models={activeERTModel ? [activeERTModel] : []} />
         </>}
       </>}
     </section>
