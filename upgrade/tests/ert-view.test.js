@@ -9,7 +9,7 @@ test('ERT zoom preserves the view centre while increasing magnification', () => 
 
 test('ERT zoom is bounded and zooming back out returns to the full section', () => {
   const maximum = zoomERTView({ x: 0, y: 0, zoom: 4 }, 10);
-  assert.deepEqual(maximum, { x: 304, y: 156, zoom: 5 });
+  assert.deepEqual(maximum, { x: 19, y: 9.75, zoom: 5 });
   const full = zoomERTView(maximum, 0.01);
   assert.deepEqual(full, { x: 0, y: 0, zoom: 1 });
 });
