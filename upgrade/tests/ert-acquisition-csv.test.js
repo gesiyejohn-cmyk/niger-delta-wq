@@ -13,8 +13,8 @@ test('ERT field CSV export includes survey geometry, signed resistance and calcu
     recordedAt: '2026-11-27T10:00:00.000Z'
   }]);
   assert.equal(csv.split(/\r\n/).length, 2, 'CSV records must use standard CRLF line endings');
-  assert.match(csv, /survey_id,array,A_m,B_m,M_m,N_m/);
-  assert.match(csv, /LINE-01,Wenner,0,3,1,2,-10,-1,6.283185,62.83185/);
+  assert.ok(csv.includes('"survey_id","array","A_m","B_m","M_m","N_m"'), 'CSV header fields must be quoted');
+  assert.ok(csv.includes('"LINE-01","Wenner","0","3","1","2","-10","-1","6.283185","62.83185"'), 'CSV data fields must be quoted');
   assert.match(csv, /2026-11-27T10:00:00.000Z/);
 });
 
