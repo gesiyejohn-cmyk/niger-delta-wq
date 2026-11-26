@@ -5,22 +5,7 @@ import { saveSample } from '../storage/samples.js';
 import { PARAMETER_REGISTRY } from '../engine/parameters.js';
 import { availableUnits, toCanonical } from '../engine/units.js';
 import { isBlankImportValue, parseImportedNumericValue } from '../engine/importValues.js';
-
-const META_COLUMNS = {
-  sampleCode: ['sample code', 'sample id', 'id'],
-  stationName: ['station', 'station name', 'location'],
-  latitude: ['latitude', 'lat'],
-  longitude: ['longitude', 'lon', 'lng'],
-  coordinateFormat: ['coordinate format', 'coordinate_format', 'coord format'],
-  latitudeHemisphere: ['latitude hemisphere', 'latitude_hemisphere', 'lat hemisphere', 'lat hemi'],
-  longitudeHemisphere: ['longitude hemisphere', 'longitude_hemisphere', 'lon hemisphere', 'lon hemi'],
-  coordinateDatum: ['coordinate datum', 'coordinate_datum', 'datum'],
-  coordinateCRS: ['coordinate crs', 'coordinate_crs', 'coordinate reference system', 'crs'],
-  collectionDate: ['date', 'collection date'],
-  waterSourceType: ['source', 'water source'],
-  collector: ['collector'],
-  notes: ['notes']
-};
+import { detectMetadataMapping } from '../engine/importMapping.js';
 
 export default function ImportPage() {
   const navigate = useNavigate();
@@ -66,14 +51,8 @@ export default function ImportPage() {
       setHeaders(sourceHeaders);
       setRows(dataRows);
 
-      const detectedMeta = {};
+      const detectedMeta = detectMetadataMapping(sourceHeaders);
       const detectedParams = {};
-      for (const [key, synonyms] of Object.entries(META_COLUMNS)) {
-        const index = sourceHeaders.findIndex(header =>
-          synonyms.includes(header.toLowerCase().trim())
-        );
-        if (index >= 0) detectedMeta[key] = sourceHeaders[index];
-      }
       for (const [key, config] of Object.entries(PARAMETER_REGISTRY)) {
         const index = sourceHeaders.findIndex(header => {
           const normalized = header.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -83,7 +62,7 @@ export default function ImportPage() {
         if (index >= 0) detectedParams[key] = sourceHeaders[index];
       }
 
-      setMapping(previous => ({ ...previous, ...detectedMeta }));
+      setMapping(detectedMeta);
       setParamMap(detectedParams);
       setMessage(dataRows.length + ' data rows loaded. Check the column mappings before importing.');
     } catch (error) {

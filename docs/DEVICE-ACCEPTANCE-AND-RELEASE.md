@@ -543,3 +543,28 @@ Artifact metadata (uploaded ZIP archive sizes):
 The earlier specifically requested [run #43762079209](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43762079209) is complete and failed in its Android launch job: the emulator reached boot-complete, but the subsequent ADB settings-service command returned `Broken pipe (32)` and ADB exit code 224 before an APK artifact could be uploaded. This failure is retained as historical evidence; the later run above demonstrates the corrected boot-and-launch sequence on a later commit.
 
 These CI results do not establish physical-phone visual acceptance, production signing, compatibility with an existing installation, real-device backup/restore, Windows installation/runtime on a physical computer, web deployment/browser acceptance or scientific sign-off. Do not uninstall, clear data or install a debug APK over an existing phone installation.
+
+## Multi-platform CI verification — 25 November 2026
+
+[Workflow run #45623473549](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45623473549) completed successfully on branch commit `fb4e8f7acb2241aab58927501e6af2ff63746d9a`. The exact same commit passed all three required CI jobs:
+
+- `web-and-tests`: **141 passed, 0 failed**; production web build and artifact upload passed.
+- `android`: original-identity debug APK built; API 35 emulator booted; package `com.nigerdeltawq.mobile`, label `Niger Delta WQ`, and launcher `com.nigerdeltawq.mobile.MainActivity` were verified. The original launcher activity was observed as top-resumed. The isolated preview package `com.nigerdeltawq.mobile.preview2` also installed and launched. The original APK is debug-signed; certificate SHA-256 fingerprint `a832195a7e58b7ac1763f8c5a95948d2db1cf3911cbec701d85593e15055c682`.
+- `windows-desktop`: NSIS installer `Niger-Delta-WQ-Setup-1.0.0.exe` generated and uploaded. The log explicitly reports that no code-signing certificate was configured; publishing was disabled.
+
+Artifact metadata (GitHub-uploaded ZIP sizes):
+
+- Web `ndwq-integrated-web`, ID `15026517040`, **303,363 bytes**; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45623473549/artifacts/15026517040); expires **9 December 2026 at 13:26:06 UTC**.
+- Android `ndwq-integrated-android-debug-apk`, ID `15028255983`, **8,084,730 bytes**; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45623473549/artifacts/15028255983); expires **9 December 2026 at 13:30:47 UTC**. The ZIP contains the original-identity debug APK, separate preview APK and build/signing metadata.
+- Windows `ndwq-integrated-windows-desktop`, ID `15026737005`, **95,588,727 bytes**; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45623473549/artifacts/15026737005); expires **9 December 2026 at 13:27:58 UTC**.
+
+The specifically requested earlier [run #43762079209](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43762079209) remains a completed historical failure. Its Android emulator reached boot-complete, but the third ADB settings animation-scale command returned `Broken pipe (32)` and ADB exit code 224; the launch verification and Android artifact upload were skipped. The newer run above completed the revised boot/readiness sequence and successfully launched both package variants.
+
+This successful run establishes CI builds and emulator smoke tests only. It does not establish physical-phone visual acceptance, production signing or compatibility with an existing installation, real-device backup/restore, Windows installation/runtime on a real computer, web deployment/browser acceptance, or scientific sign-off. Do not uninstall, clear data or install the debug APK over the existing phone app.
+
+## Bulk-import coordinate mapping reset — 26 November 2026
+
+A follow-up audit found that the importer merged newly detected metadata columns into the previous file's mapping state. When a user loaded a second CSV/Excel file with a different header set, old latitude/longitude, hemisphere, format or CRS mappings could remain selected even though those columns no longer existed in the new file. The row importer then looked up the stale header, received an undefined cell and could save a sample without the coordinates the user expected to import.
+
+Metadata alias detection is now a pure helper, and each newly loaded file replaces the complete metadata mapping with a fresh detection result. Every supported metadata field is initialized explicitly; fields not present in the new file return to “Not mapped” rather than inheriting stale selections. Regression tests cover coordinate aliases, all metadata fields, file-to-file mapping reset, and the ImportPage wiring. CI verification for this follow-up commit is pending; the successful run above applies to the parent commit only.
+
