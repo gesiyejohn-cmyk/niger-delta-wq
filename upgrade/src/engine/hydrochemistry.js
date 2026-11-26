@@ -53,19 +53,18 @@ export function calculateChargeBalance(sample) {
 
 export function calculatePiperPercentages(sample) {
   const meq = convertIonConcentrations(sample);
+  // Each Piper vertex is a measured analytical group. Because this registry
+  // stores Na/K and HCO3/CO3 separately, both components must be measured;
+  // an unmeasured component must never be silently treated as zero.
   const groups = {
-    cations: { Ca: meq.Ca, Mg: meq.Mg, NaK: (meq.Na ?? 0) + (meq.K ?? 0) },
-    anions: { Cl: meq.Cl, SO4: meq.SO4, HCO3CO3: (meq.HCO3 ?? 0) + (meq.CO3 ?? 0) }
+    cations: { Ca: meq.Ca, Mg: meq.Mg, NaK: meq.Na !== null && meq.K !== null ? meq.Na + meq.K : null },
+    anions: { Cl: meq.Cl, SO4: meq.SO4, HCO3CO3: meq.HCO3 !== null && meq.CO3 !== null ? meq.HCO3 + meq.CO3 : null }
   };
   const normalize = (group, keys) => {
-    const available = keys.filter(key => {
-      if (key === 'NaK') return meq.Na !== null || meq.K !== null;
-      if (key === 'HCO3CO3') return meq.HCO3 !== null || meq.CO3 !== null;
-      return group[key] !== null;
-    });
-    const total = available.reduce((sum, key) => sum + group[key], 0);
-    if (!available.length || total <= 0) return null;
-    return Object.fromEntries(available.map(key => [key, 100 * group[key] / total]));
+    if (keys.some(key => group[key] === null)) return null;
+    const total = keys.reduce((sum, key) => sum + group[key], 0);
+    if (total <= 0) return null;
+    return Object.fromEntries(keys.map(key => [key, 100 * group[key] / total]));
   };
   return {
     cations: normalize(groups.cations, ['Ca', 'Mg', 'NaK']),
