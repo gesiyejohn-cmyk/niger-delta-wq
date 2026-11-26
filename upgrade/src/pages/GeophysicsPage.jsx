@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
 import { calculateVES, validateVES, validateERT } from '../engine/geophysics.js';
 import VESInterpretation from './VESInterpretation.jsx';
+import ERTTomogram from './ERTTomogram.jsx';
 import CoordinateFields from './CoordinateFields.jsx';
 import { validateCoordinatePair } from '../engine/coordinates.js';
 import { saveVES, listVES, deleteVES, saveERT, listERT, deleteERT } from '../storage/geophysics.js';
@@ -277,6 +278,7 @@ export default function GeophysicsPage() {
               </tr>)}</tbody>
             </table>
           </div>
+          {activeERTModel && <ERTTomogram models={[activeERTModel]} />}
         </>}
       </>}
     </section>
