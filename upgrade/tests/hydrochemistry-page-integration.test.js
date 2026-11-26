@@ -19,3 +19,14 @@ test('hydrochemistry summary table visibly reports both measured ion totals', ()
   assert.match(page, /Total measured anions \(meq\/L\)/);
   assert.match(page, /chemistry\.balance\.anionTotal\.toFixed\(4\)/);
 });
+
+
+test('Durov analysis receives only measured canonical pH and TDS values from the selected sample', () => {
+  assert.match(page, /<DurovSchoellerPanel ions=\{chemistry\.ions\} auxiliary=\{\{/);
+  assert.match(page, /pH:\s*sample\.parameters\?\.ph\?\.canonical\s*\?\?\s*null/);
+  assert.match(page, /tds:\s*sample\.parameters\?\.tds\?\.canonical\s*\?\?\s*null/);
+  const panel = readFileSync(new URL('../src/components/DurovSchoellerPanel.jsx', import.meta.url), 'utf8');
+  assert.match(panel, /calculateDurovDiagram\(ions, auxiliary\)/);
+  assert.match(panel, /result\.auxiliary\.pH/);
+  assert.match(panel, /result\.auxiliary\.tds/);
+});
