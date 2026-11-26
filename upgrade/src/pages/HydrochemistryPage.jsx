@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { listSamples } from '../storage/samples.js';
 import { calculateChargeBalance, calculatePiperPercentages, ION_DEFINITIONS } from '../engine/hydrochemistry.js';
 import { downloadText } from '../storage/export.js';
+import { buildHydrochemistryCSV } from '../engine/hydrochemistryExport.js';
 
 const IONS = Object.keys(ION_DEFINITIONS);
 const LABELS = { Ca: 'Calcium', Mg: 'Magnesium', Na: 'Sodium', K: 'Potassium', Cl: 'Chloride', SO4: 'Sulphate', HCO3: 'Bicarbonate', CO3: 'Carbonate', NO3: 'Nitrate', F: 'Fluoride' };
-const csvCell = value => '"' + String(value ?? '').replace(/"/g, '""') + '"';
 
 export default function HydrochemistryPage() {
   const [samples, setSamples] = useState([]);
@@ -22,18 +22,9 @@ export default function HydrochemistryPage() {
   }, [sample]);
   function exportCSV() {
     if (!sample || !chemistry || chemistry.error) return;
-    const rows = [
-      ['sample_code','station','date','ion','concentration_mg_L','meq_L','ion_group'],
-      ...IONS.map(ion => [sample.sampleCode, sample.stationName, sample.collectionDate, ion,
-        chemistry.ions[ion] ?? '', chemistry.balance.meq[ion] ?? '',
-        ION_DEFINITIONS[ion].type])
-    ];
-    rows.push(['sample_code','station','date','cation_total_meq_L','anion_total_meq_L','charge_balance_error_percent','screening_status']);
-    rows.push([sample.sampleCode, sample.stationName, sample.collectionDate,
-      chemistry.balance.cationTotal, chemistry.balance.anionTotal,
-      chemistry.balance.errorPercent ?? '', chemistry.balance.status]);
+    const csv = buildHydrochemistryCSV(sample, chemistry.ions, chemistry.balance, ION_DEFINITIONS);
     downloadText('hydrochemistry-' + (sample.sampleCode || sample.id) + '.csv',
-      rows.map(row => row.map(csvCell).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+      csv, 'text/csv;charset=utf-8');
   }
   const pct = group => group ? Object.entries(group).map(([key, value]) => ({ key, value })) : [];
   return <div className="page">
@@ -59,6 +50,16 @@ export default function HydrochemistryPage() {
               <td align="right">{chemistry.ions[ion] == null ? 'Unmeasured' : Number(chemistry.ions[ion]).toFixed(3)}</td>
               <td align="right">{chemistry.balance.meq[ion] == null ? '—' : chemistry.balance.meq[ion].toFixed(4)}</td>
             </tr>)}</tbody>
+            <tfoot>
+              <tr style={{borderTop:'2px solid #64748b',fontWeight:700}}>
+                <td colSpan="3">Total measured cations (meq/L)</td>
+                <td align="right">{chemistry.balance.cationTotal.toFixed(4)}</td>
+              </tr>
+              <tr style={{fontWeight:700}}>
+                <td colSpan="3">Total measured anions (meq/L)</td>
+                <td align="right">{chemistry.balance.anionTotal.toFixed(4)}</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
         <h2>Charge-balance assessment</h2>
