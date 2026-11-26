@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { buildERTGrid } from '../engine/ert.js';
+import { panERTView, zoomERTView } from '../engine/ertView.js';
 
 function colour(value, min, max) {
   const t = Math.max(0, Math.min(1, (Math.log10(value) - Math.log10(min)) /
@@ -24,37 +25,27 @@ export default function ERTTomogram({ models = [] }) {
   const max = Math.max(...points.map(p => p.resistivity));
   const viewWidth = 760 / view.zoom;
   const viewHeight = 390 / view.zoom;
-  const clamp = (value, limit) => Math.max(0, Math.min(limit, value));
 
   function zoom(factor) {
-    setView(current => {
-      const nextZoom = Math.max(1, Math.min(5, current.zoom * factor));
-      const width = 760 / nextZoom, height = 390 / nextZoom;
-      return {
-        zoom: nextZoom,
-        x: clamp(current.x + (760 / current.zoom - width) / 2, 760 - width),
-        y: clamp(current.y + (390 / current.zoom - height) / 2, 390 - height)
-      };
-    });
+    setView(current => zoomERTView(current, factor));
   }
 
   function startPan(event) {
     if (view.zoom <= 1) return;
     event.currentTarget.setPointerCapture(event.pointerId);
-    drag.current = { clientX: event.clientX, clientY: event.clientY, x: view.x, y: view.y };
+    drag.current = { clientX: event.clientX, clientY: event.clientY, view };
   }
 
   function movePan(event) {
     if (!drag.current) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    const dx = (event.clientX - drag.current.clientX) * viewWidth / rect.width;
-    const dy = (event.clientY - drag.current.clientY) * viewHeight / rect.height;
-    const start = drag.current;
-    setView(current => ({
-      ...current,
-      x: clamp(start.x - dx, 760 - viewWidth),
-      y: clamp(start.y - dy, 390 - viewHeight)
-    }));
+    setView(panERTView(
+      drag.current.view,
+      event.clientX - drag.current.clientX,
+      event.clientY - drag.current.clientY,
+      rect.width,
+      rect.height
+    ));
   }
 
   function endPan() { drag.current = null; }
