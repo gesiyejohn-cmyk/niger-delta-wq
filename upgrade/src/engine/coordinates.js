@@ -80,7 +80,7 @@ export function getStandardUTMZone(latitude, longitude) {
 
 
 export function validateUTMDisplayCRS(latitude, crs) {
-  const match = /^UTM Zone ([1-9]|[1-5]\\d|60)([NS]) \\(WGS84\\)$/.exec(String(crs || ''));
+  const match = /^UTM Zone ([1-9]|[1-5]\d|60)([NS]) \(WGS84\)$/.exec(String(crs || ''));
   const lat = Number(latitude);
   if (!match || latitude === '' || latitude == null || !Number.isFinite(lat) || lat < -80 || lat > 84) {
     throw new Error('Choose a valid WGS84 UTM zone and latitude within the UTM range.');
