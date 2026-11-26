@@ -75,8 +75,8 @@ test('Piper diagram places pure Mg-SO4 composition at the upper vertices', async
 test('Piper facies reports mixed compositions when no ion group reaches 50 percent', async () => {
   const { calculatePiperDiagram } = await import('../src/engine/hydrochemistry.js');
   const result = calculatePiperDiagram({
-    Ca: 20.039, Mg: 12.1525, Na: 11.4948845,
-    Cl: 17.725, SO4: 24.015, HCO3: 30.5084
+    Ca: 20.039, Mg: 12.1525, Na: 11.4948845, K: 0,
+    Cl: 17.725, SO4: 24.015, HCO3: 30.5084, CO3: 0
   });
   assert.equal(result.facies.cation.status, 'mixed');
   assert.equal(result.facies.anion.status, 'mixed');
@@ -111,7 +111,7 @@ test('Piper coordinate results stay finite for a fully measured mixed sample', a
   const { calculatePiperDiagram } = await import('../src/engine/hydrochemistry.js');
   const result = calculatePiperDiagram({
     Ca: 40.078, Mg: 24.305, Na: 22.989769, K: 39.0983,
-    Cl: 35.45, SO4: 48.03, HCO3: 61.0168
+    Cl: 35.45, SO4: 48.03, HCO3: 61.0168, CO3: 0
   });
   for (const point of Object.values(result.coordinates)) {
     assert.ok(Number.isFinite(point.x));
