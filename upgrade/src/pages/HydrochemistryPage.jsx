@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { listSamples } from '../storage/samples.js';
-import { calculateChargeBalance, calculatePiperPercentages, ION_DEFINITIONS } from '../engine/hydrochemistry.js';
+import { calculateChargeBalance, calculatePiperDiagram, ION_DEFINITIONS } from '../engine/hydrochemistry.js';
 import { downloadText } from '../storage/export.js';
 import { buildHydrochemistryCSV } from '../engine/hydrochemistryExport.js';
 
@@ -21,7 +21,7 @@ export default function HydrochemistryPage() {
     if (!sample) return null;
     const ions = Object.fromEntries(IONS.map(ion => [ion, sample.parameters?.[ion.toLowerCase()]?.canonical ?? null]));
     try {
-      return { ions, balance: calculateChargeBalance(ions), piper: calculatePiperPercentages(ions) };
+      return { ions, balance: calculateChargeBalance(ions), piper: calculatePiperDiagram(ions) };
     } catch (e) { return { ions, error: e.message }; }
   }, [sample]);
   function exportCSV() {
@@ -74,11 +74,37 @@ export default function HydrochemistryPage() {
         </div>
         <p className="notice">{chemistry.balance.status}. The ±5% band is a screening convention; assess analytical quality and the suitability of the measured ion suite before interpretation.</p>
         <h2>Piper ion-group percentages</h2>
-        <p className="muted">Each triangle group is normalized independently from measured equivalents. These are the plotted ternary coordinates, not a completed Piper diagram or facies classification.</p>
+        <p className="muted">Major-ion percentages are normalized independently on a meq/L basis. The diagram requires all three groups in each triangle to be measured; an explicitly measured zero is valid, but a blank group is not assumed to be zero.</p>
         <div className="form-grid">
           <div><h3>Cation triangle (%)</h3>{pct(chemistry.piper.cations).map(item => <p key={item.key}>{GROUP_LABELS[item.key] || item.key}: <strong>{item.value.toFixed(1)}%</strong></p>)}</div>
           <div><h3>Anion triangle (%)</h3>{pct(chemistry.piper.anions).map(item => <p key={item.key}>{GROUP_LABELS[item.key] || ION_SYMBOLS[item.key] || item.key}: <strong>{item.value.toFixed(1)}%</strong></p>)}</div>
         </div>
+        <h3>Piper trilinear diagram</h3>
+        {chemistry.piper.coordinates.cations && chemistry.piper.coordinates.anions && chemistry.piper.coordinates.diamond ? (() => {
+          const h = Math.sqrt(3) / 2;
+          const point = p => `${p.x * 250},${(2.05 - p.y) * 190}`;
+          const cat = chemistry.piper.coordinates.cations;
+          const ani = chemistry.piper.coordinates.anions;
+          const dia = chemistry.piper.coordinates.diamond;
+          return <div style={{width:'100%',overflowX:'auto'}}>
+            <svg viewBox="0 0 600 420" role="img" aria-label="Piper trilinear diagram showing cation and anion triangles and central diamond" style={{width:'100%',minWidth:320,maxHeight:440}}>
+              <g fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.8">
+                <path d={`M 0,389.5 L 250,389.5 L 125,${(2.05-h)*190} Z`} />
+                <path d={`M 300,389.5 L 550,389.5 L 425,${(2.05-h)*190} Z`} />
+                <path d={`M 150,${(2.05-h*1.2)*190} L 275,${(2.05-1.9052558883)*190} L 400,${(2.05-h*1.2)*190} L 275,${(2.05-0.1732050808)*190} Z`} />
+              </g>
+              <g fill="currentColor" fontSize="12">
+                <text x="0" y="410">Ca²⁺</text><text x="250" y="410" textAnchor="end">Na⁺ + K⁺</text><text x="125" y="185" textAnchor="middle">Mg²⁺</text>
+                <text x="300" y="410">HCO₃⁻ + CO₃²⁻</text><text x="550" y="410" textAnchor="end">Cl⁻</text><text x="425" y="185" textAnchor="middle">SO₄²⁻</text>
+              </g>
+              <g fill="#2563eb" stroke="white" strokeWidth="2"><circle cx={cat.x*250} cy={(2.05-cat.y)*190} r="6"/></g>
+              <g fill="#0d9488" stroke="white" strokeWidth="2"><circle cx={ani.x*250} cy={(2.05-ani.y)*190} r="6"/></g>
+              <g fill="#d97706" stroke="white" strokeWidth="2"><circle cx={dia.x*250} cy={(2.05-dia.y)*190} r="7"/></g>
+            </svg>
+            <p className="muted">Cation point <span style={{color:'#2563eb'}}>●</span> · Anion point <span style={{color:'#0d9488'}}>●</span> · Diamond projection <span style={{color:'#d97706'}}>●</span></p>
+          </div>;
+        })() : <p className="notice">Piper diagram unavailable: measure Ca, Mg, Na+K and Cl, SO₄, HCO₃+CO₃ (including measured zeros where appropriate). Missing groups are not treated as zero.</p>}
+        <p><strong>Hydrochemical facies:</strong> {chemistry.piper.facies.label}</p>
         <button type="button" className="primary" onClick={exportCSV}>Export hydrochemistry CSV</button>
       </>}
     </section>
