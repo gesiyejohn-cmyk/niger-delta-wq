@@ -27,9 +27,7 @@ test('hydrochemistry CSV uses one consistent schema for ion and total rows', () 
     errorPercent: 33.333333,
     status: 'Outside ±5% screening tolerance'
   };
-  const definitions = {
-    Ca: { type: 'cation' }, Mg: { type: 'cation' }, Cl: { type: 'anion' }
-  };
+  const definitions = { Ca: { type: 'cation' }, Mg: { type: 'cation' }, Cl: { type: 'anion' } };
   const csv = buildHydrochemistryCSV(sample, ions, balance, definitions);
   const lines = csv.split('\r\n');
   const header = lines[0].split(',').length;
@@ -39,6 +37,17 @@ test('hydrochemistry CSV uses one consistent schema for ion and total rows', () 
   assert.match(csv, /"charge_balance_totals"/);
   assert.match(csv, /"2","1","33.333333","Outside ±5% screening tolerance"/);
   assert.match(csv, /"Mg","cation","",""/);
+});
+
+test('hydrochemistry CSV neutralizes spreadsheet formulas in sample and station text', () => {
+  const csv = buildHydrochemistryCSV(
+    { sampleCode: '=HYPERLINK("https://bad.example")', stationName: ' @SUM(1,1)', collectionDate: '2026-11-27' },
+    { Ca: 1 },
+    { meq: { Ca: 1 }, cationTotal: 1, anionTotal: 0, errorPercent: 100, status: 'Outside tolerance' },
+    { Ca: { type: 'cation' } }
+  );
+  assert.ok(csv.includes(`"'=HYPERLINK(""https://bad.example"")"`));
+  assert.ok(csv.includes(`"' @SUM(1,1)"`));
 });
 
 test('hydrochemistry CSV rejects incomplete inputs', () => {
