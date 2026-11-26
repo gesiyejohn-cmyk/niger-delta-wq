@@ -50,7 +50,8 @@ test('negative and non-numeric concentrations are rejected', () => {
 test('Piper diagram places pure Ca-HCO3 composition at the corresponding triangle vertices', async () => {
   const { calculatePiperDiagram } = await import('../src/engine/hydrochemistry.js');
   const result = calculatePiperDiagram({
-    Ca: 40.078, HCO3: 61.0168
+    Ca: 40.078, Mg: 0, Na: 0, K: 0,
+    Cl: 0, SO4: 0, HCO3: 61.0168, CO3: 0
   });
   assert.deepEqual(result.coordinates.cations, { x: 0, y: 0 });
   assert.deepEqual(result.coordinates.anions, { x: 1.2, y: 0 });
@@ -62,7 +63,8 @@ test('Piper diagram places pure Ca-HCO3 composition at the corresponding triangl
 test('Piper diagram places pure Mg-SO4 composition at the upper vertices', async () => {
   const { calculatePiperDiagram } = await import('../src/engine/hydrochemistry.js');
   const result = calculatePiperDiagram({
-    Mg: 24.305, SO4: 48.03
+    Ca: 0, Mg: 24.305, Na: 0, K: 0,
+    Cl: 0, SO4: 48.03, HCO3: 0, CO3: 0
   });
   assert.ok(Math.abs(result.coordinates.cations.x - 0.5) < 1e-10);
   assert.ok(Math.abs(result.coordinates.cations.y - Math.sqrt(3) / 2) < 1e-10);
@@ -84,7 +86,7 @@ test('Piper facies reports mixed compositions when no ion group reaches 50 perce
 test('Piper diagram does not invent triangle or diamond coordinates for missing ion groups', async () => {
   const { calculatePiperDiagram } = await import('../src/engine/hydrochemistry.js');
   const result = calculatePiperDiagram({ Ca: 40.078, Cl: '' });
-  assert.ok(result.coordinates.cations);
+  assert.equal(result.coordinates.cations, null);
   assert.equal(result.coordinates.anions, null);
   assert.equal(result.coordinates.diamond, null);
   assert.equal(result.facies.label, 'Insufficient measured ions');
