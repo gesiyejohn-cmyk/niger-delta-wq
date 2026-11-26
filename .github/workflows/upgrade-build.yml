@@ -29,8 +29,17 @@ jobs:
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
         run: |
-          npm install
-          npm install --no-save fake-indexeddb
+          for attempt in 1 2 3; do
+            if npm install && npm install --no-save fake-indexeddb; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Dependency installation failed after 3 attempts."
+              exit 1
+            fi
+            echo "Dependency installation attempt $attempt failed; retrying in 20 seconds."
+            sleep 20
+          done
       - name: Run scientific and geophysics tests
         working-directory: source/niger-delta-wq
         run: npm test
@@ -97,7 +106,17 @@ jobs:
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
         run: |
-          npm install
+          for attempt in 1 2 3; do
+            if npm install; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Dependency installation failed after 3 attempts."
+              exit 1
+            fi
+            echo "Dependency installation attempt $attempt failed; retrying in 20 seconds."
+            sleep 20
+          done
           npm run build
           node -e 'const fs=require("node:fs"); const c=JSON.parse(fs.readFileSync("capacitor.config.json","utf8")); const p=JSON.parse(fs.readFileSync("package.json","utf8")); const id=c.appId || p.capacitor?.appId || null; const name=c.appName || p.capacitor?.appName || null; if(id!=="com.nigerdeltawq.mobile") throw new Error("Unexpected source Android application ID: "+id); if(name!=="Niger Delta WQ") throw new Error("Unexpected source Android application name: "+name); console.log("::notice::Verified source Android application ID: "+id); console.log("::notice::Verified source Android application name: "+name);'
           # Build and smoke-test the source package identity on a clean CI emulator.
