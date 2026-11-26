@@ -21,10 +21,10 @@ function DurovPlot({ ions }) {
             <line x1={x0} y1={y0+n*size/3} x2={x0+size} y2={y0+n*size/3}/>
           </g>)}
           <g fill="currentColor" fontSize="11">
-            <text x={x0} y="17">HCO₃⁻ + CO₃²⁻</text>
-            <text x={x0+size} y="17" textAnchor="end">Cl⁻</text>
-            <text x={x0-8} y={y0+size+17} textAnchor="end">Ca²⁺</text>
-            <text x={x0+size+8} y={y0+size+17}>Na⁺ + K⁺</text>
+            <text x={x0} y="17">Cl⁻</text>
+            <text x={x0+size} y="17" textAnchor="end">HCO₃⁻ + CO₃²⁻</text>
+            <text x={x0-8} y={y0+size+17} textAnchor="end">Na⁺ + K⁺</text>
+            <text x={x0+size+8} y={y0+size+17}>Ca²⁺</text>
             <text x={x0+size/2} y={y0+size+36} textAnchor="middle">Anion projection →</text>
             <text transform={`translate(18 ${y0+size/2}) rotate(-90)`} textAnchor="middle">Cation projection →</text>
             <text x={x0-5} y={y0+size+3} textAnchor="end">0</text>
