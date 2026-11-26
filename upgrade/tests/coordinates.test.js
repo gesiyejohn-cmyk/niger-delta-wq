@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { coordinateToDecimal, decimalToCoordinate, validateCoordinatePair, getStandardUTMZone, convertCoordinatePairFormat } from '../src/engine/coordinates.js';
+import { coordinateToDecimal, decimalToCoordinate, validateCoordinatePair, getStandardUTMZone, convertCoordinatePairFormat, validateUTMDisplayCRS } from '../src/engine/coordinates.js';
 
 test('DD coordinates respect hemisphere and axis limits', () => {
   assert.equal(coordinateToDecimal('4.92', 'DD', 'N', 'latitude'), 4.92);
@@ -132,4 +132,13 @@ test('changing coordinate format rejects invalid partial input instead of reinte
   assert.throws(() => convertCoordinatePairFormat({
     latitude: '', longitude: '', format: 'DD', nextFormat: 'UTM'
   }), /Choose DD, DMS or DDM/);
+});
+
+test('UTM display CRS validation requires a valid zone and matching latitude hemisphere', () => {
+  assert.equal(validateUTMDisplayCRS(4.92, 'UTM Zone 32N (WGS84)'), 32);
+  assert.equal(validateUTMDisplayCRS(-4.92, 'UTM Zone 32S (WGS84)'), 32);
+  assert.throws(() => validateUTMDisplayCRS(-4.92, 'UTM Zone 32N (WGS84)'), /does not match latitude hemisphere/);
+  assert.throws(() => validateUTMDisplayCRS(4.92, 'UTM Zone 61N (WGS84)'));
+  assert.throws(() => validateUTMDisplayCRS(85, 'UTM Zone 32N (WGS84)'));
+  assert.throws(() => validateUTMDisplayCRS('', 'UTM Zone 32N (WGS84)'));
 });
