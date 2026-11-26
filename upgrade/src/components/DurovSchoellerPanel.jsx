@@ -10,8 +10,8 @@ function DurovPlot({ ions }) {
   const x = point ? x0 + point.x * size : null;
   const y = point ? y0 + (1 - point.y) * size : null;
   return <section className="panel" aria-labelledby="durov-title">
-    <h2 id="durov-title">Durov diagram</h2>
-    <p className="muted">Central-square projection of independently normalized major-ion equivalents. The point is plotted only when all required cation and anion groups are measured.</p>
+    <h2 id="durov-title">Durov central-square projection</h2>
+    <p className="muted">Partial Durov representation: central-square projection of independently normalized major-ion equivalents. The two ternary plots and auxiliary pH/TDS panels are not yet displayed. The point is plotted only when all required cation and anion groups are measured.</p>
     {point ? <>
       <div style={{overflowX:'auto'}}>
         <svg viewBox="0 0 470 390" role="img" aria-label="Durov central square projection of the selected sample" style={{width:'100%',maxWidth:520,minWidth:300}}>
