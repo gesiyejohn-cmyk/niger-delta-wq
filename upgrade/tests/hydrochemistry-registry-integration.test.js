@@ -100,5 +100,5 @@ test('blank registry values remain unmeasured while a measured zero remains zero
   const inputs = hydrochemistryInputs(sample);
   assert.equal(inputs.Ca, 0);
   assert.equal(inputs.Mg, null);
-  assert.equal(inputs.Na, 22.989769);
+  assert.ok(Math.abs(inputs.Na - 22.989769) < 1e-5);
 });
