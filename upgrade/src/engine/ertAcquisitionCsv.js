@@ -14,7 +14,7 @@ const COLUMNS = [
 
 function csvCell(value, textField = false) {
   let normalized = value == null ? '' : String(value);
-  if (textField && /^[\\t\\r ]*[=+\\-@]/.test(normalized)) normalized = "'" + normalized;
+  if (textField && /^[\t\r ]*[=+\-@]/.test(normalized)) normalized = "'" + normalized;
   return '"' + normalized.replaceAll('"', '""') + '"';
 }
 
@@ -25,5 +25,5 @@ export function ertFieldReadingsToCSV(records) {
   return [
     COLUMNS.map(([header]) => csvCell(header)).join(','),
     ...records.map(record => COLUMNS.map(([, getValue, textField]) => csvCell(getValue(record), textField)).join(','))
-  ].join('\\r\\n');
+  ].join('\r\n');
 }
