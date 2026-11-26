@@ -60,8 +60,8 @@ function DiagramNavigation({ navigation, label }) {
   </div>;
 }
 
-function DurovPlot({ ions }) {
-  const result = useMemo(() => calculateDurovDiagram(ions), [ions]);
+function DurovPlot({ ions, auxiliary }) {
+  const result = useMemo(() => calculateDurovDiagram(ions, auxiliary), [ions, auxiliary]);
   const navigation = useDiagramView(900, 340);
   const point = result.coordinates.square;
   const cation = result.coordinates.cationTriangle;
@@ -126,7 +126,12 @@ function DurovPlot({ ions }) {
         <div><h3>Cation groups (meq %)</h3>{Object.entries(result.cations).map(([k,v]) => <p key={k}>{ionLabel[k]}: <strong>{v.toFixed(1)}%</strong></p>)}</div>
         <div><h3>Anion groups (meq %)</h3>{Object.entries(result.anions).map(([k,v]) => <p key={k}>{ionLabel[k]}: <strong>{v.toFixed(1)}%</strong></p>)}</div>
       </div>
-      <p className="muted">The central square uses x = HCO₃⁻ + CO₃²⁻ + ½SO₄²⁻ and y = Ca²⁺ + ½Mg²⁺, each as a percentage of its own ion total. The classic major-ion fields are shown; auxiliary pH/TDS panels are not shown because those measurements are not currently passed into this chart.</p>
+      <p className="muted">The central square uses x = HCO₃⁻ + CO₃²⁻ + ½SO₄²⁻ and y = Ca²⁺ + ½Mg²⁺, each as a percentage of its own ion total.</p>
+      {(result.auxiliary.pH !== null || result.auxiliary.tds !== null) && <div className="stat-grid" aria-label="Measured Durov auxiliary parameters">
+        {result.auxiliary.pH !== null && <div className="stat-card"><small>Measured pH</small><strong>{result.auxiliary.pH.toFixed(2)}</strong></div>}
+        {result.auxiliary.tds !== null && <div className="stat-card"><small>Measured TDS (mg/L)</small><strong>{result.auxiliary.tds.toFixed(2)}</strong></div>}
+      </div>}
+      {(result.auxiliary.pH === null && result.auxiliary.tds === null) && <p className="muted">No valid measured pH or TDS value is available for the auxiliary Durov display.</p>}
     </> : <p className="notice">Durov diagram unavailable. Measure Ca, Mg, Na, K, Cl, SO₄, HCO₃ and CO₃. An unmeasured ion is not treated as zero.</p>}
   </section>;
 }
@@ -172,6 +177,6 @@ function SchoellerPlot({ ions }) {
   </section>;
 }
 
-export default function DurovSchoellerPanel({ ions }) {
-  return <><DurovPlot ions={ions}/><SchoellerPlot ions={ions}/></>;
+export default function DurovSchoellerPanel({ ions, auxiliary = {} }) {
+  return <><DurovPlot ions={ions} auxiliary={auxiliary}/><SchoellerPlot ions={ions}/></>;
 }
