@@ -306,7 +306,7 @@ test('VES calculation and geometry functions reject raw boolean and object input
 test('VES geometric factors reject invalid electrode geometry at the function boundary', () => {
   for (const [ab2, mn2] of [[10, 0], [10, -1], [2, 2], [1, 2]]) {
     assert.throws(() => schlumbergerGeometricFactor(ab2, mn2),
-      /AB\\/2 > MN\\/2 > 0/);
+      error => error.message.includes('AB/2 > MN/2 > 0'));
   }
   for (const spacing of [0, -1]) {
     assert.throws(() => wennerGeometricFactor(spacing),
