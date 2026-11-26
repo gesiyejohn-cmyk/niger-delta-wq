@@ -15,7 +15,7 @@ export const GOD_FACTORS = [
 
 function parseFactor(value, factor) {
   const validType = typeof value === 'number'
-    || (typeof value === 'string' && /^\\+?(?:\\d+(?:\\.\\d*)?|\\.\\d+)$/.test(value.trim()));
+    || (typeof value === 'string' && /^\+?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim()));
   const parsed = validType ? Number(value) : Number.NaN;
   if (!Number.isFinite(parsed) || parsed < factor.min || parsed > factor.max) {
     throw new Error(factor.key.toUpperCase() + ' rating must be a finite number from ' + factor.min + ' to ' + factor.max + '.');
@@ -53,7 +53,7 @@ export function calculateGod(values) {
 
 const csvCell = value => {
   const text = String(value ?? '');
-  const safe = typeof value === 'string' && /^\\s*[=+@-]/.test(text) ? "'" + text : text;
+  const safe = typeof value === 'string' && /^\s*[=+@-]/.test(text) ? "'" + text : text;
   return '"' + safe.replace(/"/g, '""') + '"';
 };
 
@@ -68,5 +68,5 @@ export function exportGodCSV(records) {
       record.index, record.classification, record.notes
     ].map(csvCell).join(',');
   });
-  return '\\uFEFF' + [headers.map(csvCell).join(','), ...rows].join('\\r\\n') + '\\r\\n';
+  return '\uFEFF' + [headers.map(csvCell).join(','), ...rows].join('\r\n') + '\r\n';
 }
