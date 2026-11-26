@@ -28,7 +28,7 @@ test('ERT field CSV export escapes quotes and neutralizes spreadsheet formula te
     geometricFactor: 1,
     apparentResistivity: 1
   }]);
-  assert.match(csv, /"'=HYPERLINK(""https://bad.example"")"/);
+  assert.ok(csv.includes(`"'=HYPERLINK(""https://bad.example"")"`));
 });
 
 test('ERT field CSV export rejects an empty reading list', async () => {
