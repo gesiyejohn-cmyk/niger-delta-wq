@@ -5,7 +5,11 @@ import { downloadText } from '../storage/export.js';
 import { buildHydrochemistryCSV } from '../engine/hydrochemistryExport.js';
 
 const IONS = Object.keys(ION_DEFINITIONS);
-const LABELS = { Ca: 'Calcium', Mg: 'Magnesium', Na: 'Sodium', K: 'Potassium', Cl: 'Chloride', SO4: 'Sulphate', HCO3: 'Bicarbonate', CO3: 'Carbonate', NO3: 'Nitrate', F: 'Fluoride' };\n// Display chemistry with conventional case, Unicode subscripts and ionic charges.\n// Lowercase registry keys remain unchanged for stored-data compatibility.\nconst ION_SYMBOLS = { Ca: 'Ca²⁺', Mg: 'Mg²⁺', Na: 'Na⁺', K: 'K⁺', Cl: 'Cl⁻', SO4: 'SO₄²⁻', HCO3: 'HCO₃⁻', CO3: 'CO₃²⁻', NO3: 'NO₃⁻', F: 'F⁻' };\nconst GROUP_LABELS = { Ca: 'Ca²⁺', Mg: 'Mg²⁺', NaK: 'Na⁺ + K⁺', Cl: 'Cl⁻', SO4: 'SO₄²⁻', HCO3CO3: 'HCO₃⁻ + CO₃²⁻' };
+const LABELS = { Ca: 'Calcium', Mg: 'Magnesium', Na: 'Sodium', K: 'Potassium', Cl: 'Chloride', SO4: 'Sulphate', HCO3: 'Bicarbonate', CO3: 'Carbonate', NO3: 'Nitrate', F: 'Fluoride' };
+// Display chemistry with conventional case, Unicode subscripts and ionic charges.
+// Lowercase registry keys remain unchanged for stored-data compatibility.
+const ION_SYMBOLS = { Ca: 'Ca²⁺', Mg: 'Mg²⁺', Na: 'Na⁺', K: 'K⁺', Cl: 'Cl⁻', SO4: 'SO₄²⁻', HCO3: 'HCO₃⁻', CO3: 'CO₃²⁻', NO3: 'NO₃⁻', F: 'F⁻' };
+const GROUP_LABELS = { Ca: 'Ca²⁺', Mg: 'Mg²⁺', NaK: 'Na⁺ + K⁺', Cl: 'Cl⁻', SO4: 'SO₄²⁻', HCO3CO3: 'HCO₃⁻ + CO₃²⁻' };
 
 export default function HydrochemistryPage() {
   const [samples, setSamples] = useState([]);
