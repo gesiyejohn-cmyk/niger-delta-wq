@@ -1,4 +1,5 @@
 name: Validate integrated geophysics upgrade
+# Re-run full cross-platform validation against the current integrated branch head.
 on:
   push:
     branches: [ndwq-integrated-geophysics-upgrade, ndwq-desktop-build-integration, ndwq-coordinate-system-upgrade]
