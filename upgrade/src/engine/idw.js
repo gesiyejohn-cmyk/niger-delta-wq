@@ -79,12 +79,15 @@ export function generateIDWGrid(samples, options = {}) {
     throw new Error('IDW grid rows and columns must each be integers of at least two.');
   }
   const hull = convexHull(points);
+  if (hull.length < 3) throw new Error('Measured sample coordinates must span a two-dimensional area; collinear points cannot define an IDW grid.');
   const minX = Math.min(...points.map(p=>p.x)), maxX = Math.max(...points.map(p=>p.x));
   const minY = Math.min(...points.map(p=>p.y)), maxY = Math.max(...points.map(p=>p.y));
   const cells = [];
   for (let row=0; row<rows; row++) for (let col=0; col<columns; col++) {
     const target = { x: minX + (maxX-minX)*col/(columns-1), y: minY + (maxY-minY)*row/(rows-1) };
-    const result = idwInterpolate(points, target, { ...options, valueKey });
+    // points are already normalised to {x, y, value}; use that key rather
+    // than the caller's original field name (e.g. "tds").
+    const result = idwInterpolate(points, target, { ...options, valueKey: 'value' });
     cells.push({ ...target, row, col, ...result });
   }
   return { cells, hull, rows, columns, method: 'Exploratory IDW; convex-hull masked; not a groundwater-potential prediction' };
