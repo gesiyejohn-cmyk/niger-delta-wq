@@ -99,3 +99,21 @@ test('IDW preserves a genuine measured zero as a valid exact sample', () => {
   assert.equal(result.status, 'Exact sample location');
   assert.equal(result.used, 1);
 });
+
+test('IDW excludes boolean and object readings and coordinates instead of coercing them to numbers', () => {
+  const contaminated = [
+    { x: 0, y: 0, tds: 10 },
+    { x: 100, y: 0, tds: 20 },
+    { x: 0, y: 100, tds: 30 },
+    { x: 100, y: 100, tds: false },
+    { x: false, y: 50, tds: 0 },
+    { x: 50, y: {}, tds: 0 }
+  ];
+  const result = idwInterpolate(contaminated, { x: 50, y: 50 }, {
+    valueKey: 'tds', neighbours: 8, maxDistance: 1000
+  });
+  assert.equal(result.used, 3);
+  assert.ok(result.value > 10 && result.value < 30);
+  assert.throws(() => idwInterpolate(samples, { x: false, y: 50 }, { valueKey: 'tds' }), /Target x and y must be finite/);
+  assert.throws(() => idwInterpolate(samples, { x: 50, y: {} }, { valueKey: 'tds' }), /Target x and y must be finite/);
+});
