@@ -51,6 +51,15 @@ test('grid generator produces requested dimensions and hull masking', () => {
   assert.match(grid.method, /not a groundwater-potential prediction/);
 });
 
+test('grid generator rejects collinear samples because they cannot define an area', () => {
+  const collinear = [
+    { x: 0, y: 0, tds: 1 },
+    { x: 10, y: 10, tds: 2 },
+    { x: 20, y: 20, tds: 3 }
+  ];
+  assert.throws(() => generateIDWGrid(collinear, { valueKey: 'tds' }), /collinear points/);
+});
+
 test('IDW rejects duplicate locations, invalid settings and insufficient points', () => {
   assert.throws(() => idwInterpolate([{x:0,y:0,value:1},{x:0,y:0,value:2},{x:1,y:1,value:3}], {x:0,y:0}));
   assert.throws(() => idwInterpolate(samples, {x:50,y:50}, {power:0}));
