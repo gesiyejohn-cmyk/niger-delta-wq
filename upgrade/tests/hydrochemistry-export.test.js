@@ -31,7 +31,7 @@ test('hydrochemistry CSV uses one consistent schema for ion and total rows', () 
     Ca: { type: 'cation' }, Mg: { type: 'cation' }, Cl: { type: 'anion' }
   };
   const csv = buildHydrochemistryCSV(sample, ions, balance, definitions);
-  const lines = csv.split('\\r\\n');
+  const lines = csv.split('\r\n');
   const header = lines[0].split(',').length;
   assert.equal(lines.length, 5);
   assert.ok(lines.every(line => parseCsvRow(line).length === header));
