@@ -94,6 +94,7 @@ test('full backup and replace restore preserve raw data, interpretations and mis
     vesInterpretations: [{ id: 'ves-1', vesId: 'ves-1', layers: [{ layer: 1, resistivity: 100, thickness: 2 }] }],
     ert: [{ id: 'ert-1', line: 'LINE-01', sourceImportId: 'ert-1', cells: [{ x: 0, depth: 1, resistivity: 50 }] }],
     ertSource: [{ id: 'ert-1', fileName: 'line.csv', contentType: 'text/csv', content: 'x,depth,resistivity\\n0,1,50' }],
+    ertFieldReadings: [{ id: 'field-1', surveyId: 'LINE-01', array: 'Wenner', apparentResistivity: 62.83 }],
     vulnerability: [{ id: 'vuln-1', method: 'DRASTIC', weightedScore: 120, ratings: { depth: 5 } }],
     wqiAssessments: [{ id: 'wqi-1', sample: { id: 'sample-1' }, measurements: [{ key: 'nitrate', measuredValue: null }], result: { wqi: 20, details: [] }, standardSource: 'Project reference' }]
   };

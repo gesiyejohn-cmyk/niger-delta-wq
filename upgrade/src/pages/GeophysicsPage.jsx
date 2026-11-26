@@ -101,7 +101,8 @@ export default function GeophysicsPage() {
   async function saveERTFieldSequence() {
     try {
       if (!line.lineId.trim()) throw new Error('Enter the ERT line ID before saving field measurements.');
-      const saved = await saveERTFieldReadings(line.lineId, ertFieldDrafts);
+      const complete = ertFieldDrafts.filter(row => row.resistanceOhm !== '' && ['A', 'B', 'M', 'N'].every(key => row.electrodes[key] !== ''));
+      const saved = await saveERTFieldReadings(line.lineId, complete);
       setErtFieldDrafts([{ array: 'Wenner', electrodes: { A: '', B: '', M: '', N: '' }, resistanceOhm: '' }]);
       notify(saved.length + ' raw ERT field reading(s) saved with electrode positions, measured resistance, geometric factor and apparent resistivity. No inversion was performed.', 'success');
       await refresh();
