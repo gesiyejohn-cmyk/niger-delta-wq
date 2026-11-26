@@ -45,3 +45,59 @@ test('negative and non-numeric concentrations are rejected', () => {
   assert.throws(() => mgLToMeqL('Ca', 'bad'));
   assert.throws(() => mgLToMeqL('Unknown', 1));
 });
+
+
+test('Piper diagram places pure Ca-HCO3 composition at the corresponding triangle vertices', async () => {
+  const { calculatePiperDiagram } = await import('../src/engine/hydrochemistry.js');
+  const result = calculatePiperDiagram({
+    Ca: 40.078, HCO3: 61.0168
+  });
+  assert.deepEqual(result.coordinates.cations, { x: 0, y: 0 });
+  assert.deepEqual(result.coordinates.anions, { x: 1.2, y: 0 });
+  assert.equal(result.facies.label, 'Ca–HCO3+CO3');
+  assert.ok(Math.abs(result.coordinates.diamond.x - 0.6) < 1e-10);
+  assert.ok(Math.abs(result.coordinates.diamond.y - Math.sqrt(3) * 0.6) < 1e-10);
+});
+
+test('Piper diagram places pure Mg-SO4 composition at the upper vertices', async () => {
+  const { calculatePiperDiagram } = await import('../src/engine/hydrochemistry.js');
+  const result = calculatePiperDiagram({
+    Mg: 24.305, SO4: 48.03
+  });
+  assert.ok(Math.abs(result.coordinates.cations.x - 0.5) < 1e-10);
+  assert.ok(Math.abs(result.coordinates.cations.y - Math.sqrt(3) / 2) < 1e-10);
+  assert.ok(Math.abs(result.coordinates.anions.x - 1.7) < 1e-10);
+  assert.ok(Math.abs(result.coordinates.anions.y - Math.sqrt(3) / 2) < 1e-10);
+});
+
+test('Piper facies reports mixed compositions when no ion group reaches 50 percent', async () => {
+  const { calculatePiperDiagram } = await import('../src/engine/hydrochemistry.js');
+  const result = calculatePiperDiagram({
+    Ca: 20.039, Mg: 12.1525, Na: 11.4948845,
+    Cl: 17.725, SO4: 24.015, HCO3: 30.5084
+  });
+  assert.equal(result.facies.cation.status, 'mixed');
+  assert.equal(result.facies.anion.status, 'mixed');
+  assert.equal(result.facies.label, 'Mixed water type');
+});
+
+test('Piper diagram does not invent triangle or diamond coordinates for missing ion groups', async () => {
+  const { calculatePiperDiagram } = await import('../src/engine/hydrochemistry.js');
+  const result = calculatePiperDiagram({ Ca: 40.078, Cl: '' });
+  assert.ok(result.coordinates.cations);
+  assert.equal(result.coordinates.anions, null);
+  assert.equal(result.coordinates.diamond, null);
+  assert.equal(result.facies.label, 'Insufficient measured ions');
+});
+
+test('Piper coordinate results stay finite for a fully measured mixed sample', async () => {
+  const { calculatePiperDiagram } = await import('../src/engine/hydrochemistry.js');
+  const result = calculatePiperDiagram({
+    Ca: 40.078, Mg: 24.305, Na: 22.989769, K: 39.0983,
+    Cl: 35.45, SO4: 48.03, HCO3: 61.0168
+  });
+  for (const point of Object.values(result.coordinates)) {
+    assert.ok(Number.isFinite(point.x));
+    assert.ok(Number.isFinite(point.y));
+  }
+});
