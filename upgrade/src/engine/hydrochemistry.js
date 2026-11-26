@@ -133,3 +133,55 @@ export function calculatePiperDiagram(sample) {
     facies: { cation: cationFacies, anion: anionFacies, label: facies }
   };
 }
+
+
+// Durov uses the same equivalent-percentage groups as Piper, but projects
+// the cation and anion triangles into a central square. The optional pH and
+// TDS panels are auxiliary measured observations, not inferred values.
+export function calculateDurovDiagram(sample, auxiliary = {}) {
+  const percentages = calculatePiperPercentages(sample);
+  const c = percentages.cations;
+  const a = percentages.anions;
+  const complete = Boolean(c && a);
+  const pH = measured(auxiliary.pH) && Number(auxiliary.pH) >= 0 && Number(auxiliary.pH) <= 14
+    ? Number(auxiliary.pH) : null;
+  const tds = measured(auxiliary.tds) && Number(auxiliary.tds) >= 0
+    ? Number(auxiliary.tds) : null;
+  return {
+    cations: c,
+    anions: a,
+    coordinates: {
+      // Durov's central square: x is the HCO3+CO3-to-Cl axis;
+      // y is the Ca-to-Na+K axis, with Mg and SO4 as the complementary terms.
+      square: complete ? {
+        x: (a.HCO3CO3 + a.SO4 / 2) / 100,
+        y: (c.Ca + c.Mg / 2) / 100
+      } : null
+    },
+    auxiliary: { pH, tds },
+    extended: Boolean(pH !== null || tds !== null),
+    status: complete ? 'complete-major-ion-projection' : 'insufficient-major-ion-data'
+  };
+}
+
+// Schoeller-Berkaloff is semi-logarithmic: positive meq/L values can be
+// plotted on log10 scale. A measured zero is retained as nonpositive (not
+// replaced with an arbitrary epsilon); an unmeasured value remains missing.
+export function calculateSchoellerSeries(sample) {
+  const meq = convertIonConcentrations(sample);
+  const groups = [
+    ['Ca', 'Ca', meq.Ca],
+    ['Mg', 'Mg', meq.Mg],
+    ['Na+K', 'Na + K', meq.Na !== null && meq.K !== null ? meq.Na + meq.K : null],
+    ['Cl', 'Cl', meq.Cl],
+    ['SO4', 'SO4', meq.SO4],
+    ['HCO3+CO3', 'HCO3 + CO3', meq.HCO3 !== null && meq.CO3 !== null ? meq.HCO3 + meq.CO3 : null],
+    ['NO3', 'NO3', meq.NO3],
+    ['F', 'F', meq.F]
+  ];
+  return groups.map(([key, label, value], index) => ({
+    key, label, index, meqL: value,
+    status: value === null ? 'unmeasured' : value === 0 ? 'measured-zero-not-plottable-on-log-axis' : 'plottable',
+    log10MeqL: value !== null && value > 0 ? Math.log10(value) : null
+  }));
+}
