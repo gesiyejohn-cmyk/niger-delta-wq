@@ -151,8 +151,15 @@ export function calculateDurovDiagram(sample, auxiliary = {}) {
     cations: c,
     anions: a,
     coordinates: {
-      // Durov's central square: x is the HCO3+CO3-to-Cl axis;
-      // y is the Ca-to-Na+K axis, with Mg and SO4 as the complementary terms.
+      // The Durov layout contains both ternary fields and their central-square
+      // projection. Keep the ternary points in local unit-triangle coordinates.
+      cationTriangle: trianglePoint(c, {
+        Ca: [0, 0], Mg: [0.5, PIPER_HEIGHT], NaK: [1, 0]
+      }),
+      anionTriangle: trianglePoint(a, {
+        Cl: [0, 0], SO4: [0.5, PIPER_HEIGHT], HCO3CO3: [1, 0]
+      }),
+      // x projects HCO3+CO3 and SO4; y projects Ca and Mg.
       square: complete ? {
         x: (a.HCO3CO3 + a.SO4 / 2) / 100,
         y: (c.Ca + c.Mg / 2) / 100

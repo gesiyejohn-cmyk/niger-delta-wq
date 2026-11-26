@@ -6,43 +6,69 @@ const ionLabel = { Ca: 'Ca²⁺', Mg: 'Mg²⁺', NaK: 'Na⁺ + K⁺', Cl: 'Cl⁻
 function DurovPlot({ ions }) {
   const result = useMemo(() => calculateDurovDiagram(ions), [ions]);
   const point = result.coordinates.square;
-  const x0 = 80, y0 = 28, size = 300;
-  const x = point ? x0 + point.x * size : null;
-  const y = point ? y0 + (1 - point.y) * size : null;
+  const cation = result.coordinates.cationTriangle;
+  const anion = result.coordinates.anionTriangle;
+  const triHeight = Math.sqrt(3) / 2;
+  const chartPoint = (p, x0, y0, width) => ({
+    x: x0 + p.x * width,
+    y: y0 + (triHeight - p.y) * width
+  });
+  const cationDot = cation && chartPoint(cation, 35, 68, 220);
+  const anionDot = anion && chartPoint(anion, 645, 68, 220);
+  const squareX = 340, squareY = 68, squareSize = 220;
+  const squareDot = point && {
+    x: squareX + point.x * squareSize,
+    y: squareY + (1 - point.y) * squareSize
+  };
   return <section className="panel" aria-labelledby="durov-title">
-    <h2 id="durov-title">Durov central-square projection</h2>
-    <p className="muted">Partial Durov representation: central-square projection of independently normalized major-ion equivalents. The two ternary plots and auxiliary pH/TDS panels are not yet displayed. The point is plotted only when all required cation and anion groups are measured.</p>
-    {point ? <>
+    <h2 id="durov-title">Durov diagram</h2>
+    <p className="muted">Major-ion Durov representation: cation and anion ternary fields with their central-square projection. All required major-ion groups must be measured; blank ions are never assumed to be zero.</p>
+    {point && cation && anion ? <>
       <div style={{overflowX:'auto'}}>
-        <svg viewBox="0 0 470 390" role="img" aria-label="Durov central square projection of the selected sample" style={{width:'100%',maxWidth:520,minWidth:300}}>
-          <rect x={x0} y={y0} width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.5"/>
-          {[1,2].map(n => <g key={n} stroke="currentColor" opacity=".28" strokeDasharray="4 4">
-            <line x1={x0+n*size/3} y1={y0} x2={x0+n*size/3} y2={y0+size}/>
-            <line x1={x0} y1={y0+n*size/3} x2={x0+size} y2={y0+n*size/3}/>
-          </g>)}
-          <g fill="currentColor" fontSize="11">
-            <text x={x0} y="17">Cl⁻</text>
-            <text x={x0+size} y="17" textAnchor="end">HCO₃⁻ + CO₃²⁻</text>
-            <text x={x0-8} y={y0+size+17} textAnchor="end">Na⁺ + K⁺</text>
-            <text x={x0+size+8} y={y0+size+17}>Ca²⁺</text>
-            <text x={x0+size/2} y={y0+size+36} textAnchor="middle">Anion projection →</text>
-            <text transform={`translate(18 ${y0+size/2}) rotate(-90)`} textAnchor="middle">Cation projection →</text>
-            <text x={x0-5} y={y0+size+3} textAnchor="end">0</text>
-            <text x={x0+size+5} y={y0+size+3}>100%</text>
-            <text x={x0-5} y={y0+8} textAnchor="end">100%</text>
-            <text x={x0+size/2} y={y0+size/2} textAnchor="middle" opacity=".5">Durov field</text>
+        <svg viewBox="0 0 900 340" role="img" aria-label="Durov diagram showing cation ternary field, central square projection, and anion ternary field" style={{width:'100%',minWidth:760}}>
+          <g fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d={`M 35 ${68+triHeight*220} L 255 ${68+triHeight*220} L 145 68 Z`}/>
+            <path d={`M 645 ${68+triHeight*220} L 865 ${68+triHeight*220} L 755 68 Z`}/>
+            <rect x={squareX} y={squareY} width={squareSize} height={squareSize}/>
           </g>
-          <circle cx={x} cy={y} r="7" fill="#0d9488" stroke="white" strokeWidth="2"/>
-          <line x1={x} y1={y} x2={x} y2={y0+size} stroke="#0d9488" strokeDasharray="3 3" opacity=".65"/>
-          <line x1={x0} y1={y} x2={x} y2={y} stroke="#0d9488" strokeDasharray="3 3" opacity=".65"/>
+          <g stroke="currentColor" opacity=".25" strokeDasharray="4 4">
+            {[1,2].map(n=><g key={n}>
+              <line x1={squareX+n*squareSize/3} y1={squareY} x2={squareX+n*squareSize/3} y2={squareY+squareSize}/>
+              <line x1={squareX} y1={squareY+n*squareSize/3} x2={squareX+squareSize} y2={squareY+n*squareSize/3}/>
+            </g>)}
+            <path d={`M 35 ${68+triHeight*220} L 145 ${68+triHeight*220/2} L 255 ${68+triHeight*220} M 90 ${68+triHeight*220/2} L 200 ${68+triHeight*220/2} M 200 ${68+triHeight*220/2} L 145 68`} fill="none"/>
+            <path d={`M 645 ${68+triHeight*220} L 755 ${68+triHeight*220/2} L 865 ${68+triHeight*220} M 700 ${68+triHeight*220/2} L 810 ${68+triHeight*220/2} M 810 ${68+triHeight*220/2} L 755 68`} fill="none"/>
+          </g>
+          <g fill="currentColor" fontSize="12">
+            <text x="145" y="28" textAnchor="middle" fontWeight="600">Cation triangle</text>
+            <text x="450" y="28" textAnchor="middle" fontWeight="600">Central square</text>
+            <text x="755" y="28" textAnchor="middle" fontWeight="600">Anion triangle</text>
+            <text x="35" y={68+triHeight*220+20}>Ca²⁺</text>
+            <text x="145" y="58" textAnchor="middle">Mg²⁺</text>
+            <text x="255" y={68+triHeight*220+20} textAnchor="end">Na⁺ + K⁺</text>
+            <text x="645" y={68+triHeight*220+20}>Cl⁻</text>
+            <text x="755" y="58" textAnchor="middle">SO₄²⁻</text>
+            <text x="865" y={68+triHeight*220+20} textAnchor="end">HCO₃⁻ + CO₃²⁻</text>
+            <text x={squareX} y="58">Cl⁻ / Na⁺ + K⁺</text>
+            <text x={squareX+squareSize} y="58" textAnchor="end">HCO₃⁻ + CO₃²⁻ / Ca²⁺</text>
+            <text x={squareX+squareSize/2} y={squareY+squareSize+20} textAnchor="middle">Anion projection →</text>
+            <text transform={`translate(${squareX-14} ${squareY+squareSize/2}) rotate(-90)`} textAnchor="middle">Cation projection →</text>
+          </g>
+          {cationDot && <circle cx={cationDot.x} cy={cationDot.y} r="7" fill="#2563eb" stroke="white" strokeWidth="2"/>}
+          {anionDot && <circle cx={anionDot.x} cy={anionDot.y} r="7" fill="#0d9488" stroke="white" strokeWidth="2"/>}
+          {squareDot && <>
+            <line x1={squareDot.x} y1={squareDot.y} x2={squareDot.x} y2={squareY+squareSize} stroke="#0d9488" strokeDasharray="3 3" opacity=".7"/>
+            <line x1={squareX} y1={squareDot.y} x2={squareDot.x} y2={squareDot.y} stroke="#0d9488" strokeDasharray="3 3" opacity=".7"/>
+            <circle cx={squareDot.x} cy={squareDot.y} r="7" fill="#d97706" stroke="white" strokeWidth="2"/>
+          </>}
         </svg>
       </div>
       <div className="form-grid">
-        <div><h3>Cation groups</h3>{Object.entries(result.cations).map(([k,v]) => <p key={k}>{ionLabel[k]}: <strong>{v.toFixed(1)}%</strong></p>)}</div>
-        <div><h3>Anion groups</h3>{Object.entries(result.anions).map(([k,v]) => <p key={k}>{ionLabel[k]}: <strong>{v.toFixed(1)}%</strong></p>)}</div>
+        <div><h3>Cation groups (meq %)</h3>{Object.entries(result.cations).map(([k,v]) => <p key={k}>{ionLabel[k]}: <strong>{v.toFixed(1)}%</strong></p>)}</div>
+        <div><h3>Anion groups (meq %)</h3>{Object.entries(result.anions).map(([k,v]) => <p key={k}>{ionLabel[k]}: <strong>{v.toFixed(1)}%</strong></p>)}</div>
       </div>
-      <p className="muted">Square coordinates: x = HCO₃⁻ + CO₃²⁻ + ½SO₄²⁻; y = Ca²⁺ + ½Mg²⁺ (each as % of its own ion total). This projection is a compositional classification aid, not a unique diagnosis of geochemical processes.</p>
-    </> : <p className="notice">Durov projection unavailable. Measure Ca, Mg, Na, K, Cl, SO₄, HCO₃ and CO₃. An unmeasured ion is not treated as zero.</p>}
+      <p className="muted">The central square uses x = HCO₃⁻ + CO₃²⁻ + ½SO₄²⁻ and y = Ca²⁺ + ½Mg²⁺, each as a percentage of its own ion total. The classic major-ion fields are shown; auxiliary pH/TDS panels are not shown because those measurements are not currently passed into this chart.</p>
+    </> : <p className="notice">Durov diagram unavailable. Measure Ca, Mg, Na, K, Cl, SO₄, HCO₃ and CO₃. An unmeasured ion is not treated as zero.</p>}
   </section>;
 }
 
@@ -78,7 +104,7 @@ function SchoellerPlot({ ions }) {
           <text x={px(i)} y={top+height+23} textAnchor="middle" fontSize="10" fill="currentColor">{p.label}</text>
         </g>)}
         <text x="12" y={top+height/2} transform={`rotate(-90 12 ${top+height/2})`} fill="currentColor" fontSize="11" textAnchor="middle">meq/L (log scale)</text>
-        <text x={left+width/2} y="330" fill="currentColor" fontSize="11" textAnchor="middle">Major-ion groups</text>
+        <text x={left+width/2} y="330" fill="currentColor" fontSize="11" textAnchor="middle">Individual dissolved ions</text>
       </svg>
     </div>
     <p className="muted">A line is broken at every unmeasured or zero-valued group so the chart does not imply a continuous measured profile across missing data.</p>

@@ -126,6 +126,8 @@ test('Durov projection locates pure Ca-HCO3 water at the corresponding square co
     Cl: 0, SO4: 0, HCO3: 61.0168, CO3: 0
   }, { pH: 7.2, tds: 250 });
   assert.deepEqual(result.coordinates.square, { x: 1, y: 1 });
+  assert.deepEqual(result.coordinates.cationTriangle, { x: 0, y: 0 });
+  assert.deepEqual(result.coordinates.anionTriangle, { x: 1, y: 0 });
   assert.equal(result.auxiliary.pH, 7.2);
   assert.equal(result.auxiliary.tds, 250);
   assert.equal(result.extended, true);
