@@ -139,7 +139,10 @@ export default function HydrochemistryPage() {
           </div>;
         })() : <p className="notice">Piper diagram unavailable: measure Ca, Mg, Na+K and Cl, SO₄, HCO₃+CO₃ (including measured zeros where appropriate). Missing groups are not treated as zero.</p>}
         <p><strong>Hydrochemical facies:</strong> {chemistry.piper.facies.label}</p>
-        <DurovSchoellerPanel ions={chemistry.ions} />
+        <DurovSchoellerPanel ions={chemistry.ions} auxiliary={{
+          pH: sample.parameters?.ph?.canonical ?? null,
+          tds: sample.parameters?.tds?.canonical ?? null
+        }} />
         <button type="button" className="primary" onClick={exportCSV}>Export hydrochemistry CSV</button>
       </>}
     </section>
