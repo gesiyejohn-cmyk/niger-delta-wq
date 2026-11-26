@@ -26,6 +26,8 @@ jobs:
           test -f source/niger-delta-wq/src/pages/GeophysicsPage.jsx
       - name: Install dependencies
         working-directory: source/niger-delta-wq
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
         run: |
           npm install
           npm install --no-save fake-indexeddb
@@ -92,6 +94,8 @@ jobs:
           node upgrade/scripts/integrate-ert-tomogram.mjs
       - name: Install dependencies and build
         working-directory: source/niger-delta-wq
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
         run: |
           npm install
           npm run build
@@ -198,7 +202,15 @@ jobs:
       - name: Install dependencies and build desktop installer
         working-directory: source/niger-delta-wq
         run: |
-          npm install
+          for attempt in 1 2 3; do
+            npm install && break
+            if [ "$attempt" -eq 3 ]; then
+              echo "Dependency installation failed after 3 attempts."
+              exit 1
+            fi
+            echo "Dependency installation attempt $attempt failed; retrying in 20 seconds."
+            sleep 20
+          done
           npm run build
           npx electron-builder --win nsis --publish never
       - name: Upload Windows desktop installer
