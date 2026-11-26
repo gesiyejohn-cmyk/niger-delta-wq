@@ -63,3 +63,31 @@ test('ERT interpolation rejects blank, boolean and object-valued coordinates', (
     { x: 0, depth: 1, resistivity: ' ' }
   ], 1, 1), /positive resistivity/);
 });
+
+test('ERT grid masks interpolation outside the imported model convex hull', () => {
+  const triangularPoints = [
+    { x: 0, depth: 0, resistivity: 20 },
+    { x: 10, depth: 0, resistivity: 40 },
+    { x: 0, depth: 10, resistivity: 60 },
+    { x: 5, depth: 0, resistivity: 30 },
+    { x: 0, depth: 5, resistivity: 50 },
+    { x: 3, depth: 3, resistivity: 45 }
+  ];
+  const result = buildERTGrid(triangularPoints);
+  assert.ok(result);
+  assert.equal(result.mask, 'convex-hull');
+  assert.ok(result.values.length < result.cols * result.rows);
+  assert.ok(result.values.every(cell => cell.x + cell.depth <= 10 + 1e-9));
+});
+
+test('ERT grid refuses collinear model points instead of rendering a false 2D section', () => {
+  const collinearPoints = [
+    { x: 0, depth: 0, resistivity: 10 },
+    { x: 2, depth: 2, resistivity: 20 },
+    { x: 4, depth: 4, resistivity: 30 },
+    { x: 6, depth: 6, resistivity: 40 },
+    { x: 8, depth: 8, resistivity: 50 },
+    { x: 10, depth: 10, resistivity: 60 }
+  ];
+  assert.equal(buildERTGrid(collinearPoints), null);
+});
