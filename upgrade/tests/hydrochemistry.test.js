@@ -29,8 +29,8 @@ test('charge balance reports insufficient data instead of zero-filling an unmeas
 
 test('Piper cation and anion groups are normalized independently to 100 percent', () => {
   const result = calculatePiperPercentages({
-    Ca: 40.078, Mg: 24.305, Na: 22.989769, K: '',
-    Cl: 35.45, SO4: 48.03, HCO3: 61.0168, CO3: null
+    Ca: 40.078, Mg: 24.305, Na: 22.989769, K: 0,
+    Cl: 35.45, SO4: 48.03, HCO3: 61.0168, CO3: 0
   });
   const cationSum = Object.values(result.cations).reduce((a, b) => a + b, 0);
   const anionSum = Object.values(result.anions).reduce((a, b) => a + b, 0);
@@ -81,6 +81,21 @@ test('Piper facies reports mixed compositions when no ion group reaches 50 perce
   assert.equal(result.facies.cation.status, 'mixed');
   assert.equal(result.facies.anion.status, 'mixed');
   assert.equal(result.facies.label, 'Mixed water type');
+});
+
+test('Piper combined groups remain unavailable when either component is unmeasured', () => {
+  const missingPotassium = calculatePiperPercentages({
+    Ca: 40.078, Mg: 24.305, Na: 22.989769, K: null,
+    Cl: 35.45, SO4: 48.03, HCO3: 61.0168, CO3: 0
+  });
+  assert.equal(missingPotassium.cations, null);
+  assert.ok(missingPotassium.anions);
+  const missingCarbonate = calculatePiperPercentages({
+    Ca: 40.078, Mg: 24.305, Na: 22.989769, K: 0,
+    Cl: 35.45, SO4: 48.03, HCO3: 61.0168, CO3: null
+  });
+  assert.ok(missingCarbonate.cations);
+  assert.equal(missingCarbonate.anions, null);
 });
 
 test('Piper diagram does not invent triangle or diamond coordinates for missing ion groups', async () => {
