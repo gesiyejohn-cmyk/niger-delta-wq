@@ -568,3 +568,20 @@ A follow-up audit found that the importer merged newly detected metadata columns
 
 Metadata alias detection is now a pure helper, and each newly loaded file replaces the complete metadata mapping with a fresh detection result. Every supported metadata field is initialized explicitly; fields not present in the new file return to “Not mapped” rather than inheriting stale selections. Regression tests cover coordinate aliases, all metadata fields, file-to-file mapping reset, and the ImportPage wiring. CI verification for this follow-up commit is pending; the successful run above applies to the parent commit only.
 
+
+
+### Coordinate-import mapping fix — CI verification on 26 November 2026
+
+The follow-up commit `de9119c1ad92c91129aa42091fda5506926813f8` was verified by [workflow run #45822338169](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45822338169). All three required jobs passed on this exact commit:
+
+- `web-and-tests`: **143 tests passed, 0 failed**; production web build and artifact upload passed.
+- `android`: original-identity debug APK built and installed on the API 35 emulator. Package `com.nigerdeltawq.mobile`, version code 1, version name 1.0 and launcher `com.nigerdeltawq.mobile.MainActivity` were verified. The launch command returned `Status: ok`, and the original launcher activity was observed as `topResumedActivity`. The isolated preview package `com.nigerdeltawq.mobile.preview2` also launched. Original APK signing certificate subject: `Android Debug`; certificate SHA-256 fingerprint `8793b5cf066ac4216eefaa0399a6a71efefcbf592767c091ac5e41907e93781e`.
+- `windows-desktop`: NSIS installer `Niger-Delta-WQ-Setup-1.0.0.exe` generated and uploaded. The build log confirms no code-signing certificate was configured; publishing was disabled.
+
+Artifacts from run #45822338169 (GitHub-uploaded ZIP archive sizes):
+
+- Web `ndwq-integrated-web`, ID `15118695786`, **303,416 bytes**, SHA-256 `386cd41be1151d1a85a748a335b1562fd0f280ae7b17cf0c6386c41f2dc5312e`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45822338169/artifacts/15118695786); expires **10 December 2026 at 12:43:56 UTC**.
+- Android `ndwq-integrated-android-debug-apk`, ID `15117834444`, **8,088,375 bytes**, SHA-256 `f201b500ac35996954f66e7b025bc88f6bbf551060ddf6bc586317c9e1ae183a`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45822338169/artifacts/15117834444); expires **10 December 2026 at 12:48:18 UTC**. The ZIP contains the original-identity debug APK, isolated preview APK and build/signing metadata.
+- Windows `ndwq-integrated-windows-desktop`, ID `15118303358`, **95,592,225 bytes**, SHA-256 `580215ea0a6951ae32f76b7ded8aeb414ca1e35a1846bf39839b96c7e2416d74`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45822338169/artifacts/15118303358); expires **10 December 2026 at 12:45:47 UTC**.
+
+This validates the importer metadata-mapping reset and its regression tests in CI. It does not establish human visual acceptance on a physical Android device, production signing or compatibility with an existing installation, real-device backup/restore, Windows installation/runtime on a real computer, web deployment/browser acceptance, or scientific sign-off. Do not uninstall, clear app data or install the debug APK over an existing phone installation. PR #2 remains open and draft.
