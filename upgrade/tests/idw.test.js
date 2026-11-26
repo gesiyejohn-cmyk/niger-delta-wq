@@ -66,3 +66,36 @@ test('IDW rejects duplicate locations, invalid settings and insufficient points'
   assert.throws(() => idwInterpolate(samples, {x:50,y:50}, {neighbours:0}));
   assert.throws(() => idwInterpolate(samples.slice(0,2), {x:0,y:0}));
 });
+
+test('IDW excludes blank, whitespace, null and undefined readings instead of treating them as zero', () => {
+  const withUnmeasuredCentre = [
+    { x: 0, y: 0, tds: 10 },
+    { x: 100, y: 0, tds: 20 },
+    { x: 0, y: 100, tds: 30 },
+    { x: 100, y: 100, tds: 40 },
+    { x: 50, y: 50, tds: '' },
+    { x: 40, y: 50, tds: '   ' },
+    { x: 60, y: 50, tds: null },
+    { x: 50, y: 40, tds: undefined }
+  ];
+  const result = idwInterpolate(withUnmeasuredCentre, { x: 50, y: 50 }, {
+    valueKey: 'tds', neighbours: 8, maxDistance: 1000
+  });
+  assert.equal(result.status, 'Interpolated');
+  assert.equal(result.used, 4);
+  assert.ok(Number.isFinite(result.value));
+  assert.ok(result.value > 10 && result.value < 40);
+});
+
+test('IDW preserves a genuine measured zero as a valid exact sample', () => {
+  const withMeasuredZero = [
+    { x: 0, y: 0, tds: 0 },
+    { x: 100, y: 0, tds: 20 },
+    { x: 0, y: 100, tds: 30 },
+    { x: 100, y: 100, tds: 40 }
+  ];
+  const result = idwInterpolate(withMeasuredZero, { x: 0, y: 0 }, { valueKey: 'tds' });
+  assert.equal(result.value, 0);
+  assert.equal(result.status, 'Exact sample location');
+  assert.equal(result.used, 1);
+});
