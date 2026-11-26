@@ -3,7 +3,7 @@ import { openDB } from 'idb';
 let promise;
 
 export function getDB() {
-  if (!promise) promise = openDB('niger-delta-wq', 7, {
+  if (!promise) promise = openDB('niger-delta-wq', 8, {
     upgrade(db) {
       if (!db.objectStoreNames.contains('samples')) {
         const store = db.createObjectStore('samples', { keyPath: 'id' });
@@ -16,6 +16,7 @@ export function getDB() {
       if (!db.objectStoreNames.contains('vesInterpretations')) db.createObjectStore('vesInterpretations', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('ert')) db.createObjectStore('ert', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('ertSource')) db.createObjectStore('ertSource', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('ertFieldReadings')) db.createObjectStore('ertFieldReadings', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('vulnerability')) db.createObjectStore('vulnerability', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('wqiAssessments')) db.createObjectStore('wqiAssessments', { keyPath: 'id' });
     }

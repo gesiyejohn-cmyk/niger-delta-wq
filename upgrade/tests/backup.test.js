@@ -11,7 +11,7 @@ import { getDB } from '../src/storage/db.js';
 
 const STORE_NAMES = [
   'samples', 'settings', 'syncQueue', 'ves', 'vesInterpretations',
-  'ert', 'ertSource', 'vulnerability', 'wqiAssessments'
+  'ert', 'ertSource', 'ertFieldReadings', 'vulnerability', 'wqiAssessments'
 ];
 
 async function clearStores(db, names = STORE_NAMES) {
@@ -31,7 +31,7 @@ test('full backup includes every current IndexedDB object store', async () => {
 });
 
 test('backup validator accepts an empty versioned database backup', () => {
-  const backup = { format: BACKUP_FORMAT, version: 1, stores: { samples: [], settings: [], syncQueue: [], ves: [], vesInterpretations: [], ert: [], ertSource: [], vulnerability: [], wqiAssessments: [] } };
+  const backup = { format: BACKUP_FORMAT, version: 1, stores: { samples: [], settings: [], syncQueue: [], ves: [], vesInterpretations: [], ert: [], ertSource: [], ertFieldReadings: [], vulnerability: [], wqiAssessments: [] } };
   assert.equal(validateDatabaseBackup(backup), backup);
 });
 
@@ -71,7 +71,8 @@ test('backup validator accepts separately stored VES interpretations and origina
       ves: [{ id: 'ves-1', readings: [{ ab2: 5, mn2: 1, resistance: 10 }] }],
       vesInterpretations: [{ id: 'ves-1', vesId: 'ves-1', layers: [{ layer: 1, resistivity: 100 }] }],
       ert: [{ id: 'ert-1', sourceImportId: 'ert-1', cells: [{ x: 0, depth: 1, resistivity: 50 }] }],
-      ertSource: [{ id: 'ert-1', fileName: 'line.csv', content: 'x,depth,resistivity\\n0,1,50' }]
+      ertSource: [{ id: 'ert-1', fileName: 'line.csv', content: 'x,depth,resistivity\\n0,1,50' }],
+      ertFieldReadings: [{ id: 'ert-reading-1', surveyId: 'ERT-01', array: 'Wenner', apparentResistivity: 62.83 }]
     }
   };
   assert.equal(validateDatabaseBackup(backup), backup);
@@ -108,7 +109,7 @@ test('full backup and replace restore preserve raw data, interpretations and mis
   await clearStores(db);
 
   const restored = await restoreDatabaseBackup(backup, 'replace');
-  assert.deepEqual(restored, { restored: 9, skipped: 0, mode: 'replace' });
+  assert.deepEqual(restored, { restored: 10, skipped: 0, mode: 'replace' });
   for (const name of STORE_NAMES) {
     assert.deepEqual(await db.getAll(name), fixture[name], name + ' should round-trip without data loss');
   }

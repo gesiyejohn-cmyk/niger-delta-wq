@@ -1,3 +1,4 @@
+import { validateERTMeasurements } from '../engine/ertAcquisition.js';
 import { getDB } from './db.js';
 
 const makeId = () => globalThis.crypto?.randomUUID?.() || `geo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -137,5 +138,42 @@ export async function deleteERT(id) {
   const tx = db.transaction(['ert', 'ertSource'], 'readwrite');
   await tx.objectStore('ert').delete(id);
   await tx.objectStore('ertSource').delete(id);
+  await tx.done;
+}
+
+export async function saveERTFieldReadings(surveyId, readings) {
+  if (typeof surveyId !== 'string' || !surveyId.trim()) {
+    throw new Error('An ERT survey/line ID is required for field readings.');
+  }
+  const validated = validateERTMeasurements(readings);
+  const db = await getDB();
+  const saved = validated.map(reading => ({
+    ...reading,
+    id: makeId(),
+    surveyId: surveyId.trim(),
+    recordedAt: reading.recordedAt || new Date().toISOString()
+  }));
+  const tx = db.transaction('ertFieldReadings', 'readwrite');
+  for (const record of saved) await tx.store.add(record);
+  await tx.done;
+  return saved;
+}
+
+export async function listERTFieldReadings(surveyId) {
+  const db = await getDB();
+  const records = await db.getAll('ertFieldReadings');
+  return surveyId == null ? records : records.filter(record => record.surveyId === surveyId);
+}
+
+export async function deleteERTFieldReadings(surveyId) {
+  if (typeof surveyId !== 'string' || !surveyId.trim()) {
+    throw new Error('An ERT survey/line ID is required.');
+  }
+  const db = await getDB();
+  const tx = db.transaction('ertFieldReadings', 'readwrite');
+  const records = await tx.store.getAll();
+  for (const record of records) {
+    if (record.surveyId === surveyId) await tx.store.delete(record.id);
+  }
   await tx.done;
 }

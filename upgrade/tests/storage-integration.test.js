@@ -2,13 +2,13 @@ import 'fake-indexeddb/auto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getDB } from '../src/storage/db.js';
-import { saveVES, listVES, saveVESInterpretation, saveERT, getERTSource } from '../src/storage/geophysics.js';
+import { saveVES, listVES, saveVESInterpretation, saveERT, getERTSource, saveERTFieldReadings, listERTFieldReadings } from '../src/storage/geophysics.js';
 import { createDatabaseBackup, restoreDatabaseBackup, validateDatabaseBackup } from '../src/storage/backup.js';
 import { saveWQIAssessment, listWQIAssessments } from '../src/storage/wqi.js';
 
 test('IndexedDB separates raw VES readings and interpretations, preserves original ERT CSV, and round-trips full backup', async () => {
   const db = await getDB();
-  const stores = ['samples', 'settings', 'syncQueue', 'ves', 'vesInterpretations', 'ert', 'ertSource', 'vulnerability', 'wqiAssessments'];
+  const stores = ['samples', 'settings', 'syncQueue', 'ves', 'vesInterpretations', 'ert', 'ertSource', 'ertFieldReadings', 'vulnerability', 'wqiAssessments'];
   const clearTx = db.transaction(stores, 'readwrite');
   for (const name of stores) await clearTx.objectStore(name).clear();
   await clearTx.done;
@@ -53,21 +53,28 @@ test('IndexedDB separates raw VES readings and interpretations, preserves origin
     measurements: [{ key: 'tds', label: 'TDS', unit: 'mg/L', measuredValue: 100, minStandard: '', maxStandard: '500', ideal: '0', weightStandard: '500' }],
     result: { wqi: 20, parameterCount: 1, missingExcluded: 0, method: 'Weighted arithmetic WQI', details: [{ key: 'tds', qualityRating: 20, applicableLimit: 500, unitWeight: 1, contribution: 20 }] }
   });
+  const fieldRecords = await saveERTFieldReadings('ERT-01', [{ array: 'Wenner', electrodes: { A: 0, M: 1, N: 2, B: 3 }, resistanceOhm: 10 }]);
+  assert.equal(fieldRecords.length, 1);
+  assert.ok(fieldRecords[0].apparentResistivity > 0);
+  assert.equal((await listERTFieldReadings('ERT-01')).length, 1);
+
   const backup = await createDatabaseBackup();
   assert.equal(backup.stores.ves.length, 1);
   assert.equal(backup.stores.vesInterpretations.length, 1);
   assert.equal(backup.stores.ert.length, 1);
   assert.equal(backup.stores.ertSource.length, 1);
+  assert.equal(backup.stores.ertFieldReadings.length, 1);
   assert.equal(backup.stores.wqiAssessments.length, 1);
 
   const emptyTx = db.transaction(stores, 'readwrite');
   for (const name of stores) await emptyTx.objectStore(name).clear();
   await emptyTx.done;
   const result = await restoreDatabaseBackup(backup, 'replace');
-  assert.equal(result.restored, 5);
+  assert.equal(result.restored, 6);
   assert.equal((await listWQIAssessments())[0].result.wqi, 20);
   assert.equal((await listVES())[0].interpretation.layers[0].resistivity, 125);
   assert.equal((await getERTSource('ert-model-1')).fileName, 'field-export.csv');
+  assert.equal((await listERTFieldReadings('ERT-01')).length, 1);
 });
 
 test('replace restore leaves local stores untouched when a partial backup omits them', async () => {
