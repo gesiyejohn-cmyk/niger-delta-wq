@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   schlumbergerGeometricFactor,
+  wennerGeometricFactor,
   calculateVES,
   validateVES,
   validateERT,
@@ -124,3 +125,8 @@ test('ERT import accepts distinct cells with numeric strings', () => {
   assert.equal(result[0].x, 10);
   assert.equal(result[1].resistivity, 80);
 });
+
+test('Wenner geometric factor equals 2 pi a', () => { assert.ok(Math.abs(wennerGeometricFactor(5)-10*Math.PI)<1e-10); });
+test('Wenner VES apparent resistivity uses K = 2 pi a', () => { const r=calculateVES({array:'Wenner',spacing:5,resistance:20}); assert.ok(Math.abs(r.geometricFactor-10*Math.PI)<1e-10); assert.ok(Math.abs(r.apparentResistivity-200*Math.PI)<1e-9); assert.equal(r.spread,5); });
+test('Wenner VES validation requires increasing positive spacing', () => { const r=validateVES([{spacing:2,resistance:10},{spacing:4,resistance:12}],'Wenner'); assert.ok(Math.abs(r[1].apparentResistivity-96*Math.PI)<1e-9); assert.throws(()=>validateVES([{spacing:0,resistance:10}],'Wenner')); assert.throws(()=>validateVES([{spacing:4,resistance:10},{spacing:3,resistance:12}],'Wenner'),/strictly increasing/); });
+test('Schlumberger VES validation retains existing AB/2 and MN/2 handling', () => { const r=validateVES([{ab2:10,mn2:2,resistance:20}],'Schlumberger'); assert.equal(r[0].spread,10); assert.ok(r[0].apparentResistivity>0); });
