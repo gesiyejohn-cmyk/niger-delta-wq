@@ -585,3 +585,12 @@ Artifacts from run #45822338169 (GitHub-uploaded ZIP archive sizes):
 - Windows `ndwq-integrated-windows-desktop`, ID `15118303358`, **95,592,225 bytes**, SHA-256 `580215ea0a6951ae32f76b7ded8aeb414ca1e35a1846bf39839b96c7e2416d74`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45822338169/artifacts/15118303358); expires **10 December 2026 at 12:45:47 UTC**.
 
 This validates the importer metadata-mapping reset and its regression tests in CI. It does not establish human visual acceptance on a physical Android device, production signing or compatibility with an existing installation, real-device backup/restore, Windows installation/runtime on a real computer, web deployment/browser acceptance, or scientific sign-off. Do not uninstall, clear app data or install the debug APK over an existing phone installation. PR #2 remains open and draft.
+
+
+### GeoJSON coordinate-reference safety — 26 November 2026
+
+The sample GeoJSON exporter previously included any record with numerically valid latitude/longitude, even if a legacy record had no documented datum or canonical storage CRS. GeoJSON coordinates are interpreted as WGS84 longitude/latitude; exporting such an unreferenced record as a Point could therefore misrepresent its location.
+
+The exporter now includes a sample only when it explicitly records datum `WGS84` and canonical storage CRS `EPSG:4326`, in addition to finite, in-range coordinates. Legacy samples with unknown coordinate reference metadata remain available in the CSV export with their recorded coordinate fields, but are omitted from GeoJSON until their reference system is verified. Regression coverage checks that a legacy unreferenced sample is excluded while a verified WGS84 sample is exported, and that both remain represented in CSV.
+
+The change and test are committed on `ndwq-coordinate-system-upgrade`; CI verification is pending. This is a conservative export safeguard, not an automatic reassignment of historical coordinate systems. A user must establish the actual datum/CRS before such records can be safely exported as GIS features.
