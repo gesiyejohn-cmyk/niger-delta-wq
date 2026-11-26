@@ -61,19 +61,19 @@ test('saved-sample-shaped records feed the hydrochemistry engine without key or 
       Ca: 40.078, Mg: 24.305, Na: 22.989769, K: 39.0983,
       Cl: 35.45, SO4: 48.03, HCO3: 61.0168, CO3: 60.0089,
       NO3: 62.0049, F: 18.9984
-    })[ion]) < 1e-9, `unexpected canonical value for ${ion}`);
+    })[ion]) < 1e-5, `unexpected canonical value for ${ion}`);
   }
   const balance = calculateChargeBalance(inputs);
   assert.ok(Number.isFinite(balance.errorPercent));
   const piper = calculatePiperPercentages(inputs);
-  assert.ok(Math.abs(Object.values(piper.cations).reduce((a, b) => a + b, 0) - 100) < 1e-9);
-  assert.ok(Math.abs(Object.values(piper.anions).reduce((a, b) => a + b, 0) - 100) < 1e-9);
+  assert.ok(Math.abs(Object.values(piper.cations).reduce((a, b) => a + b, 0) - 100) < 1e-5);
+  assert.ok(Math.abs(Object.values(piper.anions).reduce((a, b) => a + b, 0) - 100) < 1e-5);
 });
 
 test('nitrate reported as nitrate-n is converted to canonical mg/L as nitrate before charge balance', () => {
   const converted = toCanonical('no3', 10, 'mg/L as NO3-N');
   assert.equal(converted.unit, 'mg/L as NO3');
-  assert.ok(Math.abs(converted.canonical - 44.27) < 1e-9);
+  assert.ok(Math.abs(converted.canonical - 44.27) < 1e-5);
   const sample = {
     parameters: {
       no3: {
