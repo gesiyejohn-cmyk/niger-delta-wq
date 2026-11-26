@@ -219,6 +219,7 @@ jobs:
           Copy-Item -Path upgrade/tests/* -Destination source/niger-delta-wq/tests/ -Recurse -Force
           node upgrade/scripts/integrate-ert-tomogram.mjs
       - name: Install dependencies and build desktop installer
+        shell: bash
         working-directory: source/niger-delta-wq
         run: |
           for attempt in 1 2 3; do
