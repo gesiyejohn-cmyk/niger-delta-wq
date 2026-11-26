@@ -703,3 +703,24 @@ Artifacts:
 - Integrated source snapshot, ID `15020438742`, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45613215677/artifacts/15020438742), 197,677 bytes.
 
 This closes the **CI emulator first-screen visual check** for this revision. It does not close physical Android acceptance, signer compatibility/safe in-place update, production Android signing, physical Windows installation/runtime, public web deployment, real-device backup/restore, or independent scientific review/calibration. Do not install this debug APK over the user's current phone app, uninstall it or clear its data.
+
+
+
+### Latest superseding CI evidence — 26 November 2026 (run 45737561206)
+
+Commit `c3dceee03be95b486a2727747286aa6e70cdd05b` on `feature/hydrochemistry-measured-tds` completed [workflow run 45737561206](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45737561206). All three jobs completed successfully:
+
+- `web-and-tests`: passed, including scientific/geophysics tests, web production build, source packaging and signing-preflight guard checks.
+- `android`: isolated side-by-side Android preview APK build completed successfully.
+- `windows-desktop`: Windows desktop installer build completed successfully.
+
+The commit validates the UTM display-CRS selection in the coordinate-entry UI and reports an actionable validation error rather than silently suppressing an invalid conversion.
+
+Artifacts uploaded by this run:
+- Integrated source snapshot: ID `15079731996`, 218,194 bytes, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45737561206/artifacts/15079731996); expires 26 December 2026.
+- Source provenance manifest: ID `15079562618`, 3,519 bytes, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45737561206/artifacts/15079562618); expires 26 December 2026.
+- Android debug preview bundle: ID `15079503649`, 8,546,196 bytes, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45737561206/artifacts/15079503649); expires 10 December 2026.
+- Windows desktop installer bundle: ID `15079293971`, 95,622,770 bytes, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45737561206/artifacts/15079293971); expires 10 December 2026.
+- Integrated web build: ID `15079208984`, 354,493 bytes, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45737561206/artifacts/15079208984); expires 10 December 2026.
+
+**Acceptance boundary:** this is successful CI evidence for the listed commit, not production release approval. The Android artifact remains a preview/debug build; production signing and compatibility with the existing installed app are not established. Physical Android acceptance, physical Windows installation/runtime, public web deployment, real-device backup/restore, and independent scientific review/calibration remain open. Do not install this preview APK over the user's current phone app or uninstall/clear its data.
