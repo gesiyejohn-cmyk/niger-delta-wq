@@ -3,6 +3,7 @@ import { listSamples } from '../storage/samples.js';
 import { calculateChargeBalance, calculatePiperDiagram, ION_DEFINITIONS } from '../engine/hydrochemistry.js';
 import { downloadText } from '../storage/export.js';
 import { buildHydrochemistryCSV } from '../engine/hydrochemistryExport.js';
+import DurovSchoellerPanel from '../components/DurovSchoellerPanel.jsx';
 
 const IONS = Object.keys(ION_DEFINITIONS);
 const LABELS = { Ca: 'Calcium', Mg: 'Magnesium', Na: 'Sodium', K: 'Potassium', Cl: 'Chloride', SO4: 'Sulphate', HCO3: 'Bicarbonate', CO3: 'Carbonate', NO3: 'Nitrate', F: 'Fluoride' };
@@ -138,6 +139,7 @@ export default function HydrochemistryPage() {
           </div>;
         })() : <p className="notice">Piper diagram unavailable: measure Ca, Mg, Na+K and Cl, SO₄, HCO₃+CO₃ (including measured zeros where appropriate). Missing groups are not treated as zero.</p>}
         <p><strong>Hydrochemical facies:</strong> {chemistry.piper.facies.label}</p>
+        <DurovSchoellerPanel ions={chemistry.ions} />
         <button type="button" className="primary" onClick={exportCSV}>Export hydrochemistry CSV</button>
       </>}
     </section>
