@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { coordinateToDecimal, decimalToCoordinate, decimalToUTM, getStandardUTMZone, convertCoordinatePairFormat } from '../engine/coordinates.js';
+import { coordinateToDecimal, decimalToCoordinate, decimalToUTM, getStandardUTMZone, validateUTMDisplayCRS, convertCoordinatePairFormat } from '../engine/coordinates.js';
 
 const field = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
 
@@ -129,6 +129,7 @@ export default function CoordinateFields({ value, onChange, label = 'Location co
         </select>
       </label>
     </div>
+    {utmCRSError && <p className="error" role="alert">{utmCRSError}</p>}
     {converted && <><p className="muted">Canonical WGS84 decimal degrees: {converted.latitude.toFixed(8)}°, {converted.longitude.toFixed(8)}°</p>{utm && <p className="muted">Derived {utm.zone}{utm.hemisphere} UTM (EPSG:{utm.epsg}): Easting {utm.easting.toFixed(3)} m · Northing {utm.northing.toFixed(3)} m</p>}</>}
     {utm && standardZone !== null && selectedZone !== standardZone && <p className="muted" role="status">The selected UTM Zone {selectedZone} differs from the standard zone {standardZone} for this location. Confirm the intended coordinate reference system before using or exporting these values. Adjacent-zone or custom-zone projections may still be intentional.</p>}
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
