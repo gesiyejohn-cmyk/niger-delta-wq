@@ -1,10 +1,68 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { calculateDurovDiagram, calculateSchoellerSeries } from '../engine/hydrochemistry.js';
 
 const ionLabel = { Ca: 'Ca²⁺', Mg: 'Mg²⁺', NaK: 'Na⁺ + K⁺', Cl: 'Cl⁻', SO4: 'SO₄²⁻', HCO3CO3: 'HCO₃⁻ + CO₃²⁻' };
 
+function useDiagramView(baseWidth, baseHeight) {
+  const [view, setView] = useState({ x: 0, y: 0, zoom: 1 });
+  const drag = useRef(null);
+  const width = baseWidth / view.zoom;
+  const height = baseHeight / view.zoom;
+  const clamp = (value, max) => Math.max(0, Math.min(max, value));
+  function zoomBy(factor) {
+    setView(current => {
+      const zoom = Math.max(1, Math.min(4, current.zoom * factor));
+      const nextWidth = baseWidth / zoom;
+      const nextHeight = baseHeight / zoom;
+      return {
+        zoom,
+        x: clamp(current.x + (baseWidth / current.zoom - nextWidth) / 2, baseWidth - nextWidth),
+        y: clamp(current.y + (baseHeight / current.zoom - nextHeight) / 2, baseHeight - nextHeight)
+      };
+    });
+  }
+  function startPan(event) {
+    if (view.zoom <= 1) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    drag.current = { clientX: event.clientX, clientY: event.clientY, x: view.x, y: view.y, width, height };
+  }
+  function movePan(event) {
+    const start = drag.current;
+    if (!start) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const dx = (event.clientX - start.clientX) * start.width / rect.width;
+    const dy = (event.clientY - start.clientY) * start.height / rect.height;
+    setView(current => ({
+      ...current,
+      x: clamp(start.x - dx, baseWidth - width),
+      y: clamp(start.y - dy, baseHeight - height)
+    }));
+  }
+  function endPan() { drag.current = null; }
+  function reset() { drag.current = null; setView({ x: 0, y: 0, zoom: 1 }); }
+  return {
+    view, width, height, drag,
+    viewBox: `${view.x} ${view.y} ${width} ${height}`,
+    zoomIn: () => zoomBy(1.25),
+    zoomOut: () => zoomBy(0.8),
+    reset, startPan, movePan, endPan
+  };
+}
+
+function DiagramNavigation({ navigation, label }) {
+  const { view, zoomIn, zoomOut, reset } = navigation;
+  return <div className="button-row" role="group" aria-label={`${label} navigation`} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+    <button type="button" onClick={zoomIn} disabled={view.zoom >= 4} aria-label={`Zoom in on ${label}`}>Zoom in +</button>
+    <button type="button" onClick={zoomOut} disabled={view.zoom <= 1} aria-label={`Zoom out on ${label}`}>Zoom out −</button>
+    <button type="button" onClick={reset} disabled={view.zoom === 1 && view.x === 0 && view.y === 0}>Reset view</button>
+    <span className="muted" aria-live="polite">{Math.round(view.zoom * 100)}% zoom · drag to pan when zoomed</span>
+  </div>;
+}
+
 function DurovPlot({ ions }) {
   const result = useMemo(() => calculateDurovDiagram(ions), [ions]);
+  const navigation = useDiagramView(900, 340);
   const point = result.coordinates.square;
   const cation = result.coordinates.cationTriangle;
   const anion = result.coordinates.anionTriangle;
@@ -24,8 +82,9 @@ function DurovPlot({ ions }) {
     <h2 id="durov-title">Durov diagram</h2>
     <p className="muted">Major-ion Durov representation: cation and anion ternary fields with their central-square projection. All required major-ion groups must be measured; blank ions are never assumed to be zero.</p>
     {point && cation && anion ? <>
-      <div style={{overflowX:'auto'}}>
-        <svg viewBox="0 0 900 340" role="img" aria-label="Durov diagram showing cation ternary field, central square projection, and anion ternary field" style={{width:'100%',minWidth:760}}>
+      <div style={{ overflowX: 'auto' }}>
+        <DiagramNavigation navigation={navigation} label="Durov diagram" />
+        <svg viewBox={navigation.viewBox} role="img" aria-label="Durov diagram showing cation ternary field, central square projection, and anion ternary field. Zoom in, then drag to pan." onPointerDown={navigation.startPan} onPointerMove={navigation.movePan} onPointerUp={navigation.endPan} onPointerCancel={navigation.endPan} style={{ width: '100%', minWidth: 520, touchAction: 'none', cursor: navigation.view.zoom > 1 ? 'grab' : 'default', userSelect: 'none' }}>
           <g fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d={`M 35 ${68+triHeight*220} L 255 ${68+triHeight*220} L 145 68 Z`}/>
             <path d={`M 645 ${68+triHeight*220} L 865 ${68+triHeight*220} L 755 68 Z`}/>
@@ -74,6 +133,7 @@ function DurovPlot({ ions }) {
 
 function SchoellerPlot({ ions }) {
   const series = useMemo(() => calculateSchoellerSeries(ions), [ions]);
+  const navigation = useDiagramView(650, 335);
   const positive = series.filter(p => p.status === 'plottable').map(p => p.meqL);
   if (!positive.length) return <section className="panel"><h2>Schoeller–Berkaloff diagram</h2><p className="notice">No positive measured major-ion values are available to plot on a logarithmic axis.</p></section>;
   const minLog = Math.floor(Math.min(...positive.map(Math.log10)));
@@ -92,8 +152,9 @@ function SchoellerPlot({ ions }) {
   return <section className="panel" aria-labelledby="schoeller-title">
     <h2 id="schoeller-title">Schoeller–Berkaloff diagram</h2>
     <p className="muted">Major-ion concentrations are plotted in meq/L on a logarithmic vertical axis. Missing results remain gaps; measured zeroes are marked at the baseline and are not shifted to an artificial positive value.</p>
-    <div style={{overflowX:'auto'}}>
-      <svg viewBox="0 0 650 335" role="img" aria-label="Schoeller Berkaloff logarithmic plot of major-ion concentrations in milliequivalents per litre" style={{width:'100%',minWidth:520}}>
+    <div style={{ overflowX: 'auto' }}>
+      <DiagramNavigation navigation={navigation} label="Schoeller diagram" />
+      <svg viewBox={navigation.viewBox} role="img" aria-label="Schoeller Berkaloff logarithmic plot of major-ion concentrations in milliequivalents per litre. Zoom in, then drag to pan." onPointerDown={navigation.startPan} onPointerMove={navigation.movePan} onPointerUp={navigation.endPan} onPointerCancel={navigation.endPan} style={{ width: '100%', minWidth: 420, touchAction: 'none', cursor: navigation.view.zoom > 1 ? 'grab' : 'default', userSelect: 'none' }}>
         {[...Array(hi-lo+1)].map((_,i)=>{const v=10**(hi-i);const yy=top+i*height/(hi-lo);return <g key={i} stroke="currentColor" opacity=".2"><line x1={left} y1={yy} x2={left+width} y2={yy}/><text x={left-8} y={yy+4} fill="currentColor" stroke="none" textAnchor="end" fontSize="10">{v}</text></g>;})}
         <line x1={left} y1={top} x2={left} y2={top+height} stroke="currentColor"/>
         <line x1={left} y1={top+height} x2={left+width} y2={top+height} stroke="currentColor"/>
