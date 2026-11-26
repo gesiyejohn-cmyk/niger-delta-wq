@@ -73,3 +73,64 @@ export function calculatePiperPercentages(sample) {
     meqL: meq
   };
 }
+
+const PIPER_HEIGHT = Math.sqrt(3) / 2;
+const PIPER_ANION_OFFSET = 1.2;
+
+function trianglePoint(percentages, vertices) {
+  if (!percentages) return null;
+  const entries = Object.entries(vertices);
+  if (entries.some(([key]) => !Number.isFinite(percentages[key]))) return null;
+  const total = entries.reduce((sum, [key]) => sum + percentages[key], 0);
+  if (Math.abs(total - 100) > 1e-6) return null;
+  const fractions = Object.fromEntries(entries.map(([key]) => [key, percentages[key] / 100]));
+  return {
+    x: entries.reduce((sum, [key]) => sum + fractions[key] * vertices[key][0], 0),
+    y: entries.reduce((sum, [key]) => sum + fractions[key] * vertices[key][1], 0)
+  };
+}
+
+function dominantGroup(percentages) {
+  if (!percentages) return { key: null, status: 'insufficient-data' };
+  const ranked = Object.entries(percentages).sort((a, b) => b[1] - a[1]);
+  if (!ranked.length) return { key: null, status: 'insufficient-data' };
+  if (ranked[0][1] < 50) return { key: null, status: 'mixed' };
+  if (ranked[1] && 50 - ranked[1][1] <= 10) return { key: null, status: 'mixed-boundary' };
+  return { key: ranked[0][0], status: 'dominant' };
+}
+
+// Coordinates use a unit equilateral triangle (height sqrt(3)/2), with
+// Ca/Mg/Na+K and HCO3+CO3/SO4/Cl vertices in conventional Piper order.
+// The central diamond is the intersection of the two triangle projection
+// lines; the 0.1-unit side gap is represented by the 1.2-unit anion offset.
+export function calculatePiperDiagram(sample) {
+  const percentages = calculatePiperPercentages(sample);
+  const cations = trianglePoint(percentages.cations, {
+    Ca: [0, 0], Mg: [0.5, PIPER_HEIGHT], NaK: [1, 0]
+  });
+  const anions = trianglePoint(percentages.anions, {
+    HCO3CO3: [PIPER_ANION_OFFSET, 0],
+    SO4: [PIPER_ANION_OFFSET + 0.5, PIPER_HEIGHT],
+    Cl: [PIPER_ANION_OFFSET + 1, 0]
+  });
+  let diamond = null;
+  if (cations && anions) {
+    diamond = {
+      x: (anions.x + cations.x) / 2 + (anions.y - cations.y) / (4 * PIPER_HEIGHT),
+      y: (anions.y + cations.y) / 2 + PIPER_HEIGHT * (anions.x - cations.x)
+    };
+  }
+  const cationFacies = dominantGroup(percentages.cations);
+  const anionFacies = dominantGroup(percentages.anions);
+  const facies = cationFacies.status === 'insufficient-data' || anionFacies.status === 'insufficient-data'
+    ? 'Insufficient measured ions'
+    : cationFacies.key && anionFacies.key
+      ? ({ Ca: 'Ca', Mg: 'Mg', NaK: 'Na+K' }[cationFacies.key] + '–' +
+         ({ HCO3CO3: 'HCO3+CO3', SO4: 'SO4', Cl: 'Cl' }[anionFacies.key]))
+      : 'Mixed water type';
+  return {
+    ...percentages,
+    coordinates: { cations, anions, diamond },
+    facies: { cation: cationFacies, anion: anionFacies, label: facies }
+  };
+}
