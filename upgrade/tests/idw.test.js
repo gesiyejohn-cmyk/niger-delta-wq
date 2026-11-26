@@ -149,3 +149,23 @@ test('synthetic IDW CSV download has an in-app copyable fallback for Android Web
 
 test('IDW raster cell polygons are clipped to the sampled convex hull',()=>{const r=interpolateIDW(triangle,{resolution:10,maxDistanceMeters:20000,neighbors:3});assert.ok(r.cells.length>3);for(const cell of r.cells){assert.ok(Array.isArray(cell.polygon)&&cell.polygon.length>=3);assert.ok(cell.polygon.every(vertex=>pointInPolygon(vertex,r.hull)));}});
 test('grid-cell clipping retains interior cells and trims cells crossing a hull edge',()=>{const hull=[{latitude:0,longitude:0},{latitude:0,longitude:2},{latitude:2,longitude:0}];const interior=clipGridCellToHull([{latitude:.2,longitude:.2},{latitude:.2,longitude:.4},{latitude:.4,longitude:.4},{latitude:.4,longitude:.2}],hull);const crossing=clipGridCellToHull([{latitude:.8,longitude:.8},{latitude:.8,longitude:1.2},{latitude:1.2,longitude:1.2},{latitude:1.2,longitude:.8}],hull);assert.equal(interior.length,4);assert.ok(crossing.length>=3);assert.ok(crossing.every(vertex=>pointInPolygon(vertex,hull)));});
+
+
+test('IDW source adapter excludes negative dissolved-ion and TDS concentrations', () => {
+  const waterQualitySamples = [
+    { id: 'negative-tds', meta: { latitude: 5, longitude: 6 }, params: { tds: { canonical: -1 } } },
+    { id: 'valid-tds', meta: { latitude: 5.01, longitude: 6.01 }, params: { tds: { canonical: 120 } } }
+  ];
+  const hydrochemistrySamples = [
+    { id: 'negative-chloride', latitude: 5, longitude: 6, cl: -0.5 },
+    { id: 'valid-chloride', latitude: 5.01, longitude: 6.01, cl: 25 }
+  ];
+  assert.deepEqual(
+    collectIDWSamples({ waterQualitySamples, parameter: 'tds' }).ready.map(point => point.value),
+    [120]
+  );
+  assert.deepEqual(
+    collectIDWSamples({ hydrochemistrySamples, sourceMode: 'hydrochemistry', parameter: 'cl' }).ready.map(point => point.value),
+    [25]
+  );
+});
