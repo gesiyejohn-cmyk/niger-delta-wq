@@ -42,6 +42,13 @@ const isMeasuredNumber = value => value != null &&
   (typeof value === 'number' || typeof value === 'string') &&
   Number.isFinite(Number(value));
 
+const NON_NEGATIVE_CONCENTRATION_PARAMETERS = new Set([
+  'tds', ...CHEMISTRY_IDW_PARAMETERS
+]);
+const isValidParameterMeasurement = (value, parameter) =>
+  isMeasuredNumber(value) &&
+  (!NON_NEGATIVE_CONCENTRATION_PARAMETERS.has(parameter) || Number(value) >= 0);
+
 function waterQualityMeasurement(sample, parameter) {
   const measurement = sample?.parameters?.[parameter] ?? sample?.params?.[parameter];
   if (measurement && typeof measurement === 'object') {
@@ -59,7 +66,7 @@ export function collectIDWSamples({
   const waterQualityPoints = waterQualitySamples
     .filter(sample => isMeasuredNumber(sample?.meta?.latitude ?? sample?.latitude) &&
       isMeasuredNumber(sample?.meta?.longitude ?? sample?.longitude) &&
-      isMeasuredNumber(waterQualityMeasurement(sample, parameter)))
+      isValidParameterMeasurement(waterQualityMeasurement(sample, parameter), parameter))
     .map(sample => ({
       id: sample.id,
       sampleCode: sample.meta?.sampleCode ?? sample.sampleCode ?? sample.id,
@@ -71,7 +78,7 @@ export function collectIDWSamples({
   const chemistryPoints = CHEMISTRY_IDW_PARAMETERS.has(parameter)
     ? hydrochemistrySamples
       .filter(sample => isMeasuredNumber(sample?.latitude) &&
-        isMeasuredNumber(sample?.longitude) && isMeasuredNumber(sample?.[parameter]))
+        isMeasuredNumber(sample?.longitude) && isValidParameterMeasurement(sample?.[parameter], parameter))
       .map(sample => ({
         id: sample.id, sampleCode: sample.sampleId || sample.id,
         latitude: Number(sample.latitude), longitude: Number(sample.longitude),
