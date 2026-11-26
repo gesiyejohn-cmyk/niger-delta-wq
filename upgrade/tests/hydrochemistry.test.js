@@ -190,3 +190,23 @@ test('charge-balance results disclose whether optional nitrate was measured and 
  assert.equal(withNitrate.chargeBalanceNitrateIncluded,true);
  assert.ok(!withNitrate.chargeBalanceUnmeasuredIons.includes('no3'));
 });
+
+test('hydrochemistry CSV exports explicit nitrate inclusion and unmeasured-ion disclosures', async () => {
+ const { buildHydrochemistryCSV } = await import('../src/engine/hydrochemistry.js');
+ const csv=buildHydrochemistryCSV([
+  {...sample,sampleId:'NO-NITRATE'},
+  {...sample,sampleId:'MEASURED-ZERO',no3:0}
+ ]);
+ const lines=csv.split(String.fromCharCode(13,10));
+ const headers=parseCSVRow(lines[0]);
+ const unmeasured=parseCSVRow(lines[1]);
+ const measuredZero=parseCSVRow(lines[2]);
+ const nitrateIncluded=headers.indexOf('Nitrate included in charge balance');
+ const unmeasuredIons=headers.indexOf('Unmeasured ions');
+ assert.ok(nitrateIncluded>=0,'CSV must disclose nitrate inclusion');
+ assert.ok(unmeasuredIons>=0,'CSV must disclose unmeasured ions');
+ assert.equal(unmeasured[nitrateIncluded],'No');
+ assert.ok(unmeasured[unmeasuredIons].split('; ').includes('no3'));
+ assert.equal(measuredZero[nitrateIncluded],'Yes');
+ assert.ok(!measuredZero[unmeasuredIons].split('; ').includes('no3'));
+});
