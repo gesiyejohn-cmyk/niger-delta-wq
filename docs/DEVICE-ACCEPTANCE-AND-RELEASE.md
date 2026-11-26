@@ -605,3 +605,14 @@ The GOD engine computes `G × O × D`, validates the published factor ranges (G 
 Method reference: Foster, S., Hirata, R., Gomes, D., D’Elia, M. & Paris, M. (2002), *Groundwater Quality Protection*, World Bank, Technical Guide B1, Figure 1.2, pp. 22–23. The guide specifies the three-factor product and the stated factor scales. The index is an intrinsic-vulnerability screening indicator, not a contamination probability. The selected aquifer, depth/strike interpretation, predominant or limiting overlying lithology, and local geological assumptions must be recorded and reviewed.
 
 The GOD engine, UI, navigation and regression tests have been committed on `ndwq-coordinate-system-upgrade`. CI verification is pending; do not treat this feature as tested until a workflow run passes on the exact resulting commit. It has not been physically accepted on Android or Windows.
+
+
+## GOD / DRASTIC record isolation and CI evidence — 26 November 2026
+
+A follow-up audit found that the shared vulnerability store was method-tagged, and the GOD screen already listed only GOD records, but the DRASTIC screen and DRASTIC CSV exporter initially included every record in that store. That could display a GOD record as a blank DRASTIC score and create misleading rows in a DRASTIC export.
+
+The DRASTIC page now lists only records tagged `DRASTIC intrinsic vulnerability screening`; the DRASTIC exporter applies the same filter. For backward compatibility, legacy records without a method tag are retained in DRASTIC lists/exports only when they have the expected DRASTIC ratings array and a finite weighted score. GOD records are excluded. A regression test covers a mixed GOD/DRASTIC/legacy record set.
+
+On commit `e45e328a79b8a273ab06a5f178ca2a784613b00d`, the web/scientific test job passed 149 tests (0 failures) and the production web build succeeded; the Windows installer build/upload job succeeded. The Android job was cancelled while its emulator smoke-test script was booting the API 35 emulator because subsequent focused commits updated the branch and cancelled the older run. It did not complete original-identity launch verification or upload an Android artifact. These results do not validate the later DRASTIC-isolation commits.
+
+The DRASTIC isolation source and regression test are committed after that run. A fresh exact-head workflow run is required for full three-platform verification. PR #2 remains draft/open and unmerged.
