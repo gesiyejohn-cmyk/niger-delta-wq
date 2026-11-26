@@ -724,3 +724,27 @@ Artifacts uploaded by this run:
 - Integrated web build: ID `15079208984`, 354,493 bytes, [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45737561206/artifacts/15079208984); expires 10 December 2026.
 
 **Acceptance boundary:** this is successful CI evidence for the listed commit, not production release approval. The Android artifact remains a preview/debug build; production signing and compatibility with the existing installed app are not established. Physical Android acceptance, physical Windows installation/runtime, public web deployment, real-device backup/restore, and independent scientific review/calibration remain open. Do not install this preview APK over the user's current phone app or uninstall/clear its data.
+
+
+### Latest superseding cross-platform CI evidence — 26 November 2026 (run 45738205719)
+
+Commit `0533cf28a1b54bbb8899ffa2e47a023178c05ece` completed successfully in [Actions run 45738205719](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45738205719) on `feature/hydrochemistry-measured-tds`. All three jobs passed on this exact commit:
+
+- `web-and-tests`: **286 tests passed, 0 failed, 0 skipped**; production Vite build, source packaging and provenance-manifest generation passed. Android signing-preflight guard checks also passed.
+- `android`: original-identity debug APK built; API 35 emulator booted, installed and launched the app; the workflow waited for the WebView first-screen settling period and captured a screenshot and UI hierarchy. The isolated preview package `com.nigerdeltawq.mobile.preview513` also installed/launched and produced its screenshot and UI hierarchy. These are automated emulator checks, not physical-phone acceptance.
+- `windows-desktop`: NSIS desktop installer generated and uploaded successfully. This does not establish installation/runtime acceptance on a physical Windows computer or code-signing trust.
+
+Android signing and identity evidence:
+- Original package identity: `com.nigerdeltawq.mobile`; CI build uses the Android debug signer.
+- CI debug certificate SHA-256: `6941e83015d0e2904004a6742043cbe19eec6c23fd2b66b7a6fc8c52aedc92e7`.
+- Preview package identity: `com.nigerdeltawq.mobile.preview513`.
+- The CI debug certificate is not a production signing key and does not establish compatibility with the signing certificate on the user's existing phone installation. Do not install this APK over the existing app, uninstall it, or clear its data.
+
+Artifacts from run 45738205719 (GitHub Actions retention applies):
+- Android debug APK bundle, ID `15079523037`, 8,546,814 bytes, archive SHA-256 `d2335e4f280ed8575490f766b20a1f33ce5de74750a26f49447d91fdc78539b5`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45738205719/artifacts/15079523037); expires 10 December 2026.
+- Windows installer bundle, ID `15079693383`, 95,622,815 bytes, archive SHA-256 `521c2bc317f764fbb6d62508efee1987485c880fc34103bd6eeacb4cf1019c47`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45738205719/artifacts/15079693383); expires 10 December 2026.
+- Integrated web build, ID `15079807594`, 354,493 bytes, archive SHA-256 `e2027d2ec8b1abd5c06a5045d3c6db031b3875f22b82e1b09467c442880d9f8a`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45738205719/artifacts/15079807594); expires 10 December 2026.
+- Integrated source snapshot, ID `15080086965`, 218,668 bytes, archive SHA-256 `b38349130de93121f92431265c0ff6b91884ccf8e8ad7e8ef66d984820046bf8`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45738205719/artifacts/15080086965); expires 26 December 2026.
+- Source provenance manifest, ID `15079642865`, 3,519 bytes, SHA-256 `3545f6199aace872303a146c7ababe9c1ee08c125251df51f0d8bde36f5b2d69`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45738205719/artifacts/15079642865); expires 26 December 2026.
+
+**Acceptance boundary remains unchanged:** this successful CI run does not approve production release. Physical Android acceptance, verification of signer compatibility and safe update/data migration, production Android signing, physical Windows installation/runtime acceptance, public web deployment, real-device backup/restore verification, and independent scientific review/calibration remain open.
