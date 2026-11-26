@@ -60,6 +60,43 @@ export function interpolateERTResistivity(points, x, depth) {
   return interpolateValidatedPoints(validPoints, Number(x), Number(depth));
 }
 
+function convexHull(points) {
+  const sorted = [...points].sort((a, b) => a.x - b.x || a.depth - b.depth);
+  const cross = (origin, a, b) =>
+    (a.x - origin.x) * (b.depth - origin.depth)
+    - (a.depth - origin.depth) * (b.x - origin.x);
+  const lower = [];
+  for (const point of sorted) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) lower.pop();
+    lower.push(point);
+  }
+  const upper = [];
+  for (let index = sorted.length - 1; index >= 0; index -= 1) {
+    const point = sorted[index];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) upper.pop();
+    upper.push(point);
+  }
+  lower.pop();
+  upper.pop();
+  return lower.concat(upper);
+}
+
+function isInsideConvexHull(point, hull) {
+  if (hull.length < 3) return false;
+  let orientation = 0;
+  for (let index = 0; index < hull.length; index += 1) {
+    const a = hull[index];
+    const b = hull[(index + 1) % hull.length];
+    const cross = (b.x - a.x) * (point.depth - a.depth)
+      - (b.depth - a.depth) * (point.x - a.x);
+    if (Math.abs(cross) <= 1e-10) continue;
+    const sign = Math.sign(cross);
+    if (orientation && sign !== orientation) return false;
+    orientation = sign;
+  }
+  return true;
+}
+
 export function buildERTGrid(points) {
   if (!Array.isArray(points) || !points.length) return null;
   // Validate source data before deciding whether coverage is sufficient.
@@ -76,13 +113,24 @@ export function buildERTGrid(points) {
   if (x0 === x1 || z0 === z1) return null;
   const cols = Math.min(60, Math.max(24, xs.length * 3));
   const rows = Math.min(36, Math.max(12, depths.length * 3));
+  const hull = convexHull(validPoints);
+  if (hull.length < 3) return null;
   const values = [];
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
       const x = x0 + (col + 0.5) / cols * (x1 - x0);
       const depth = z0 + (row + 0.5) / rows * (z1 - z0);
-      values.push({ c: col, r: row, value: interpolateValidatedPoints(validPoints, x, depth) });
+      // Do not extrapolate the displayed section beyond the imported model's
+      // convex-hull footprint; leave unsupported edge regions blank.
+      if (!isInsideConvexHull({ x, depth }, hull)) continue;
+      values.push({ c: col, r: row, x, depth, value: interpolateValidatedPoints(validPoints, x, depth) });
     }
   }
-  return { cols, rows, values, x0, x1, z0, z1, method: 'log-resistivity inverse-distance weighting', inversionPerformed: false };
+  if (!values.length) return null;
+  return {
+    cols, rows, values, x0, x1, z0, z1,
+    method: 'log-resistivity inverse-distance weighting',
+    mask: 'convex-hull',
+    inversionPerformed: false
+  };
 }
