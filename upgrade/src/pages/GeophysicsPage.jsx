@@ -16,7 +16,7 @@ export default function GeophysicsPage() {
   const [meta, setMeta] = useState({ stationId: '', latitude: '', longitude: '', array: 'Schlumberger', notes: '' });
   const [vesCoordinates, setVesCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
   const [ertCoordinates, setErtCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
-  const [readings, setReadings] = useState([{ ab2: '', mn2: '', resistance: '' }]);
+  const [readings, setReadings] = useState([{ ab2: '', mn2: '', spacing: '', resistance: '' }]);
   const [line, setLine] = useState({ lineId: '', spacing: '', electrodes: '', rms: '', software: '', notes: '' });
   const [cells, setCells] = useState([]);
   const [sourceImport, setSourceImport] = useState(null);
@@ -48,7 +48,7 @@ export default function GeophysicsPage() {
   function rowPreview(row) {
     if (row.ab2 === '' || row.mn2 === '' || row.resistance === '') return null;
     try {
-      return calculateVES(row);
+      return calculateVES({ ...row, array: meta.array });
     } catch {
       return null;
     }
@@ -56,9 +56,9 @@ export default function GeophysicsPage() {
   async function saveSounding() {
     try {
       const completeRows = readings.filter(row =>
-        row.ab2 !== '' && row.mn2 !== '' && row.resistance !== ''
+        row.resistance !== '' && (meta.array === 'Wenner' ? row.spacing !== '' : row.ab2 !== '' && row.mn2 !== '')
       );
-      const clean = validateVES(completeRows);
+      const clean = validateVES(completeRows, meta.array);
       const partial = clean.length < 2;
       const coordinates = validateCoordinatePair(vesCoordinates);
       await saveVES({
@@ -71,7 +71,7 @@ export default function GeophysicsPage() {
         interpretationStatus: partial ? 'Partial sounding - additional readings required' : 'Uninterpreted',
         dataStatus: partial ? 'One valid reading stored; curve requires at least two readings' : 'Field readings stored'
       });
-      setReadings([{ ab2: '', mn2: '', resistance: '' }]);
+      setReadings([{ ab2: '', mn2: '', spacing: '', resistance: '' }]);
       notify(partial
         ? 'VES reading saved. Add at least one more valid reading to produce a sounding curve.'
         : 'VES sounding saved. Apparent resistivity and geometric factors were calculated; layer interpretation remains a separate expert task.', 'success');
@@ -148,7 +148,7 @@ export default function GeophysicsPage() {
   return <div className="page">
     <p className="eyebrow">INTEGRATED GEOPHYSICAL DATA</p>
     <h1>VES &amp; ERT workspace</h1>
-    <p className="muted">Record field measurements, calculate Schlumberger apparent resistivity, and visualise imported ERT inversion points. Raw observations and interpreted models are stored separately from water-quality samples.</p>
+    <p className="muted">Record Schlumberger or Wenner VES measurements with array-specific apparent resistivity, and visualise imported ERT inversion points. Raw observations and interpreted models are stored separately from water-quality samples.</p>
     <section style={panel}>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button onClick={() => setTab('VES')} className={tab === 'VES' ? 'primary' : ''}>VES soundings</button>
@@ -166,6 +166,7 @@ export default function GeophysicsPage() {
           <label>Array configuration
             <select style={input} value={meta.array} onChange={event => setMeta(old => ({ ...old, array: event.target.value }))}>
               <option>Schlumberger</option>
+              <option>Wenner</option>
             </select>
           </label>
           <label className="span-two">Field notes
@@ -173,20 +174,23 @@ export default function GeophysicsPage() {
           </label>
         </div>
         <h2>Field readings</h2>
-        <p className="muted">AB/2 and MN/2 are in metres; resistance is in ohms. Blank rows are ignored. At least one complete reading can be stored; two or more are needed for a sounding curve.</p>
+        <p className="muted">{meta.array === "Wenner" ? "Enter equal adjacent-electrode spacing a in metres; Wenner uses K = 2πa. " : "AB/2 and MN/2 are in metres; Schlumberger uses K = π[(AB/2)² − (MN/2)²] / [2(MN/2)]. "}Resistance is in ohms. Blank rows are ignored. At least one complete reading can be stored; two or more are needed for a sounding curve.</p>
         {readings.map((row, index) => {
           const preview = rowPreview(row);
           return <div key={index} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 10, marginBottom: 10 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
-              {[
+              {(meta.array === 'Wenner' ? [
+                ['spacing', 'Electrode spacing a (m)'],
+                ['resistance', 'Resistance (Ω)']
+              ] : [
                 ['ab2', 'AB/2 (m)'],
                 ['mn2', 'MN/2 (m)'],
                 ['resistance', 'Resistance (Ω)']
-              ].map(([key, label]) => <label key={key}>{label}
+              ]).map(([key, label]) => <label key={key}>{label}
                 <input style={input} type="number" min="0" step="any" value={row[key]} onChange={event => editRow(index, key, event.target.value)} />
               </label>)}
             </div>
-            {preview && <p className="muted">Geometric factor: {preview.geometricFactor.toFixed(3)} m · Apparent resistivity: <strong>{preview.apparentResistivity.toFixed(2)} Ωm</strong></p>}
+            {preview && <p className="muted">{meta.array} geometric factor: {preview.geometricFactor.toFixed(3)} m · Apparent resistivity: <strong>{preview.apparentResistivity.toFixed(2)} Ωm</strong></p>}
             <button type="button" onClick={() => setReadings(old => old.filter((_, i) => i !== index))} disabled={readings.length === 1}>Remove reading</button>
           </div>;
         })}
@@ -280,15 +284,15 @@ export default function GeophysicsPage() {
 }
 
 function VESPlot({ record }) {
-  const points = record.readings.filter(row => row.ab2 > 0 && row.apparentResistivity > 0);
-  const maxX = Math.max(1, ...points.map(point => point.ab2));
+  const points = record.readings.filter(row => (row.spread ?? row.ab2) > 0 && row.apparentResistivity > 0);
+  const maxX = Math.max(1, ...points.map(point => point.spread ?? point.ab2));
   const maxY = Math.max(1, ...points.map(point => point.apparentResistivity));
   return <section>
     <h2>VES sounding curve — {record.stationId || 'Unlabelled sounding'}</h2>
     <svg viewBox="0 0 720 300" style={{ width: '100%', background: '#f8fafc', border: '1px solid #cbd5e1' }}>
       <path d="M55 15V255H700" fill="none" stroke="#64748b" />
       {points.map((point, index) => <g key={index}>
-        <circle cx={55 + point.ab2 / maxX * 630} cy={255 - point.apparentResistivity / maxY * 220} r="4" fill="#2563eb" />
+        <circle cx={55 + (point.spread ?? point.ab2) / maxX * 630} cy={255 - point.apparentResistivity / maxY * 220} r="4" fill="#2563eb" />
         <title>AB/2 {point.ab2} m; apparent resistivity {point.apparentResistivity.toFixed(2)} Ωm</title>
       </g>)}
     </svg>
