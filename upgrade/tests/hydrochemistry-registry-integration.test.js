@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PARAMETER_REGISTRY } from '../../src/engine/parameters.js';
-import { availableUnits, toCanonical } from '../../src/engine/units.js';
+import { PARAMETER_REGISTRY } from '../src/engine/parameters.js';
+import { availableUnits, toCanonical } from '../src/engine/units.js';
 import {
   ION_DEFINITIONS,
   calculateChargeBalance,
