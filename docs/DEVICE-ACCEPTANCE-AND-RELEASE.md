@@ -594,3 +594,14 @@ The sample GeoJSON exporter previously included any record with numerically vali
 The exporter now includes a sample only when it explicitly records datum `WGS84` and canonical storage CRS `EPSG:4326`, in addition to finite, in-range coordinates. Legacy samples with unknown coordinate reference metadata remain available in the CSV export with their recorded coordinate fields, but are omitted from GeoJSON until their reference system is verified. Regression coverage checks that a legacy unreferenced sample is excluded while a verified WGS84 sample is exported, and that both remain represented in CSV.
 
 The change and test are committed on `ndwq-coordinate-system-upgrade`; CI verification is pending. This is a conservative export safeguard, not an automatic reassignment of historical coordinate systems. A user must establish the actual datum/CRS before such records can be safely exported as GIS features.
+
+
+## Independent GOD vulnerability workflow — 26 November 2026
+
+The branch now includes a separate GOD assessment workspace at `/god`, separate from the existing DRASTIC screen at `/vulnerability`. The two methods use independent inputs and calculation paths: a GOD assessment requires only G, O and D ratings; a DRASTIC assessment continues to require its own seven ratings. Neither method reads or derives its values from the other's saved records.
+
+The GOD engine computes `G × O × D`, validates the published factor ranges (G 0–1, O 0.4–1, D 0.6–1), and classifies the resulting 0–1 index using negligible, low, moderate, high and extreme bands. The workspace saves GOD records separately by method tag in the existing vulnerability store, lists only GOD records, and exports a GOD-only CSV. Coordinates are optional. Factor ratings remain investigator-entered: the application does not automatically infer confinement, vadose-zone lithology or depth ratings from VES/ERT or water chemistry.
+
+Method reference: Foster, S., Hirata, R., Gomes, D., D’Elia, M. & Paris, M. (2002), *Groundwater Quality Protection*, World Bank, Technical Guide B1, Figure 1.2, pp. 22–23. The guide specifies the three-factor product and the stated factor scales. The index is an intrinsic-vulnerability screening indicator, not a contamination probability. The selected aquifer, depth/strike interpretation, predominant or limiting overlying lithology, and local geological assumptions must be recorded and reviewed.
+
+The GOD engine, UI, navigation and regression tests have been committed on `ndwq-coordinate-system-upgrade`. CI verification is pending; do not treat this feature as tested until a workflow run passes on the exact resulting commit. It has not been physically accepted on Android or Windows.
