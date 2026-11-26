@@ -228,3 +228,34 @@ test('bulk import infers hemispheres from signed DD strings and canonicalizes fo
   assert.equal(imported.coordinateOriginal.longitudeHemisphere, 'W');
   assert.equal(imported.coordinateCRS, 'UTM Zone 32S (WGS84)');
 });
+
+
+test('GeoJSON excludes legacy coordinates without verified WGS84 storage metadata', async () => {
+  await clearSampleStores();
+  const db = await getDB();
+  await db.put('samples', {
+    id: 'legacy-unknown-crs',
+    sampleCode: 'LEGACY-UNKNOWN-CRS',
+    latitude: 4.92,
+    longitude: 6.26
+  });
+  await saveSample({
+    meta: {
+      sampleCode: 'KNOWN-WGS84',
+      latitude: '4.92',
+      longitude: '6.26',
+      coordinateDatum: 'WGS84',
+      coordinateCRS: 'Geographic (WGS84)'
+    },
+    params: {}
+  });
+
+  const geojson = await exportSamplesGeoJSON();
+  assert.equal(geojson.features.length, 1);
+  assert.equal(geojson.features[0].properties.sampleCode, 'KNOWN-WGS84');
+  assert.deepEqual(geojson.features[0].geometry.coordinates, [6.26, 4.92]);
+
+  const csv = await exportSamplesCSV();
+  assert.ok(csv.includes('"LEGACY-UNKNOWN-CRS"'));
+  assert.ok(csv.includes('"KNOWN-WGS84"'));
+});
