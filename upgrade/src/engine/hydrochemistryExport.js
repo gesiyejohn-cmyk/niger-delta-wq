@@ -22,5 +22,5 @@ export function buildHydrochemistryCSV(sample, ions, balance, definitions) {
     sample.collectionDate, '', '', '', '', balance.cationTotal,
     balance.anionTotal, balance.errorPercent ?? '', balance.status
   ]);
-  return rows.map(row => row.map(csvCell).join(',')).join('\\r\\n');
+  return rows.map(row => row.map(csvCell).join(',')).join('\r\n');
 }
