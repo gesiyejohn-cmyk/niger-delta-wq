@@ -6,6 +6,9 @@ import { downloadText } from '../storage/export.js';
 
 const FIELDS = [['tds','Total dissolved solids','mg/L'],['ec','Electrical conductivity','µS/cm'],['no3','Nitrate','mg/L'],['fe','Iron','mg/L'],['cl','Chloride','mg/L']];
 const cellCSV = value => '"' + String(value ?? '').replace(/"/g, '""') + '"';
+const isMeasuredFinite = value => value !== null && value !== undefined
+  && !(typeof value === 'string' && value.trim() === '')
+  && Number.isFinite(Number(value));
 
 export default function IDWPage() {
   const [samples, setSamples] = useState([]);
@@ -21,8 +24,7 @@ export default function IDWPage() {
   const prepared = useMemo(() => {
     const candidates = samples.filter(s => Number.isFinite(s.latitude) && Number.isFinite(s.longitude)
       && s.coordinateDatum === 'WGS84' && s.coordinateStorageCRS === 'EPSG:4326'
-      && s.parameters?.[field]?.canonical != null
-      && Number.isFinite(Number(s.parameters[field].canonical)));
+      && isMeasuredFinite(s.parameters?.[field]?.canonical));
     if (!candidates.length) return { points: [], message: 'No samples have both WGS84 coordinates and a measured value for this parameter.' };
     const projections = new Set(candidates.map(s => getStandardUTMZone(s.latitude, s.longitude) + (s.latitude < 0 ? 'S' : 'N')));
     if (projections.size !== 1) return { points: [], message: 'The selected samples span multiple standard UTM zones or hemispheres. Filter the dataset to one UTM zone and hemisphere before interpolation; the app will not mix coordinate systems.' };
