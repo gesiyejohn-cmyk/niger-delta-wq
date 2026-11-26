@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { listSamples } from '../storage/samples.js';
 import { calculateChargeBalance, calculatePiperDiagram, ION_DEFINITIONS } from '../engine/hydrochemistry.js';
 import { downloadText } from '../storage/export.js';
@@ -15,6 +15,8 @@ export default function HydrochemistryPage() {
   const [samples, setSamples] = useState([]);
   const [sampleId, setSampleId] = useState('');
   const [error, setError] = useState('');
+  const [piperView, setPiperView] = useState({ x: 0, y: 0, zoom: 1 });
+  const piperDrag = useRef(null);
   useEffect(() => { listSamples().then(setSamples).catch(e => setError(e.message)); }, []);
   const sample = samples.find(s => String(s.id) === String(sampleId)) || samples[0] || null;
   const chemistry = useMemo(() => {
@@ -86,8 +88,39 @@ export default function HydrochemistryPage() {
           const cat = chemistry.piper.coordinates.cations;
           const ani = chemistry.piper.coordinates.anions;
           const dia = chemistry.piper.coordinates.diamond;
+          const viewWidth = 600 / piperView.zoom;
+          const viewHeight = 420 / piperView.zoom;
+          const clamp = (value, max) => Math.max(0, Math.min(max, value));
+          function zoomPiper(factor) {
+            setPiperView(current => {
+              const zoom = Math.max(1, Math.min(4, current.zoom * factor));
+              const width = 600 / zoom;
+              const height = 420 / zoom;
+              return { zoom, x: clamp(current.x + (600 / current.zoom - width) / 2, 600 - width), y: clamp(current.y + (420 / current.zoom - height) / 2, 420 - height) };
+            });
+          }
+          function startPiperPan(event) {
+            if (piperView.zoom <= 1) return;
+            event.currentTarget.setPointerCapture(event.pointerId);
+            piperDrag.current = { clientX: event.clientX, clientY: event.clientY, x: piperView.x, y: piperView.y };
+          }
+          function movePiperPan(event) {
+            const start = piperDrag.current;
+            if (!start) return;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const dx = (event.clientX - start.clientX) * viewWidth / rect.width;
+            const dy = (event.clientY - start.clientY) * viewHeight / rect.height;
+            setPiperView(current => ({ ...current, x: clamp(start.x - dx, 600 - viewWidth), y: clamp(start.y - dy, 420 - viewHeight) }));
+          }
+          function endPiperPan() { piperDrag.current = null; }
           return <div style={{width:'100%',overflowX:'auto'}}>
-            <svg viewBox="0 0 600 420" role="img" aria-label="Piper trilinear diagram showing cation and anion triangles and central diamond" style={{width:'100%',minWidth:320,maxHeight:440}}>
+            <div className="button-row" role="group" aria-label="Piper diagram navigation" style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
+              <button type="button" onClick={() => zoomPiper(1.25)} disabled={piperView.zoom >= 4} aria-label="Zoom in on Piper diagram">Zoom in +</button>
+              <button type="button" onClick={() => zoomPiper(0.8)} disabled={piperView.zoom <= 1} aria-label="Zoom out on Piper diagram">Zoom out −</button>
+              <button type="button" onClick={() => { piperDrag.current = null; setPiperView({ x: 0, y: 0, zoom: 1 }); }} disabled={piperView.zoom === 1 && piperView.x === 0 && piperView.y === 0}>Reset view</button>
+              <span className="muted" aria-live="polite">{Math.round(piperView.zoom * 100)}% zoom</span>
+            </div>
+            <svg viewBox={`${piperView.x} ${piperView.y} ${viewWidth} ${viewHeight}`} role="img" aria-label="Piper trilinear diagram showing cation and anion triangles and central diamond. Zoom in, then drag to pan." onPointerDown={startPiperPan} onPointerMove={movePiperPan} onPointerUp={endPiperPan} onPointerCancel={endPiperPan} style={{width:'100%',minWidth:320,maxHeight:440,touchAction:'none',cursor:piperView.zoom > 1 ? 'grab' : 'default',userSelect:'none'}}>
               <g fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.8">
                 <path d={`M 0,389.5 L 250,389.5 L 125,${(2.05-h)*190} Z`} />
                 <path d={`M 300,389.5 L 550,389.5 L 425,${(2.05-h)*190} Z`} />
