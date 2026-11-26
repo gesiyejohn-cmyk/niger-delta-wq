@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
 import { calculateVES, validateVES, validateERT } from '../engine/geophysics.js';
+import { calculateERTMeasurement } from '../engine/ertAcquisition.js';
 import VESInterpretation from './VESInterpretation.jsx';
 import ERTTomogram from './ERTTomogram.jsx';
 import CoordinateFields from './CoordinateFields.jsx';
 import { validateCoordinatePair } from '../engine/coordinates.js';
-import { saveVES, listVES, deleteVES, saveERT, listERT, deleteERT } from '../storage/geophysics.js';
+import { saveVES, listVES, deleteVES, saveERT, listERT, deleteERT, saveERTFieldReadings, listERTFieldReadings } from '../storage/geophysics.js';
 
 const input = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
 const panel = { background: '#fff', border: '1px solid #dbe3ea', borderRadius: 12, padding: 16, marginBottom: 16 };
@@ -14,6 +15,8 @@ export default function GeophysicsPage() {
   const [tab, setTab] = useState('VES');
   const [ves, setVes] = useState([]);
   const [ert, setErt] = useState([]);
+  const [savedERTFieldReadings, setSavedERTFieldReadings] = useState([]);
+  const [ertFieldDrafts, setErtFieldDrafts] = useState([{ array: 'Wenner', electrodes: { A: '', B: '', M: '', N: '' }, resistanceOhm: '' }]);
   const [meta, setMeta] = useState({ stationId: '', latitude: '', longitude: '', array: 'Schlumberger', notes: '' });
   const [vesCoordinates, setVesCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
   const [ertCoordinates, setErtCoordinates] = useState({ latitude: '', longitude: '', format: 'DD', latitudeHemisphere: 'N', longitudeHemisphere: 'E', datum: 'WGS84', crs: 'Geographic (WGS84)' });
@@ -31,6 +34,7 @@ export default function GeophysicsPage() {
       setVes(await listVES());
       const savedERT = await listERT();
       setErt(savedERT);
+      setSavedERTFieldReadings(await listERTFieldReadings());
       setSelectedErtModelId(current => current || savedERT[0]?.id || '');
     } catch (error) {
       setMsg('Could not load saved geophysical records: ' + error.message);
@@ -79,6 +83,30 @@ export default function GeophysicsPage() {
       await refresh();
     } catch (error) {
       notify('VES not saved: ' + error.message, 'error');
+    }
+  }
+
+  function editERTField(index, key, value) {
+    setErtFieldDrafts(old => old.map((row, rowIndex) => {
+      if (rowIndex !== index) return row;
+      if (key.startsWith('electrode:')) return { ...row, electrodes: { ...row.electrodes, [key.split(':')[1]]: value } };
+      return { ...row, [key]: value };
+    }));
+  }
+
+  function previewERTField(row) {
+    try { return calculateERTMeasurement(row); } catch { return null; }
+  }
+
+  async function saveERTFieldSequence() {
+    try {
+      if (!line.lineId.trim()) throw new Error('Enter the ERT line ID before saving field measurements.');
+      const saved = await saveERTFieldReadings(line.lineId, ertFieldDrafts);
+      setErtFieldDrafts([{ array: 'Wenner', electrodes: { A: '', B: '', M: '', N: '' }, resistanceOhm: '' }]);
+      notify(saved.length + ' raw ERT field reading(s) saved with electrode positions, measured resistance, geometric factor and apparent resistivity. No inversion was performed.', 'success');
+      await refresh();
+    } catch (error) {
+      notify('ERT field readings not saved: ' + error.message, 'error');
     }
   }
 
@@ -223,7 +251,44 @@ export default function GeophysicsPage() {
           </label>
           <CoordinateFields value={ertCoordinates} onChange={setErtCoordinates} label="ERT survey location coordinates" />
         </div>
-        <p className="muted">Import a CSV exported from inversion software with columns x, depth, resistivity (or electrode_x, depth_m, resistivity_ohm_m). RMS error and software details should come from the actual inversion report.</p>
+        <h2>Raw ERT field acquisition</h2>
+        <p className="muted">Record each four-electrode reading by its actual line positions in metres: current electrodes A/B and potential electrodes M/N. NDWQ calculates the general collinear geometric factor and apparent resistivity from these positions and measured transfer resistance. Array name is recorded as survey metadata; the electrode positions determine the calculation. These readings are raw field observations, not an inverted subsurface model.</p>
+        {ertFieldDrafts.map((row, index) => {
+          const preview = previewERTField(row);
+          return <div key={index} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 10, marginBottom: 10 }}>
+            <div className="form-grid">
+              <label>Array configuration
+                <select style={input} value={row.array} onChange={event => editERTField(index, 'array', event.target.value)}>
+                  <option>Wenner</option><option>Schlumberger</option><option>Dipole-dipole</option><option>Custom</option>
+                </select>
+              </label>
+              {['A', 'B', 'M', 'N'].map(key => <label key={key}>Electrode {key} position (m)
+                <input style={input} type="number" step="any" value={row.electrodes[key]} onChange={event => editERTField(index, 'electrode:' + key, event.target.value)} />
+              </label>)}
+              <label>Transfer resistance (Ω)
+                <input style={input} type="number" step="any" value={row.resistanceOhm} onChange={event => editERTField(index, 'resistanceOhm', event.target.value)} />
+              </label>
+            </div>
+            {preview && <p className="muted">Geometric factor: {preview.geometricFactor.toFixed(3)} m · Apparent resistivity: <strong>{preview.apparentResistivity.toFixed(2)} Ωm</strong> · Polarity: {preview.polarity > 0 ? 'positive' : 'negative'}</p>}
+            <button type="button" onClick={() => setErtFieldDrafts(old => old.filter((_, rowIndex) => rowIndex !== index))} disabled={ertFieldDrafts.length === 1}>Remove reading</button>
+          </div>;
+        })}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button type="button" onClick={() => setErtFieldDrafts(old => [...old, { array: 'Wenner', electrodes: { A: '', B: '', M: '', N: '' }, resistanceOhm: '' }])}>Add ERT field reading</button>
+          <button type="button" className="primary" onClick={saveERTFieldSequence}>Save raw ERT field readings</button>
+        </div>
+        <h3>Saved raw ERT field readings</h3>
+        {savedERTFieldReadings.length === 0 ? <p className="muted">No raw ERT field readings saved yet.</p> : <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead><tr><th align="left">Line</th><th>Array</th><th>A/B/M/N positions (m)</th><th>R (Ω)</th><th>Apparent resistivity (Ωm)</th></tr></thead>
+            <tbody>{savedERTFieldReadings.map(record => <tr key={record.id}>
+              <td>{record.surveyId}</td><td>{record.array}</td><td>{['A','B','M','N'].map(key => record.electrodes[key]).join(' / ')}</td><td align="right">{record.signedResistanceOhm}</td><td align="right">{record.apparentResistivity.toFixed(2)}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>}
+        <h2>Import an inverted ERT model</h2>
+        <p className="muted">Separately, import a CSV exported from inversion software with columns x, depth, resistivity (or electrode_x, depth_m, resistivity_ohm_m). RMS error and software details should come from the actual inversion report. Raw field readings above are not automatically inverted.</p>
+
         <input type="file" accept=".csv,text/csv" onChange={event => event.target.files?.[0] && importERT(event.target.files[0])} />
         <p>{cells.length} model points staged for import.</p>
         <button type="button" className="primary" disabled={!cells.length} onClick={saveModel}>Save imported ERT model</button>
