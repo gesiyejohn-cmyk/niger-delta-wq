@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Papa from 'papaparse';
 import { calculateVES, validateVES, validateERT } from '../engine/geophysics.js';
 import { calculateERTMeasurement } from '../engine/ertAcquisition.js';
+import { ertFieldReadingsToCSV } from '../engine/ertAcquisitionCsv.js';
 import VESInterpretation from './VESInterpretation.jsx';
 import ERTTomogram from './ERTTomogram.jsx';
 import CoordinateFields from './CoordinateFields.jsx';
@@ -108,6 +109,24 @@ export default function GeophysicsPage() {
       await refresh();
     } catch (error) {
       notify('ERT field readings not saved: ' + error.message, 'error');
+    }
+  }
+
+  function exportERTFieldReadings() {
+    try {
+      const csv = ertFieldReadingsToCSV(savedERTFieldReadings);
+      const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'ndwq-ert-field-readings.csv';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      notify('Exported ' + savedERTFieldReadings.length + ' raw ERT field reading(s) to CSV.', 'success');
+    } catch (error) {
+      notify('ERT field-data export failed: ' + error.message, 'error');
     }
   }
 
@@ -278,7 +297,10 @@ export default function GeophysicsPage() {
           <button type="button" onClick={() => setErtFieldDrafts(old => [...old, { array: 'Wenner', electrodes: { A: '', B: '', M: '', N: '' }, resistanceOhm: '' }])}>Add ERT field reading</button>
           <button type="button" className="primary" onClick={saveERTFieldSequence}>Save raw ERT field readings</button>
         </div>
-        <h3>Saved raw ERT field readings</h3>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <h3>Saved raw ERT field readings</h3>
+          <button type="button" onClick={exportERTFieldReadings} disabled={savedERTFieldReadings.length === 0}>Export field readings CSV</button>
+        </div>
         {savedERTFieldReadings.length === 0 ? <p className="muted">No raw ERT field readings saved yet.</p> : <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr><th align="left">Line</th><th>Array</th><th>A/B/M/N positions (m)</th><th>R (Ω)</th><th>Apparent resistivity (Ωm)</th></tr></thead>
