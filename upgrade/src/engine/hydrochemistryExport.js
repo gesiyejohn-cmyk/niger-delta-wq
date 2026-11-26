@@ -1,4 +1,11 @@
-const csvCell = value => '"' + String(value ?? '').replace(/"/g, '""') + '"';
+const csvCell = value => {
+  const text = String(value ?? '');
+  // Protect spreadsheet applications from formula execution in untrusted text fields.
+  const safe = typeof value === 'string' && /^[\t\r ]*[=+\-@]/.test(text)
+    ? "'" + text
+    : text;
+  return '"' + safe.replace(/"/g, '""') + '"';
+};
 
 export function buildHydrochemistryCSV(sample, ions, balance, definitions) {
   if (!sample || !ions || !balance || !definitions) {
