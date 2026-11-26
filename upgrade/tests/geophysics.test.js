@@ -301,3 +301,21 @@ test('VES calculation and geometry functions reject raw boolean and object input
   assert.throws(() => validateVES([{ ab2: 10, mn2: 2, resistance: true }]), /positive numeric resistance/);
   assert.throws(() => validateVES([{ spacing: true, resistance: 5 }], 'Wenner alpha'), /spacing a must be numeric/);
 });
+
+
+test('VES geometric factors reject invalid electrode geometry at the function boundary', () => {
+  for (const [ab2, mn2] of [[10, 0], [10, -1], [2, 2], [1, 2]]) {
+    assert.throws(() => schlumbergerGeometricFactor(ab2, mn2),
+      /AB\\/2 > MN\\/2 > 0/);
+  }
+  for (const spacing of [0, -1]) {
+    assert.throws(() => wennerGeometricFactor(spacing),
+      /spacing must be greater than zero/);
+  }
+});
+
+test('Wenner alpha validation rejects decreasing spacing as well as duplicate spacing', () => {
+  assert.throws(() => validateVES([
+    { spacing: 10, resistance: 10 }, { spacing: 5, resistance: 12 }
+  ], 'Wenner alpha'), /strictly increasing/);
+});
