@@ -5,7 +5,7 @@ import { downloadText } from '../storage/export.js';
 import { buildHydrochemistryCSV } from '../engine/hydrochemistryExport.js';
 
 const IONS = Object.keys(ION_DEFINITIONS);
-const LABELS = { Ca: 'Calcium', Mg: 'Magnesium', Na: 'Sodium', K: 'Potassium', Cl: 'Chloride', SO4: 'Sulphate', HCO3: 'Bicarbonate', CO3: 'Carbonate', NO3: 'Nitrate', F: 'Fluoride' };
+const LABELS = { Ca: 'Calcium', Mg: 'Magnesium', Na: 'Sodium', K: 'Potassium', Cl: 'Chloride', SO4: 'Sulphate', HCO3: 'Bicarbonate', CO3: 'Carbonate', NO3: 'Nitrate', F: 'Fluoride' };\n// Display chemistry with conventional case, Unicode subscripts and ionic charges.\n// Lowercase registry keys remain unchanged for stored-data compatibility.\nconst ION_SYMBOLS = { Ca: 'Ca²⁺', Mg: 'Mg²⁺', Na: 'Na⁺', K: 'K⁺', Cl: 'Cl⁻', SO4: 'SO₄²⁻', HCO3: 'HCO₃⁻', CO3: 'CO₃²⁻', NO3: 'NO₃⁻', F: 'F⁻' };\nconst GROUP_LABELS = { Ca: 'Ca²⁺', Mg: 'Mg²⁺', NaK: 'Na⁺ + K⁺', Cl: 'Cl⁻', SO4: 'SO₄²⁻', HCO3CO3: 'HCO₃⁻ + CO₃²⁻' };
 
 export default function HydrochemistryPage() {
   const [samples, setSamples] = useState([]);
@@ -46,7 +46,7 @@ export default function HydrochemistryPage() {
           <table style={{width:'100%',borderCollapse:'collapse',minWidth:520}}>
             <thead><tr><th align="left">Ion</th><th align="left">Type</th><th align="right">mg/L</th><th align="right">meq/L</th></tr></thead>
             <tbody>{IONS.map(ion => <tr key={ion} style={{borderTop:'1px solid #e2e8f0'}}>
-              <td>{LABELS[ion]} ({ion})</td><td>{ION_DEFINITIONS[ion].type}</td>
+              <td>{LABELS[ion]} ({ION_SYMBOLS[ion]})</td><td>{ION_DEFINITIONS[ion].type}</td>
               <td align="right">{chemistry.ions[ion] == null ? 'Unmeasured' : Number(chemistry.ions[ion]).toFixed(3)}</td>
               <td align="right">{chemistry.balance.meq[ion] == null ? '—' : chemistry.balance.meq[ion].toFixed(4)}</td>
             </tr>)}</tbody>
@@ -72,7 +72,7 @@ export default function HydrochemistryPage() {
         <h2>Piper ion-group percentages</h2>
         <p className="muted">Each triangle group is normalized independently from measured equivalents. These are the plotted ternary coordinates, not a completed Piper diagram or facies classification.</p>
         <div className="form-grid">
-          <div><h3>Cation triangle (%)</h3>{pct(chemistry.piper.cations).map(item => <p key={item.key}>{item.key}: <strong>{item.value.toFixed(1)}%</strong></p>)}</div>
+          <div><h3>Cation triangle (%)</h3>{pct(chemistry.piper.cations).map(item => <p key={item.key}>{GROUP_LABELS[item.key] || item.key}: <strong>{item.value.toFixed(1)}%</strong></p>)}</div>
           <div><h3>Anion triangle (%)</h3>{pct(chemistry.piper.anions).map(item => <p key={item.key}>{item.key}: <strong>{item.value.toFixed(1)}%</strong></p>)}</div>
         </div>
         <button type="button" className="primary" onClick={exportCSV}>Export hydrochemistry CSV</button>
