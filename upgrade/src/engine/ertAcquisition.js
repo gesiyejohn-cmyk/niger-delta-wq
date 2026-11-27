@@ -7,6 +7,73 @@ const isFiniteMeasurement = value => value != null
 const ELECTRODE_KEYS = ['A', 'B', 'M', 'N'];
 const ARRAY_TYPES = ['Wenner', 'Schlumberger', 'Dipole-dipole', 'Custom'];
 
+function approximatelyEqual(left, right, tolerance = 1e-6) {
+  return Math.abs(left - right) <= tolerance * Math.max(1, Math.abs(left), Math.abs(right));
+}
+
+export function validateERTArrayGeometry(array, electrodes) {
+  if (!ARRAY_TYPES.includes(array)) throw new Error('Unsupported ERT array configuration.');
+  const positions = {};
+  for (const key of ELECTRODE_KEYS) {
+    if (!isFiniteMeasurement(electrodes?.[key])) {
+      throw new Error('Electrode ' + key + ' must have a finite position in metres.');
+    }
+    positions[key] = Number(electrodes[key]);
+  }
+  if (new Set(Object.values(positions)).size !== ELECTRODE_KEYS.length) {
+    throw new Error('ERT electrodes A, B, M and N must occupy distinct positions.');
+  }
+
+  const ordered = Object.entries(positions).sort((left, right) => left[1] - right[1]).map(([key]) => key);
+  const wennerOrder = ['A', 'M', 'N', 'B'];
+  const reverseWennerOrder = [...wennerOrder].reverse();
+  const schlumbergerOrder = wennerOrder;
+  const reverseSchlumbergerOrder = reverseWennerOrder;
+
+  if (array === 'Wenner') {
+    if (ordered.join(',') !== wennerOrder.join(',') && ordered.join(',') !== reverseWennerOrder.join(',')) {
+      throw new Error('Wenner geometry requires the electrode order A-M-N-B (or its reverse).');
+    }
+    const spacings = ordered.slice(1).map((key, index) =>
+      Math.abs(positions[key] - positions[ordered[index]])
+    );
+    if (!approximatelyEqual(spacings[0], spacings[1]) || !approximatelyEqual(spacings[1], spacings[2])) {
+      throw new Error('Wenner geometry requires three equal adjacent-electrode spacings.');
+    }
+  }
+
+  if (array === 'Schlumberger') {
+    if (ordered.join(',') !== schlumbergerOrder.join(',') && ordered.join(',') !== reverseSchlumbergerOrder.join(',')) {
+      throw new Error('Schlumberger geometry requires current electrodes outside potential electrodes (A-M-N-B or reverse).');
+    }
+    const currentMidpoint = (positions.A + positions.B) / 2;
+    const potentialMidpoint = (positions.M + positions.N) / 2;
+    if (!approximatelyEqual(currentMidpoint, potentialMidpoint)) {
+      throw new Error('Schlumberger geometry requires symmetric current and potential electrode pairs.');
+    }
+    if (Math.abs(positions.B - positions.A) <= Math.abs(positions.N - positions.M)) {
+      throw new Error('Schlumberger current-electrode spacing AB must exceed potential-electrode spacing MN.');
+    }
+  }
+
+  if (array === 'Dipole-dipole') {
+    const currentLength = Math.abs(positions.B - positions.A);
+    const potentialLength = Math.abs(positions.N - positions.M);
+    if (!approximatelyEqual(currentLength, potentialLength)) {
+      throw new Error('Dipole-dipole geometry requires equal current- and potential-dipole lengths.');
+    }
+    const currentMin = Math.min(positions.A, positions.B);
+    const currentMax = Math.max(positions.A, positions.B);
+    const potentialMin = Math.min(positions.M, positions.N);
+    const potentialMax = Math.max(positions.M, positions.N);
+    if (!(currentMax < potentialMin || potentialMax < currentMin)) {
+      throw new Error('Dipole-dipole current and potential dipoles must not overlap.');
+    }
+  }
+
+  return positions;
+}
+
 export function calculateERTGeometricFactor(electrodes) {
   if (!electrodes || typeof electrodes !== 'object') {
     throw new Error('Provide positions for current electrodes A/B and potential electrodes M/N.');
@@ -60,7 +127,8 @@ export function calculateERTMeasurement(reading) {
     throw new Error('Measured transfer resistance must be finite and non-zero.');
   }
 
-  const geometricFactor = calculateERTGeometricFactor(reading.electrodes);
+  const electrodes = validateERTArrayGeometry(array, reading.electrodes);
+  const geometricFactor = calculateERTGeometricFactor(electrodes);
   const apparentResistivity = geometricFactor * Math.abs(signedResistance);
   if (!Number.isFinite(apparentResistivity) || apparentResistivity <= 0) {
     throw new Error('Calculated apparent resistivity is outside the supported numeric range.');
@@ -69,7 +137,7 @@ export function calculateERTMeasurement(reading) {
   return {
     ...reading,
     array,
-    electrodes: Object.fromEntries(ELECTRODE_KEYS.map(key => [key, Number(reading.electrodes[key])])),
+    electrodes,
     signedResistanceOhm: signedResistance,
     geometricFactor,
     apparentResistivity,
