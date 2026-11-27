@@ -184,3 +184,26 @@ test('replace refuses an empty backup before clearing current records', async ()
   await assert.rejects(restoreDatabaseBackup(emptyBackup, 'replace'), /Cannot replace current data with an empty backup/);
   assert.deepEqual(await db.get('samples', 'sample-safe'), { id: 'sample-safe', sampleCode: 'KEEP' });
 });
+
+test('failed replace restore rolls back cleared records when IndexedDB rejects a record', async () => {
+  const db = await getDB();
+  await clearStores(db);
+  await db.put('samples', { id: 'sample-safe', sampleCode: 'KEEP' });
+  const backup = {
+    format: BACKUP_FORMAT,
+    version: 1,
+    stores: {
+      samples: [{ id: 'sample-invalid-clone', sampleCode: 'BAD', unsupported: () => 'not cloneable' }]
+    }
+  };
+
+  await assert.rejects(
+    restoreDatabaseBackup(backup, 'replace'),
+    /Restore was not completed/
+  );
+  assert.deepEqual(
+    await db.getAll('samples'),
+    [{ id: 'sample-safe', sampleCode: 'KEEP' }],
+    'the original sample must remain after the failed replacement transaction'
+  );
+});
