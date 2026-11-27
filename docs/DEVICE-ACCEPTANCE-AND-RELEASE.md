@@ -616,3 +616,21 @@ The DRASTIC page now lists only records tagged `DRASTIC intrinsic vulnerability 
 On commit `e45e328a79b8a273ab06a5f178ca2a784613b00d`, the web/scientific test job passed 149 tests (0 failures) and the production web build succeeded; the Windows installer build/upload job succeeded. The Android job was cancelled while its emulator smoke-test script was booting the API 35 emulator because subsequent focused commits updated the branch and cancelled the older run. It did not complete original-identity launch verification or upload an Android artifact. These results do not validate the later DRASTIC-isolation commits.
 
 The DRASTIC isolation source and regression test are committed after that run. A fresh exact-head workflow run is required for full three-platform verification. PR #2 remains draft/open and unmerged.
+
+
+## Integrated multi-platform CI verification — 27 November 2026
+
+The current branch head `d8d82b4344ad1e8dd4e8cd5a8f2bc8b469f98a32` passed [workflow run #45972767741](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45972767741). All three required jobs completed successfully on this exact commit:
+
+- `web-and-tests`: **235 tests passed, 0 failed**; production web build and artifact upload passed.
+- `windows-desktop`: NSIS desktop installer build and artifact upload passed.
+- `android`: original-identity debug APK build passed; API 35 emulator boot and original-identity APK launch passed; package identity and debug signing-certificate metadata were recorded; the isolated preview APK was also built and uploaded.
+
+Artifacts (GitHub-uploaded ZIP archive sizes):
+- Web `ndwq-integrated-web`, ID `15185184086`, **322,448 bytes**; expires **11 December 2026 at 09:20:09 UTC**.
+- Android `ndwq-integrated-android-debug-apk`, ID `15186315783`, **8,136,452 bytes**; expires **11 December 2026 at 09:23:43 UTC**.
+- Windows `ndwq-integrated-windows-desktop`, ID `15185233406`, **95,607,516 bytes**; expires **11 December 2026 at 09:21:47 UTC**.
+
+This is a same-commit CI and emulator milestone. It does **not** establish physical Android acceptance, production Android signing or update compatibility with existing installations, physical Windows installation/runtime, web deployment/browser acceptance, real-device backup/restore, or scientific sign-off. Do not uninstall, clear data or install this debug APK over an existing phone installation.
+
+PR #2 remains open and draft; PR #6 remains open and draft. Neither has been merged. The next release gates remain the documented physical-device acceptance, safe backup/restore against retained user data, signing/update strategy, deployment, and scientific review.
