@@ -1,9 +1,8 @@
 import { PARAMETER_REGISTRY } from './parameters.js';
 
 function isNumericInput(value) {
-  return (typeof value === 'number'
-    || (typeof value === 'string' && value.trim() !== ''))
-    && Number.isFinite(Number(value));
+  return (typeof value === 'number' && Number.isFinite(value))
+    || (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value)));
 }
 
 const round = (value, places = 2) => {
