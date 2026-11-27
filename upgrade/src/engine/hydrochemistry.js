@@ -22,7 +22,11 @@ export function mgLToMeqL(ion, concentration) {
   if (!measured(concentration) || Number(concentration) < 0) {
     throw new Error(ion + ' concentration must be a measured, non-negative mg/L value.');
   }
-  return Number(concentration) * definition.charge / definition.molarMass;
+  const meqL = Number(concentration) * definition.charge / definition.molarMass;
+  if (!Number.isFinite(meqL)) {
+    throw new Error(ion + ' concentration is outside the supported numeric range for mg/L to meq/L conversion.');
+  }
+  return meqL;
 }
 
 export function convertIonConcentrations(sample) {
