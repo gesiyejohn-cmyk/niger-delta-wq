@@ -200,3 +200,50 @@ export function calculateSchoellerSeries(sample) {
     log10MeqL: value !== null && value > 0 ? Math.log10(value) : null
   }));
 }
+
+// Gibbs diagrams use measured TDS (mg/L) on the horizontal axis and the
+// conventional Na/(Na+Ca) and Cl/(Cl+HCO3) ratios on the vertical axis.
+// Ratios are calculated in meq/L; incomplete analytical groups stay unavailable.
+export function calculateGibbsRatios(sample, tds) {
+  const meq = convertIonConcentrations(sample);
+  const ratio = (numerator, denominator) => denominator > 0 ? numerator / denominator : null;
+  const cationDenominator = meq.Na !== null && meq.Ca !== null ? meq.Na + meq.Ca : null;
+  const anionDenominator = meq.Cl !== null && meq.HCO3 !== null ? meq.Cl + meq.HCO3 : null;
+  const validTds = measured(tds) && Number(tds) > 0 ? Number(tds) : null;
+  const cationRatio = cationDenominator !== null ? ratio(meq.Na, cationDenominator) : null;
+  const anionRatio = anionDenominator !== null ? ratio(meq.Cl, anionDenominator) : null;
+  return {
+    tds: validTds,
+    cation: cationRatio,
+    anion: anionRatio,
+    cationStatus: cationDenominator === null ? 'incomplete-measured-ion-pair' : cationRatio === null ? 'zero-total-ion-pair' : 'plottable',
+    anionStatus: anionDenominator === null ? 'incomplete-measured-ion-pair' : anionRatio === null ? 'zero-total-ion-pair' : 'plottable',
+    status: validTds === null ? 'missing-or-nonpositive-tds' : cationRatio === null || anionRatio === null ? 'incomplete-gibbs-ratios' : 'complete'
+  };
+}
+
+// Chadha coordinates are signed equivalent-percentage differences. The x
+// coordinate contrasts alkaline-earth and alkali cations; y contrasts weak
+// and strong-acid anions. Every species in each denominator must be measured.
+export function calculateChadhaCoordinates(sample) {
+  const meq = convertIonConcentrations(sample);
+  const cationKeys = ['Ca', 'Mg', 'Na', 'K'];
+  const anionKeys = ['HCO3', 'CO3', 'Cl', 'SO4'];
+  if (cationKeys.some(key => meq[key] === null) || anionKeys.some(key => meq[key] === null)) {
+    return { x: null, y: null, status: 'insufficient-measured-major-ions' };
+  }
+  const alkalineEarth = meq.Ca + meq.Mg;
+  const alkali = meq.Na + meq.K;
+  const weakAcid = meq.HCO3 + meq.CO3;
+  const strongAcid = meq.Cl + meq.SO4;
+  const cationTotal = alkalineEarth + alkali;
+  const anionTotal = weakAcid + strongAcid;
+  if (cationTotal <= 0 || anionTotal <= 0) {
+    return { x: null, y: null, status: 'zero-total-major-ion-group' };
+  }
+  return {
+    x: 100 * (alkalineEarth - alkali) / cationTotal,
+    y: 100 * (weakAcid - strongAcid) / anionTotal,
+    status: 'complete'
+  };
+}
