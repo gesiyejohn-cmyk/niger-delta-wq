@@ -2,13 +2,13 @@ import 'fake-indexeddb/auto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getDB } from '../src/storage/db.js';
-import { saveVES, listVES, saveVESInterpretation, saveERT, getERTSource, saveERTFieldReadings, listERTFieldReadings } from '../src/storage/geophysics.js';
+import { saveVES, listVES, saveVESInterpretation, saveERT, getERTSource, saveERTInterpretation, getERTInterpretation, deleteERT, saveERTFieldReadings, listERTFieldReadings } from '../src/storage/geophysics.js';
 import { createDatabaseBackup, restoreDatabaseBackup, validateDatabaseBackup } from '../src/storage/backup.js';
 import { saveWQIAssessment, listWQIAssessments } from '../src/storage/wqi.js';
 
 test('IndexedDB separates raw VES readings and interpretations, preserves original ERT CSV, and round-trips full backup', async () => {
   const db = await getDB();
-  const stores = ['samples', 'settings', 'syncQueue', 'ves', 'vesInterpretations', 'ert', 'ertSource', 'ertFieldReadings', 'vulnerability', 'wqiAssessments'];
+  const stores = ['samples', 'settings', 'syncQueue', 'ves', 'vesInterpretations', 'ert', 'ertSource', 'ertFieldReadings', 'ertInterpretations', 'vulnerability', 'wqiAssessments'];
   const clearTx = db.transaction(stores, 'readwrite');
   for (const name of stores) await clearTx.objectStore(name).clear();
   await clearTx.done;
@@ -46,6 +46,21 @@ test('IndexedDB separates raw VES readings and interpretations, preserves origin
   assert.equal(Object.hasOwn(ertModel, 'sourceImport'), false);
   assert.equal((await getERTSource('ert-model-1')).content, 'x,depth,resistivity\\n0,1,75');
 
+  const interpretation = {
+    schemaVersion: 1,
+    ertModelId: 'ert-model-1',
+    lineId: 'ERT-01',
+    xRange: [0, 10],
+    depthRange: [0, 20],
+    interpretationStatus: 'provisional',
+    units: [{ id: 'unit-1', name: 'Sand', confidence: 'low', evidence: 'Illustrative only; verify with borehole data.', aquiferPotential: 'possible' }],
+    stations: [{ x: 0, boundaries: [0, 20] }, { x: 10, boundaries: [0, 20] }]
+  };
+  const savedInterpretation = await saveERTInterpretation('ert-model-1', interpretation);
+  assert.equal(savedInterpretation.ertModelId, 'ert-model-1');
+  assert.equal((await getERTInterpretation('ert-model-1')).units[0].name, 'Sand');
+  await assert.rejects(saveERTInterpretation('missing-ert-model', interpretation), /raw ERT model no longer exists/);
+
   await saveWQIAssessment({
     sample: { id: 'sample-wqi-1', sampleCode: 'GW-01', stationName: 'Test borehole', collectionDate: '2026-11-15' },
     standardSource: 'Project-defined test limits',
@@ -64,16 +79,18 @@ test('IndexedDB separates raw VES readings and interpretations, preserves origin
   assert.equal(backup.stores.ert.length, 1);
   assert.equal(backup.stores.ertSource.length, 1);
   assert.equal(backup.stores.ertFieldReadings.length, 1);
+  assert.equal(backup.stores.ertInterpretations.length, 1);
   assert.equal(backup.stores.wqiAssessments.length, 1);
 
   const emptyTx = db.transaction(stores, 'readwrite');
   for (const name of stores) await emptyTx.objectStore(name).clear();
   await emptyTx.done;
   const result = await restoreDatabaseBackup(backup, 'replace');
-  assert.equal(result.restored, 6);
+  assert.equal(result.restored, 7);
   assert.equal((await listWQIAssessments())[0].result.wqi, 20);
   assert.equal((await listVES())[0].interpretation.layers[0].resistivity, 125);
   assert.equal((await getERTSource('ert-model-1')).fileName, 'field-export.csv');
+  assert.equal((await getERTInterpretation('ert-model-1')).units[0].name, 'Sand');
   assert.equal((await listERTFieldReadings('ERT-01')).length, 1);
 });
 
@@ -189,4 +206,24 @@ test('backup validation rejects duplicate primary keys before restore', () => {
     () => validateDatabaseBackup(duplicateSettingBackup),
     /duplicate primary keys in settings/
   );
+});
+
+
+test('deleting an ERT model also deletes its linked interpretation and imported source', async () => {
+  const db = await getDB();
+  await saveERT({
+    id: 'ert-delete-model',
+    lineId: 'ERT-DELETE',
+    cells: [{ x: 0, depth: 0, resistivity: 50 }, { x: 10, depth: 10, resistivity: 80 }],
+    sourceImport: { fileName: 'delete-me.csv', content: 'x,depth,resistivity\\n0,0,50' }
+  });
+  await saveERTInterpretation('ert-delete-model', {
+    schemaVersion: 1,
+    ertModelId: 'ert-delete-model',
+    units: [{ id: 'u1', name: 'Sand', confidence: 'low', evidence: 'Test only', aquiferPotential: 'unknown' }]
+  });
+  await deleteERT('ert-delete-model');
+  assert.equal(await db.get('ert', 'ert-delete-model'), undefined);
+  assert.equal(await db.get('ertSource', 'ert-delete-model'), undefined);
+  assert.equal(await getERTInterpretation('ert-delete-model'), undefined);
 });
