@@ -122,3 +122,66 @@ test('upgrades a version 6 database to version 9 without losing records or embed
     await deleteDB(databaseName);
   }
 });
+
+
+test('version 8 to 9 migration adds ERT interpretations without replacing any existing store or record', async () => {
+  const databaseName = 'niger-delta-wq-v8-upgrade-regression';
+  await deleteDB(databaseName);
+  const legacyStoreNames = [
+    'samples', 'settings', 'syncQueue', 'ves', 'vesInterpretations',
+    'ert', 'ertSource', 'ertFieldReadings', 'vulnerability', 'wqiAssessments'
+  ];
+  let legacyDb;
+  let upgradedDb;
+  try {
+    legacyDb = await openDB(databaseName, 8, {
+      upgrade(database) {
+        const samples = database.createObjectStore('samples', { keyPath: 'id' });
+        samples.createIndex('byCode', 'sampleCode');
+        samples.createIndex('byDate', 'collectionDate');
+        database.createObjectStore('settings', { keyPath: 'key' });
+        database.createObjectStore('syncQueue', { keyPath: 'id', autoIncrement: true });
+        for (const name of legacyStoreNames.filter(name =>
+          !['samples', 'settings', 'syncQueue'].includes(name)
+        )) database.createObjectStore(name, { keyPath: 'id' });
+      }
+    });
+
+    const records = {
+      samples: { id: 'v8-sample', sampleCode: 'GW-V8-01', nitrate: null },
+      settings: { key: 'coordinateFormat', value: 'DMS' },
+      ves: { id: 'v8-ves', readings: [{ ab2: 5, apparentResistivity: 120 }] },
+      vesInterpretations: { id: 'v8-ves', vesId: 'v8-ves', layers: [{ resistivity: 120 }] },
+      ert: { id: 'v8-ert', cells: [{ x: 0, depth: 1, resistivity: 80 }] },
+      ertSource: { id: 'v8-ert', fileName: 'v8-line.csv', content: 'x,depth,resistivity\\n0,1,80' },
+      ertFieldReadings: { id: 'v8-reading', array: 'Wenner', apparentResistivity: 80 },
+      vulnerability: { id: 'v8-vulnerability', method: 'DRASTIC', weightedScore: 120 },
+      wqiAssessments: { id: 'v8-wqi', result: { wqi: 42 } }
+    };
+    for (const [name, record] of Object.entries(records)) await legacyDb.put(name, record);
+    const queueId = await legacyDb.add('syncQueue', { action: 'sample-upsert', recordId: 'v8-sample' });
+    legacyDb.close();
+    legacyDb = undefined;
+
+    const { upgradeDatabase, DATABASE_VERSION } = await import('../src/storage/db.js');
+    assert.equal(DATABASE_VERSION, 9);
+    upgradedDb = await openDB(databaseName, DATABASE_VERSION, { upgrade: upgradeDatabase });
+
+    assert.equal(upgradedDb.version, 9);
+    for (const name of legacyStoreNames) {
+      assert.equal(upgradedDb.objectStoreNames.contains(name), true, 'existing store retained: ' + name);
+    }
+    assert.equal(upgradedDb.objectStoreNames.contains('ertInterpretations'), true);
+    for (const [name, record] of Object.entries(records)) {
+      assert.deepEqual(await upgradedDb.get(name, name === 'settings' ? record.key : record.id), record, name);
+    }
+    assert.equal((await upgradedDb.get('syncQueue', queueId)).recordId, 'v8-sample');
+    assert.equal(upgradedDb.transaction('samples', 'readonly').store.indexNames.contains('byCode'), true);
+    assert.equal(upgradedDb.transaction('samples', 'readonly').store.indexNames.contains('byDate'), true);
+    assert.deepEqual(await upgradedDb.getAll('ertInterpretations'), []);
+  } finally {
+    legacyDb?.close();
+    upgradedDb?.close();
+    await deleteDB(databaseName);
+  }
+});
