@@ -132,3 +132,27 @@ test('IDW excludes boolean and object readings and coordinates instead of coerci
   assert.throws(() => idwInterpolate(samples, { x: false, y: 50 }, { valueKey: 'tds' }), /Target x and y must be finite/);
   assert.throws(() => idwInterpolate(samples, { x: 50, y: {} }, { valueKey: 'tds' }), /Target x and y must be finite/);
 });
+
+test('IDW rejects powers that underflow every distance weight to zero', () => {
+  assert.throws(
+    () => idwInterpolate(samples, { x: 50, y: 50 }, {
+      valueKey: 'tds', power: 1000, neighbours: 4, maxDistance: 1000
+    }),
+    /weights outside the supported numeric range/
+  );
+});
+
+test('IDW rejects non-finite weighted contributions instead of returning NaN', () => {
+  const extreme = [
+    { x: 0, y: 0, value: Number.MAX_VALUE },
+    { x: 100, y: 0, value: Number.MAX_VALUE },
+    { x: 0, y: 100, value: Number.MAX_VALUE },
+    { x: 100, y: 100, value: Number.MAX_VALUE }
+  ];
+  assert.throws(
+    () => idwInterpolate(extreme, { x: 50, y: 50 }, {
+      power: 2, neighbours: 4, maxDistance: 1000
+    }),
+    /weighted sum is outside the supported numeric range/
+  );
+});
