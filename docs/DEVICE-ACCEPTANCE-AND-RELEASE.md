@@ -634,3 +634,31 @@ Artifacts (GitHub-uploaded ZIP archive sizes):
 This is a same-commit CI and emulator milestone. It does **not** establish physical Android acceptance, production Android signing or update compatibility with existing installations, physical Windows installation/runtime, web deployment/browser acceptance, real-device backup/restore, or scientific sign-off. Do not uninstall, clear data or install this debug APK over an existing phone installation.
 
 PR #2 remains open and draft; PR #6 remains open and draft. Neither has been merged. The next release gates remain the documented physical-device acceptance, safe backup/restore against retained user data, signing/update strategy, deployment, and scientific review.
+
+
+## Latest integrated CI verification — 27 November 2026
+
+The latest inspected branch head before the route-loading performance change was `700490e8db7f2042f41244501fbec05c81980ff8` on `ndwq-coordinate-system-upgrade`. [Workflow run #45973673429](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45973673429) completed successfully on that exact commit. All three required jobs passed:
+
+- `web-and-tests`: **235 tests passed, 0 failed**; Vite production build and web artifact upload passed.
+- `android`: original-identity debug APK built; API 35 emulator installed and launched it successfully; the app process and `topResumedActivity` were both observed. A separate `com.nigerdeltawq.mobile.preview2` APK was also built and launched.
+- `windows-desktop`: NSIS installer generated and uploaded. The build log explicitly reports that no code-signing certificate is configured, so signing was skipped.
+
+Android identity and signing evidence from this run:
+- Original package: `com.nigerdeltawq.mobile`; label: `Niger Delta WQ`; versionCode `1`; versionName `1.0`; launcher `com.nigerdeltawq.mobile.MainActivity`.
+- Original debug APK SHA-256: `8fc93cfe163f06b47e960500c22ff7f40b1fd4405ced060286949966ca9c5502`.
+- CI debug certificate SHA-256 fingerprint: `4de3489fa02233f63960e464fe590154b475c25f58adcf86af156399e36aa92e`. This is a CI debug certificate, not a persistent release key and not evidence of compatibility with any existing phone installation.
+- Original-identity emulator launch result: `Status: ok`; process observed; resumed activity observed. This verifies a CI emulator process/activity launch, not visual rendering or workflow acceptance by a person.
+
+Artifacts (GitHub ZIP archive sizes and archive SHA-256):
+- Web `ndwq-integrated-web`, ID `15185748981`, **322,448 bytes**, SHA-256 `2d96b71812e3610ac7e3da4627a5668209672b3649e46cb25314ddc68efd62f5`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45973673429/artifacts/15185748981); expires **11 December 2026 at 09:26:27 UTC**.
+- Android `ndwq-integrated-android-debug-apk`, ID `15186935168`, **8,136,454 bytes**, SHA-256 `9894f53e820f4f1de369354d941633412c72fef3bb49e3bd08f829c429aea6cd`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45973673429/artifacts/15186935168); expires **11 December 2026 at 09:30:52 UTC**.
+- Windows `ndwq-integrated-windows-desktop`, ID `15185992764`, **95,607,365 bytes**, SHA-256 `21ba767309cee46dbf37a7b91001d1ddd9abcdff07c1a2ecb5aaf9324e2fae06`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/45973673429/artifacts/15185992764); expires **11 December 2026 at 09:28:12 UTC**.
+
+The specifically requested historical [run #43762079209](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/43762079209), on commit `0e81667b0876f6d3373fd4aa7b8d227843448676`, is now complete with an Android-job failure. Its log shows the emulator booting, then the third animation-setting ADB call failed with `Broken pipe (32)`; the emulator-runner action exited with code 224 during its setup/teardown path before the embedded APK install/start commands ran. No Android APK artifact was uploaded by that run. This is an emulator-runner failure, not evidence that the NDWQ app itself crashed. The later custom bounded-emulator workflow on commit `700490e` completed the original-identity install/launch check successfully.
+
+The web build also emitted a Vite warning: the main JavaScript chunk was **531.20 kB** minified and the separate XLSX chunk was **429.02 kB**. The main chunk exceeded Vite's 500 kB advisory threshold. Route-level lazy loading is being introduced to keep specialist workspaces out of the initial dashboard/sample-entry bundle; the resulting build and route behaviour must pass the next exact-commit CI run before this optimization is considered verified.
+
+This run establishes same-commit web tests/build, Android debug build and emulator process/activity launch, and Windows installer generation. It does **not** establish physical Android acceptance, production Android signing or update compatibility with existing installations, physical Windows installation/runtime, public web deployment/browser acceptance, real-device backup/restore, or scientific sign-off. Do not uninstall, clear data or install any debug APK over an existing phone installation.
+
+PR #2 remains open and draft; it has not been merged. PR #6 also remains unmerged. No production signing, deployment or public release was performed.
