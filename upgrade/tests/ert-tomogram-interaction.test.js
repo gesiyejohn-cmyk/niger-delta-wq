@@ -9,7 +9,8 @@ test('ERT tomogram exposes accessible zoom controls and a reset action', async (
   assert.match(page, /aria-label="ERT tomogram navigation"/);
   assert.match(page, /aria-label="Zoom in on ERT tomogram"/);
   assert.match(page, /aria-label="Zoom out on ERT tomogram"/);
-  assert.match(page, /Reset view/);\n  assert.match(page, /setView\(\{x:0,y:0,zoom:1\}\)/);
+  assert.match(page, /Reset view/);
+  assert.match(page, /setView\(\{x:0,y:0,zoom:1\}\)/);
   assert.match(page, /aria-label="Interpolated ERT resistivity section"/);
 });
 
