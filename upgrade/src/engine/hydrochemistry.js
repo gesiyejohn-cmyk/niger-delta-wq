@@ -13,9 +13,8 @@ export const ION_DEFINITIONS = Object.freeze({
   F: { name: 'Fluoride', type: 'anion', molarMass: 18.9984, charge: 1 }
 });
 
-const measured = value => value !== null && value !== undefined &&
-  !(typeof value === 'string' && value.trim() === '') &&
-  Number.isFinite(Number(value));
+const measured = value => (typeof value === 'number' && Number.isFinite(value)) ||
+  (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value)));
 
 export function mgLToMeqL(ion, concentration) {
   const definition = ION_DEFINITIONS[ion];
