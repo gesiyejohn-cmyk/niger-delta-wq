@@ -48,7 +48,7 @@ export async function saveVESInterpretation(vesId, interpretation) {
   const tx = db.transaction(['ves', 'vesInterpretations'], 'readwrite');
   const raw = await tx.objectStore('ves').get(vesId);
   if (!raw) {
-    tx.abort();
+    await tx.done;
     throw new Error('The selected raw VES sounding no longer exists.');
   }
   await tx.objectStore('vesInterpretations').put({
@@ -154,7 +154,7 @@ export async function saveERTInterpretation(ertModelId, interpretation) {
   const tx = db.transaction(['ert', 'ertInterpretations'], 'readwrite');
   const model = await tx.objectStore('ert').get(ertModelId);
   if (!model) {
-    tx.abort();
+    await tx.done;
     throw new Error('The selected raw ERT model no longer exists.');
   }
   const validated = validateGeologicalInterpretation(interpretation, model);
