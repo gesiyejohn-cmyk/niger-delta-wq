@@ -1,8 +1,9 @@
-import { calculateChadhaCoordinates, calculateGibbsRatios } from '../engine/hydrochemistry.js';
+import { calculateChadhaCoordinates, calculateGibbsRatios, isGibbsTdsWithinDisplayRange } from '../engine/hydrochemistry.js';
 
 function GibbsPlot({ title, ratio, status, tds, label }) {
   const left = 58, top = 22, width = 520, height = 220;
-  const x = tds > 0 ? left + (Math.log10(tds) / 4) * width : null;
+  const inDisplayRange = isGibbsTdsWithinDisplayRange(tds);
+  const x = inDisplayRange ? left + (Math.log10(tds) / 4) * width : null;
   const y = ratio !== null ? top + (1 - ratio) * height : null;
   return <section className="panel">
     <h3>{title}</h3>
@@ -20,7 +21,7 @@ function GibbsPlot({ title, ratio, status, tds, label }) {
       <circle cx={x} cy={y} r="7" fill="#2563eb" stroke="white" strokeWidth="2"/>
       <text x={x+10} y={y-9} fill="currentColor" fontSize="11">{ratio.toFixed(3)}</text>
       <text x={left+width/2} y="282" textAnchor="middle" fill="currentColor" fontSize="11">TDS (mg/L, log scale)</text>
-    </svg> : <p className="notice">Not plotted: {status}. A positive measured TDS and both measured ions in this ratio are required.</p>}
+    </svg> : <p className="notice">Not plotted: {!inDisplayRange && tds !== null ? 'measured TDS is outside the displayed 1–10,000 mg/L axis range' : status}. A positive measured TDS within the displayed range and both measured ions in this ratio are required.</p>}
   </section>;
 }
 
@@ -39,14 +40,14 @@ function ChadhaPlot({ result }) {
       <path d={`M ${left} ${top+height/2} H ${left+width} M ${left+width/2} ${top} V ${top+height}`} stroke="currentColor" strokeWidth="1.5"/>
       <rect x={left} y={top} width={width} height={height} fill="none" stroke="currentColor"/>
       <g fill="currentColor" fontSize="11">
-        <text x={left+width*.25} y={top+18} textAnchor="middle">Alkaline earth–</text>
+        <text x={left+width*.25} y={top+18} textAnchor="middle">Alkali–</text>
         <text x={left+width*.25} y={top+32} textAnchor="middle">bicarbonate type</text>
-        <text x={left+width*.75} y={top+18} textAnchor="middle">Alkali–bicarbonate</text>
-        <text x={left+width*.75} y={top+32} textAnchor="middle">type</text>
-        <text x={left+width*.25} y={top+height-18} textAnchor="middle">Alkaline earth–</text>
+        <text x={left+width*.75} y={top+18} textAnchor="middle">Alkaline earth–</text>
+        <text x={left+width*.75} y={top+32} textAnchor="middle">bicarbonate type</text>
+        <text x={left+width*.25} y={top+height-18} textAnchor="middle">Alkali–</text>
         <text x={left+width*.25} y={top+height-4} textAnchor="middle">chloride type</text>
-        <text x={left+width*.75} y={top+height-18} textAnchor="middle">Alkali–chloride</text>
-        <text x={left+width*.75} y={top+height-4} textAnchor="middle">type</text>
+        <text x={left+width*.75} y={top+height-18} textAnchor="middle">Alkaline earth–</text>
+        <text x={left+width*.75} y={top+height-4} textAnchor="middle">chloride type</text>
         <text x={left} y={top+height+18} textAnchor="middle">−100</text>
         <text x={left+width/2} y={top+height+18} textAnchor="middle">0</text>
         <text x={left+width} y={top+height+18} textAnchor="middle">+100</text>
