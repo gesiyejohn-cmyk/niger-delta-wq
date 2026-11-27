@@ -67,6 +67,21 @@ test('IDW rejects duplicate locations, invalid settings and insufficient points'
   assert.throws(() => idwInterpolate(samples.slice(0,2), {x:0,y:0}));
 });
 
+test('IDW rejects fractional neighbour counts and grid dimensions instead of silently truncating', () => {
+  assert.throws(
+    () => idwInterpolate(samples, { x: 50, y: 50 }, { neighbours: 1.5 }),
+    /Neighbour count must be a positive integer/
+  );
+  assert.throws(
+    () => generateIDWGrid(samples, { valueKey: 'tds', rows: 2.5, columns: 5 }),
+    /grid rows and columns must each be integers/
+  );
+  assert.throws(
+    () => generateIDWGrid(samples, { valueKey: 'tds', rows: 5, columns: 2.5 }),
+    /grid rows and columns must each be integers/
+  );
+});
+
 test('IDW excludes blank, whitespace, null and undefined readings instead of treating them as zero', () => {
   const withUnmeasuredCentre = [
     { x: 0, y: 0, tds: 10 },

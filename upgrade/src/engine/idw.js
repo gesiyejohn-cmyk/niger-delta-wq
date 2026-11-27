@@ -51,7 +51,7 @@ export function idwInterpolate(samples, target, options = {}) {
   const valueKey = options.valueKey || 'value';
   const points = cleanSamples(samples, valueKey);
   const power = Number(options.power ?? 2);
-  const neighbours = Math.floor(Number(options.neighbours ?? 8));
+  const neighbours = Number(options.neighbours ?? 8);
   const maxDistance = Number(options.maxDistance ?? 5000);
   if (!finite(target?.x) || !finite(target?.y)) throw new Error('Target x and y must be finite projected coordinates in metres.');
   if (!Number.isFinite(power) || power <= 0) throw new Error('IDW power must be greater than zero.');
@@ -75,8 +75,8 @@ export function idwInterpolate(samples, target, options = {}) {
 export function generateIDWGrid(samples, options = {}) {
   const valueKey = options.valueKey || 'value';
   const points = cleanSamples(samples, valueKey);
-  const columns = Math.floor(Number(options.columns ?? 20));
-  const rows = Math.floor(Number(options.rows ?? 20));
+  const columns = Number(options.columns ?? 20);
+  const rows = Number(options.rows ?? 20);
   if (!Number.isInteger(columns) || columns < 2 || !Number.isInteger(rows) || rows < 2) {
     throw new Error('IDW grid rows and columns must each be integers of at least two.');
   }
