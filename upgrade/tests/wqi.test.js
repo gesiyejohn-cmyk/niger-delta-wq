@@ -269,9 +269,10 @@ test('weighted arithmetic WQI separates missing measurements from measured but u
     { key: 'nitrate', value: '', maxStandard: 50, ideal: 0 },
     { key: 'iron', value: 0.1, maxStandard: '', ideal: 0 },
     { key: 'manganese', value: 0.2, maxStandard: 0.5, ideal: '' },
-    { key: 'lead', value: null, maxStandard: 0.01, ideal: 0 }
+    { key: 'lead', value: null, maxStandard: 0.01, ideal: 0 },
+    { key: 'calcium', value: 40, maxStandard: 100, ideal: 0 }
   ]);
-  assert.equal(result.parameterCount, 1);
+  assert.equal(result.parameterCount, 2);
   assert.equal(result.missingMeasurementCount, 2);
   assert.equal(result.unconfiguredCount, 2);
   assert.equal(result.missingExcluded, 2);
