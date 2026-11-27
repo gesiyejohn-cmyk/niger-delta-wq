@@ -159,6 +159,10 @@ test('Schoeller series uses log10 meq/L and keeps zero and missing values distin
 });
 
  
+test('hydrochemistry rejects finite inputs that overflow equivalent conversion', () => {
+  assert.throws(() => mgLToMeqL('Ca', Number.MAX_VALUE), /outside the supported numeric range/);
+});
+
 test('hydrochemistry rejects boolean and object concentrations instead of coercing them to numbers', () => {
   assert.throws(() => mgLToMeqL('Ca', true), /measured, non-negative mg\/L value/);
   assert.throws(() => mgLToMeqL('Ca', {}), /measured, non-negative mg\/L value/);
