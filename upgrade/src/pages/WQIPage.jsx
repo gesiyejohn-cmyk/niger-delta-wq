@@ -108,7 +108,7 @@ export default function WQIPage() {
       <button type="button" className="primary" disabled={!sample} onClick={calculate}>Calculate WQI</button>
       {result && <div className="notice" style={{ marginTop: 14 }}>
         <h2>Weighted arithmetic WQI: {result.calculation.wqi.toFixed(2)}</h2>
-        <p>Parameters included: {result.calculation.parameterCount}. Incomplete/missing parameters excluded: {result.calculation.missingExcluded}.</p>
+        <p>Parameters included: {result.calculation.parameterCount}. Missing measurements excluded: {result.calculation.missingMeasurementCount}. Measured parameters not scored because their limits or ideal values are incomplete: {result.calculation.unconfiguredCount}.</p>
         <p>Standard reference: {standardSource}. Method: {result.calculation.method}. This screen reports the numeric index only; interpret it using the classification scale and regulatory standard selected for your study.</p>
         <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr><th align="left">Parameter</th><th align="right">Qi</th><th align="right">Applicable limit</th><th align="right">Wi</th><th align="right">Contribution</th></tr></thead>
