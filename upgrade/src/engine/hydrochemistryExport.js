@@ -1,7 +1,7 @@
 const csvCell = value => {
   const text = String(value ?? '');
   // Protect spreadsheet applications from formula execution in untrusted text fields.
-  const safe = typeof value === 'string' && /^[\t\r ]*[=+\-@]/.test(text)
+  const safe = typeof value === 'string' && /^[\t\r\n ]*[=+\-@]/.test(text)
     ? "'" + text
     : text;
   return '"' + safe.replace(/"/g, '""') + '"';
