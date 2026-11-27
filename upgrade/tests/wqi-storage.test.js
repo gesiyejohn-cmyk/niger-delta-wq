@@ -25,6 +25,11 @@ test('database upgrades from schema v6 to v9 without losing existing records', a
   assert.equal(db.version, 9);
   assert.ok(db.objectStoreNames.contains('wqiAssessments'));
   assert.equal((await db.get('samples', 'legacy-v6-sample')).sampleCode, 'V6-KEEP');
+  // Upgrade must repair missing indexes on a pre-existing store without
+  // replacing that store or losing its records.
+  const sampleStore = db.transaction('samples', 'readonly').store;
+  assert.ok(sampleStore.indexNames.contains('byCode'));
+  assert.ok(sampleStore.indexNames.contains('byDate'));
 });
 
 test('WQI assessments save immutable input/result snapshots, list newest first and delete by ID', async () => {
