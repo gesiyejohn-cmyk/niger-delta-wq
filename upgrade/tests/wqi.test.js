@@ -82,6 +82,18 @@ test('CCME WQI treats blank custom objectives as omitted, not as zero', async ()
   assert.equal(withBlankOverride.who.wqi, baseline.who.wqi);
 });
 
+test('CCME WQI rejects malformed custom objective containers', async () => {
+  const { computeDualWQI, computeDualWQIDataset } = await import('../src/engine/wqi.js');
+  for (const invalid of [true, '8', [], 12]) {
+    assert.throws(() => computeDualWQI({ ph: 7 }, {
+      overrides: { ph: { who: invalid } }
+    }), /custom standard limits must be an object/);
+    assert.throws(() => computeDualWQIDataset([{ ph: 7 }], {
+      overrides: { ph: { who: invalid } }
+    }), /custom standard limits must be an object/);
+  }
+});
+
 test('CCME WQI rejects non-numeric, negative and contradictory custom objectives', async () => {
   const { computeDualWQI } = await import('../src/engine/wqi.js');
   assert.throws(() => computeDualWQI({ ph: 7 }, {
