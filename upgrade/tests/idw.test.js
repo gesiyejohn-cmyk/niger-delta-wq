@@ -69,7 +69,7 @@ test('IDW rejects duplicate locations, invalid settings and insufficient points'
 
 test('IDW rejects fractional neighbour counts and grid dimensions instead of silently truncating', () => {
   assert.throws(
-    () => idwInterpolate(samples, { x: 50, y: 50 }, { neighbours: 1.5 }),
+    () => idwInterpolate(samples, { x: 50, y: 50 }, { valueKey: 'tds', neighbours: 1.5 }),
     /Neighbour count must be a positive integer/
   );
   assert.throws(
