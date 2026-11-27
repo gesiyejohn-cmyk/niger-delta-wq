@@ -273,7 +273,7 @@ export default function GeophysicsPage() {
           <CoordinateFields value={ertCoordinates} onChange={setErtCoordinates} label="ERT survey location coordinates" />
         </div>
         <h2>Raw ERT field acquisition</h2>
-        <p className="muted">Record each four-electrode reading by its actual line positions in metres: current electrodes A/B and potential electrodes M/N. NDWQ calculates the general collinear geometric factor and apparent resistivity from these positions and measured transfer resistance. Array name is recorded as survey metadata; the electrode positions determine the calculation. These readings are raw field observations, not an inverted subsurface model.</p>
+        <p className="muted">Record each four-electrode reading by its actual line positions in metres: current electrodes A/B and potential electrodes M/N. NDWQ checks the selected array geometry against these measured positions, then calculates the general collinear geometric factor and apparent resistivity from the positions and measured transfer resistance. Wenner, Schlumberger and dipole-dipole readings must satisfy their respective electrode-layout rules; Custom readings require distinct positions. These are raw field observations, not an inverted subsurface model.</p>
         {ertFieldDrafts.map((row, index) => {
           const preview = previewERTField(row);
           return <div key={index} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 10, marginBottom: 10 }}>
