@@ -126,8 +126,22 @@ jobs:
       - name: Build debug APK
         working-directory: source/niger-delta-wq/android
         run: |
+          set -euo pipefail
           chmod +x gradlew
-          ./gradlew assembleDebug
+          # Maven Central can temporarily rate-limit GitHub-hosted runners (HTTP 429).
+          # Retry the same build so successfully cached dependencies are reused.
+          for attempt in 1 2 3 4; do
+            if ./gradlew assembleDebug; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 4 ]; then
+              echo "Android debug build failed after 4 attempts."
+              exit 1
+            fi
+            delay=$((attempt * 30))
+            echo "Gradle build attempt $attempt failed; retrying in $delay seconds."
+            sleep "$delay"
+          done
       - name: Record Android APK identity and signing certificate
         working-directory: source/niger-delta-wq/android
         shell: bash
