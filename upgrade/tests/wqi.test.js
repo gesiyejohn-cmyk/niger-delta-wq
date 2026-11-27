@@ -261,3 +261,18 @@ test('weighted arithmetic WQI rejects booleans, objects and non-finite numeric s
     ]), /measurement must be a finite number/);
   }
 });
+
+
+test('weighted arithmetic WQI separates missing measurements from measured but unconfigured rows', () => {
+  const result = calculateWeightedArithmeticWQI([
+    { key: 'tds', value: 100, maxStandard: 500, ideal: 0 },
+    { key: 'nitrate', value: '', maxStandard: 50, ideal: 0 },
+    { key: 'iron', value: 0.1, maxStandard: '', ideal: 0 },
+    { key: 'manganese', value: 0.2, maxStandard: 0.5, ideal: '' },
+    { key: 'lead', value: null, maxStandard: 0.01, ideal: 0 }
+  ]);
+  assert.equal(result.parameterCount, 1);
+  assert.equal(result.missingMeasurementCount, 2);
+  assert.equal(result.unconfiguredCount, 2);
+  assert.equal(result.missingExcluded, 2);
+});
