@@ -135,10 +135,50 @@ export async function getERTSource(id) {
 }
 export async function deleteERT(id) {
   const db = await getDB();
-  const tx = db.transaction(['ert', 'ertSource'], 'readwrite');
+  const tx = db.transaction(['ert', 'ertSource', 'ertInterpretations'], 'readwrite');
   await tx.objectStore('ert').delete(id);
   await tx.objectStore('ertSource').delete(id);
+  await tx.objectStore('ertInterpretations').delete(id);
   await tx.done;
+}
+
+export async function saveERTInterpretation(ertModelId, interpretation) {
+  if (typeof ertModelId !== 'string' || !ertModelId.trim()) {
+    throw new Error('An associated ERT model ID is required.');
+  }
+  if (!interpretation || typeof interpretation !== 'object' || Array.isArray(interpretation)) {
+    throw new Error('A geological interpretation record is required.');
+  }
+  const db = await getDB();
+  const tx = db.transaction(['ert', 'ertInterpretations'], 'readwrite');
+  const model = await tx.objectStore('ert').get(ertModelId);
+  if (!model) {
+    tx.abort();
+    throw new Error('The selected raw ERT model no longer exists.');
+  }
+  const saved = {
+    ...interpretation,
+    id: ertModelId,
+    ertModelId,
+    updatedAt: new Date().toISOString()
+  };
+  await tx.objectStore('ertInterpretations').put(saved);
+  await tx.done;
+  return saved;
+}
+
+export async function getERTInterpretation(ertModelId) {
+  if (typeof ertModelId !== 'string' || !ertModelId.trim()) return undefined;
+  const db = await getDB();
+  return db.get('ertInterpretations', ertModelId);
+}
+
+export async function deleteERTInterpretation(ertModelId) {
+  if (typeof ertModelId !== 'string' || !ertModelId.trim()) {
+    throw new Error('An associated ERT model ID is required.');
+  }
+  const db = await getDB();
+  await db.delete('ertInterpretations', ertModelId);
 }
 
 export async function saveERTFieldReadings(surveyId, readings) {
