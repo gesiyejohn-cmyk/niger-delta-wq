@@ -178,3 +178,45 @@ test('Durov auxiliary pH and TDS ignore boolean and object values', () => {
   assert.equal(result.auxiliary.tds, null);
   assert.equal(result.extended, false);
 });
+
+test('Gibbs ratios use measured meq/L ion pairs and positive measured TDS', async () => {
+  const { calculateGibbsRatios } = await import('../src/engine/hydrochemistry.js');
+  const result = calculateGibbsRatios({
+    Ca: 40.078, Na: 22.989769,
+    Cl: 35.45, HCO3: 61.0168
+  }, 250);
+  assert.ok(Math.abs(result.cation - 1 / 3) < 1e-10);
+  assert.equal(result.anion, 0.5);
+  assert.equal(result.tds, 250);
+  assert.equal(result.status, 'complete');
+});
+
+test('Gibbs ratios do not zero-fill missing ions or accept zero TDS as a plotted point', async () => {
+  const { calculateGibbsRatios } = await import('../src/engine/hydrochemistry.js');
+  const result = calculateGibbsRatios({ Ca: 40.078, Na: '', Cl: 35.45, HCO3: 61.0168 }, 0);
+  assert.equal(result.cation, null);
+  assert.equal(result.cationStatus, 'incomplete-measured-ion-pair');
+  assert.equal(result.anion, 0.5);
+  assert.equal(result.tds, null);
+  assert.equal(result.status, 'missing-or-nonpositive-tds');
+});
+
+test('Chadha coordinates use signed cation and anion equivalent-percentage differences', async () => {
+  const { calculateChadhaCoordinates } = await import('../src/engine/hydrochemistry.js');
+  const result = calculateChadhaCoordinates({
+    Ca: 40.078, Mg: 24.305, Na: 22.989769, K: 39.0983,
+    HCO3: 61.0168, CO3: 30.00445, Cl: 35.45, SO4: 48.03
+  });
+  assert.ok(Math.abs(result.x - 100 / 3) < 1e-10);
+  assert.equal(result.y, 0);
+  assert.equal(result.status, 'complete');
+});
+
+test('Chadha coordinates remain unavailable when any required ion is unmeasured', async () => {
+  const { calculateChadhaCoordinates } = await import('../src/engine/hydrochemistry.js');
+  const result = calculateChadhaCoordinates({
+    Ca: 40.078, Mg: 24.305, Na: 22.989769, K: '',
+    HCO3: 61.0168, CO3: 0, Cl: 35.45, SO4: 48.03
+  });
+  assert.deepEqual(result, { x: null, y: null, status: 'insufficient-measured-major-ions' });
+});
