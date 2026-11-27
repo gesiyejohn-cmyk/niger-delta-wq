@@ -113,7 +113,7 @@ test('full backup and replace restore preserve raw data, interpretations and mis
     ert: [{ id: 'ert-1', line: 'LINE-01', sourceImportId: 'ert-1', cells: [{ x: 0, depth: 1, resistivity: 50 }] }],
     ertSource: [{ id: 'ert-1', fileName: 'line.csv', contentType: 'text/csv', content: 'x,depth,resistivity\\n0,1,50' }],
     ertFieldReadings: [{ id: 'field-1', surveyId: 'LINE-01', array: 'Wenner', apparentResistivity: 62.83 }],
-    ertInterpretations: [],
+    ertInterpretations: [{ id: 'ert-1', ertModelId: 'ert-1', interpretationStatus: 'provisional', units: [{ id: 'unit-1', name: 'Sand', confidence: 'low' }] }],
     vulnerability: [{ id: 'vuln-1', method: 'DRASTIC', weightedScore: 120, ratings: { depth: 5 } }],
     wqiAssessments: [{ id: 'wqi-1', sample: { id: 'sample-1' }, measurements: [{ key: 'nitrate', measuredValue: null }], result: { wqi: 20, details: [] }, standardSource: 'Project reference' }]
   };
@@ -129,7 +129,7 @@ test('full backup and replace restore preserve raw data, interpretations and mis
   await clearStores(db);
 
   const restored = await restoreDatabaseBackup(backup, 'replace');
-  assert.deepEqual(restored, { restored: 10, skipped: 0, mode: 'replace' });
+  assert.deepEqual(restored, { restored: 11, skipped: 0, mode: 'replace' });
   for (const name of STORE_NAMES) {
     assert.deepEqual(await db.getAll(name), fixture[name], name + ' should round-trip without data loss');
   }
