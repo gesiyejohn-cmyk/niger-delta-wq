@@ -89,6 +89,18 @@ test('rejects a selected distance outside the ERT profile', () => {
   assert.throws(() => getGeologicalColumnAtDistance(validInterpretation, 11), /outside the interpreted section/);
 });
 
+test('requires interpretation extents to match the linked imported ERT model', () => {
+  const shifted = structuredClone(validInterpretation);
+  shifted.depthRange = [0, 25];
+  shifted.stations = [
+    { x: 0, boundaries: [0, 2, 8, 25] },
+    { x: 10, boundaries: [0, 3, 10, 25] }
+  ];
+  assert.throws(() => validateGeologicalInterpretation(shifted, model), /match the associated ERT model extent/);
+  const oneDepth = { ...model, cells: model.cells.map(cell => ({ ...cell, depth: 0 })) };
+  assert.throws(() => validateGeologicalInterpretation(validInterpretation, oneDepth), /does not span a two-dimensional section/);
+});
+
 test('requires evidence metadata and explicit uncertainty categories', () => {
   const missing = structuredClone(validInterpretation);
   missing.units[0].confidence = 'certain';
