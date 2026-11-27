@@ -156,9 +156,11 @@ export function calculateWeightedArithmeticWQI(measurements) {
       throw new Error((item.label || item.key || 'Parameter') + ': measurement must be a finite number or left blank only when it was not measured.');
     }
   }
-  const usable = measurements.filter(item => item && hasValue(item.value)
-    && hasValue(item.ideal)
-    && (hasValue(item.minStandard) || hasValue(item.maxStandard) || hasValue(item.standard)));
+  const hasLimits = item => hasValue(item.minStandard) || hasValue(item.maxStandard) || hasValue(item.standard);
+  const measuredItems = measurements.filter(item => item && hasValue(item.value));
+  const missingMeasurementCount = measurements.filter(item => !item || !hasValue(item.value)).length;
+  const unconfiguredCount = measuredItems.filter(item => !hasValue(item.ideal) || !hasLimits(item)).length;
+  const usable = measuredItems.filter(item => hasValue(item.ideal) && hasLimits(item));
   if (usable.length < 2) throw new Error('At least two measured parameters with entered limits and ideal values are required.');
 
   const rows = usable.map(item => {
@@ -235,7 +237,11 @@ export function calculateWeightedArithmeticWQI(measurements) {
     parameterCount: details.length,
     details,
     method: 'Weighted arithmetic water quality index',
-    missingExcluded: measurements.length - usable.length
+    // Keep missing analytical results separate from measured rows that lack
+    // the limits/ideal values required to calculate this particular WQI.
+    missingExcluded: missingMeasurementCount,
+    missingMeasurementCount,
+    unconfiguredCount
   };
 }
 
