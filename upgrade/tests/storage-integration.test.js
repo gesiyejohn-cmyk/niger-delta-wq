@@ -220,7 +220,12 @@ test('deleting an ERT model also deletes its linked interpretation and imported 
   await saveERTInterpretation('ert-delete-model', {
     schemaVersion: 1,
     ertModelId: 'ert-delete-model',
-    units: [{ id: 'u1', name: 'Sand', confidence: 'low', evidence: 'Test only', aquiferPotential: 'unknown' }]
+    lineId: 'ERT-DELETE',
+    xRange: [0, 10],
+    depthRange: [0, 10],
+    interpretationStatus: 'provisional',
+    units: [{ id: 'u1', name: 'Sand', confidence: 'low', evidence: 'Test only', aquiferPotential: 'unknown' }],
+    stations: [{ x: 0, boundaries: [0, 10] }, { x: 10, boundaries: [0, 10] }]
   });
   await deleteERT('ert-delete-model');
   assert.equal(await db.get('ert', 'ert-delete-model'), undefined);
