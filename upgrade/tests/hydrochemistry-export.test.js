@@ -50,6 +50,16 @@ test('hydrochemistry CSV neutralizes spreadsheet formulas in sample and station 
   assert.ok(csv.includes(`"' @SUM(1,1)"`));
 });
 
+test('hydrochemistry CSV neutralizes formula-like text after a leading line break', () => {
+  const csv = buildHydrochemistryCSV(
+    { sampleCode: 'SAFE', stationName: '\n=HYPERLINK("https://bad.example")', collectionDate: '2026-11-27' },
+    { Ca: 1 },
+    { meq: { Ca: 1 }, cationTotal: 1, anionTotal: 0, errorPercent: 100, status: 'Outside tolerance' },
+    { Ca: { type: 'cation' } }
+  );
+  assert.ok(csv.includes("'\\n=HYPERLINK"));
+});
+
 test('hydrochemistry CSV rejects incomplete inputs', () => {
   assert.throws(() => buildHydrochemistryCSV(null, {}, {}, {}), /required/);
 });
