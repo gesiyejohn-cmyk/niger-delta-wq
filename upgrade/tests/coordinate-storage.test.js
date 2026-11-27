@@ -8,7 +8,7 @@ import { validateCoordinatePair } from '../src/engine/coordinates.js';
 
 const STORE_NAMES = [
   'samples', 'settings', 'syncQueue', 'ves', 'vesInterpretations',
-  'ert', 'ertSource', 'vulnerability', 'wqiAssessments'
+  'ert', 'ertSource', 'ertFieldReadings', 'vulnerability', 'wqiAssessments'
 ];
 
 async function clearAllStores(db) {
