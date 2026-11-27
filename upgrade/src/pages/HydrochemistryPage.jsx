@@ -4,6 +4,7 @@ import { calculateChargeBalance, calculatePiperDiagram, ION_DEFINITIONS } from '
 import { downloadText } from '../storage/export.js';
 import { buildHydrochemistryCSV } from '../engine/hydrochemistryExport.js';
 import DurovSchoellerPanel from '../components/DurovSchoellerPanel.jsx';
+import GibbsChadhaPanel from '../components/GibbsChadhaPanel.jsx';
 
 const IONS = Object.keys(ION_DEFINITIONS);
 const LABELS = { Ca: 'Calcium', Mg: 'Magnesium', Na: 'Sodium', K: 'Potassium', Cl: 'Chloride', SO4: 'Sulphate', HCO3: 'Bicarbonate', CO3: 'Carbonate', NO3: 'Nitrate', F: 'Fluoride' };
@@ -143,6 +144,7 @@ export default function HydrochemistryPage() {
           pH: sample.parameters?.ph?.canonical ?? null,
           tds: sample.parameters?.tds?.canonical ?? null
         }} />
+        <GibbsChadhaPanel ions={chemistry.ions} tds={sample.parameters?.tds?.canonical ?? null} />
         <button type="button" className="primary" onClick={exportCSV}>Export hydrochemistry CSV</button>
       </>}
     </section>
