@@ -5,6 +5,7 @@ import { calculateERTMeasurement } from '../engine/ertAcquisition.js';
 import { ertFieldReadingsToCSV } from '../engine/ertAcquisitionCsv.js';
 import VESInterpretation from './VESInterpretation.jsx';
 import ERTTomogram from './ERTTomogram.jsx';
+import ERTGeologicalInterpretation from './ERTGeologicalInterpretation.jsx';
 import CoordinateFields from './CoordinateFields.jsx';
 import { validateCoordinatePair } from '../engine/coordinates.js';
 import { saveVES, listVES, deleteVES, saveERT, listERT, deleteERT, saveERTFieldReadings, listERTFieldReadings } from '../storage/geophysics.js';
@@ -367,6 +368,7 @@ export default function GeophysicsPage() {
             </table>
           </div>
           <ERTTomogram models={activeERTModel ? [activeERTModel] : []} />
+          {activeERTModel && <ERTGeologicalInterpretation key={activeERTModel.id} model={activeERTModel} notify={notify} />}
         </>}
       </>}
     </section>
