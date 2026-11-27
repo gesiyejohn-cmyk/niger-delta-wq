@@ -57,7 +57,7 @@ test('hydrochemistry CSV neutralizes formula-like text after a leading line brea
     { meq: { Ca: 1 }, cationTotal: 1, anionTotal: 0, errorPercent: 100, status: 'Outside tolerance' },
     { Ca: { type: 'cation' } }
   );
-  assert.ok(csv.includes("'\\n=HYPERLINK"));
+  assert.ok(csv.includes("'\n=HYPERLINK"));
 });
 
 test('hydrochemistry CSV rejects incomplete inputs', () => {
