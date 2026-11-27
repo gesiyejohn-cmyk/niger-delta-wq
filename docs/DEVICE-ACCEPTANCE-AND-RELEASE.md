@@ -662,3 +662,22 @@ The web build also emitted a Vite warning: the main JavaScript chunk was **531.2
 This run establishes same-commit web tests/build, Android debug build and emulator process/activity launch, and Windows installer generation. It does **not** establish physical Android acceptance, production Android signing or update compatibility with existing installations, physical Windows installation/runtime, public web deployment/browser acceptance, real-device backup/restore, or scientific sign-off. Do not uninstall, clear data or install any debug APK over an existing phone installation.
 
 PR #2 remains open and draft; it has not been merged. PR #6 also remains unmerged. No production signing, deployment or public release was performed.
+
+## Route-level loading and three-platform CI — 27 November 2026
+
+Commit `a02a83b568914de02e1bc2469547bde1eae0c878` completed [workflow run #46002833084](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/46002833084) successfully. The run is attached to PR #2 and the `ndwq-coordinate-system-upgrade` branch.
+
+- `web-and-tests`: **238 tests passed, 0 failed**; production Vite build and web artifact upload passed.
+- `android`: original-identity debug APK built; API 35 emulator install and launch passed. The emulator reported `Status: ok`, observed the app process and resumed activity `com.nigerdeltawq.mobile/.MainActivity`. A separate `com.nigerdeltawq.mobile.preview2` APK was also installed/launched in the emulator.
+- `windows-desktop`: NSIS installer generated and uploaded. The build log explicitly says no code-signing certificate is configured and signing was skipped.
+
+The route-level loading change reduced the initial JavaScript entry chunk from 531.20 kB to **222.64 kB**. The XLSX library remains a separate 429.02 kB chunk; specialist workspaces now produce route-specific chunks. This is a build-size result, not a browser performance measurement.
+
+Artifacts (GitHub ZIP archive sizes and archive SHA-256):
+- Web `ndwq-integrated-web`, ID `15198732596`, **333,765 bytes**, SHA-256 `3e91c9cc3ff73df41a92134a7203efc580e997704a12270cc837c7821f5289e3`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/46002833084/artifacts/15198732596); expires **11 December 2026 at 12:56:57 UTC**.
+- Android `ndwq-integrated-android-debug-apk`, ID `15199251829`, **8,153,484 bytes**, SHA-256 `d8a63b25c0038ad3789dc8e79e27aec953421e3818a57ae5aee2056c8436842d`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/46002833084/artifacts/15199251829); expires **11 December 2026 at 13:00:26 UTC**. The archive contains the original-identity debug APK, a separate preview APK and metadata. Original package is `com.nigerdeltawq.mobile`, versionCode `1`, versionName `1.0`; CI debug certificate SHA-256 fingerprint `377b42139871caf0000528afd9f565c88d332b465caa3be7e4223adf7d3b6fbb`.
+- Windows `ndwq-integrated-windows-desktop`, ID `15199521040`, **95,610,043 bytes**, SHA-256 `56e8f89fb82b6ecfdcfaad517696c7c363da45777a1646cd4d75b47f3d4d9695`; [download](https://github.com/gesiyejohn-cmyk/niger-delta-wq/actions/runs/46002833084/artifacts/15199521040); expires **11 December 2026 at 12:58:26 UTC**.
+
+This is same-commit CI evidence for web tests/build, Android debug build and emulator process/activity launch, and Windows installer generation. It does **not** establish physical Android visual/workflow acceptance, production signing or update compatibility with existing phone installations, physical Windows installation/runtime, public web deployment/browser acceptance, real-device backup/restore, or scientific sign-off. Do not uninstall, clear data or install a debug APK over an existing phone installation.
+
+PR #2 remains open and draft; it has not been merged. No production signing, deployment or public release was performed.
