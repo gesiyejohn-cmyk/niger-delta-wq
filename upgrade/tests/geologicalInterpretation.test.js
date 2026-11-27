@@ -109,3 +109,14 @@ test('requires evidence metadata and explicit uncertainty categories', () => {
   missingEvidence.units[1].evidence = '   ';
   assert.throws(() => validateGeologicalInterpretation(missingEvidence), /needs evidence notes/);
 });
+
+test('rejects missing, coerced, and non-numeric ERT coordinates', () => {
+  for (const invalidCoordinate of [null, '', '0', false, NaN, Infinity]) {
+    const invalidModel = {
+      ...model,
+      cells: model.cells.map((cell, index) => index === 0 ? { ...cell, x: invalidCoordinate } : cell)
+    };
+    assert.throws(() => createGeologicalInterpretation(invalidModel), /invalid distance or depth coordinates/);
+    assert.throws(() => validateGeologicalInterpretation(validInterpretation, invalidModel), /invalid coordinates/);
+  }
+});
