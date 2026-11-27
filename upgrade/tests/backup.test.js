@@ -42,7 +42,7 @@ test('backup validator rejects unknown format and unsupported version', () => {
 
 test('backup validator rejects malformed stores and records without keys', () => {
   assert.throws(() => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { samples: {} } }));
-  assert.throws(() => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { samples: [{ sampleCode: 'S-1' }] } }));
+  assert.throws(() => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { samples: [{ sampleCode: 'S-1' }] }));
   assert.throws(() => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { settings: [{ id: 'wrong-key' }] } }));
 });
 
@@ -50,7 +50,7 @@ test('backup validator rejects primary keys that IndexedDB cannot use', () => {
   for (const key of [true, false, {}, [], '', '   ', NaN, Infinity, -Infinity]) {
     assert.throws(
       () => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { samples: [{ id: key }] } }),
-      /non-empty string or finite numeric primary key/
+      /non-empty string/
     );
   }
   assert.doesNotThrow(() => validateDatabaseBackup({
@@ -60,6 +60,24 @@ test('backup validator rejects primary keys that IndexedDB cannot use', () => {
       settings: [{ key: 'coordinateFormat', value: 'DMS' }],
       syncQueue: [{ id: 12, status: 'pending' }]
     }
+  }));
+});
+
+test('backup validator enforces each store primary-key type before restore', () => {
+  for (const store of ['samples', 'ves', 'vesInterpretations', 'ert', 'ertSource', 'ertFieldReadings', 'vulnerability', 'wqiAssessments']) {
+    assert.throws(
+      () => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { [store]: [{ id: 12 }] } }),
+      /must have a non-empty string primary key/
+    );
+  }
+  assert.throws(
+    () => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { settings: [{ key: 12 }] } }),
+    /must have a non-empty string primary key/
+  );
+  assert.doesNotThrow(() => validateDatabaseBackup({
+    format: BACKUP_FORMAT,
+    version: 1,
+    stores: { syncQueue: [{ id: 12, status: 'pending' }] }
   }));
 });
 
