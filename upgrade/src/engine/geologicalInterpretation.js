@@ -56,6 +56,25 @@ export function validateGeologicalInterpretation(input, expectedModel = null) {
   if (expectedModel && input.ertModelId !== expectedModel.id) {
     throw new Error('This interpretation belongs to a different ERT model.');
   }
+  if (expectedModel) {
+    const cells = Array.isArray(expectedModel.cells) ? expectedModel.cells : [];
+    if (!cells.length) throw new Error('The associated ERT model has no imported cells.');
+    const xs = cells.map(cell => Number(cell.x));
+    const depths = cells.map(cell => Number(cell.depth));
+    if (![...xs, ...depths].every(Number.isFinite)) {
+      throw new Error('The associated ERT model contains invalid coordinates.');
+    }
+    const modelXRange = [Math.min(...xs), Math.max(...xs)];
+    const modelDepthRange = [Math.min(...depths), Math.max(...depths)];
+    if (modelXRange[0] === modelXRange[1] || modelDepthRange[0] === modelDepthRange[1]) {
+      throw new Error('The associated ERT model does not span a two-dimensional section.');
+    }
+    if (!Array.isArray(input.xRange) || input.xRange[0] !== modelXRange[0]
+      || input.xRange[1] !== modelXRange[1] || !Array.isArray(input.depthRange)
+      || input.depthRange[0] !== modelDepthRange[0] || input.depthRange[1] !== modelDepthRange[1]) {
+      throw new Error('Interpretation ranges must match the associated ERT model extent.');
+    }
+  }
   if (!Array.isArray(input.xRange) || input.xRange.length !== 2
     || !input.xRange.every(finite) || input.xRange[0] >= input.xRange[1]) {
     throw new Error('The interpretation distance range is invalid.');
