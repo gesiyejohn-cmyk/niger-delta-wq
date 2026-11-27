@@ -28,4 +28,7 @@ test('geophysics page exposes evidence-led manual ERT geological interpretation'
   assert.match(editor, /aquiferPotential/);
   assert.match(editor, /Evidence \/ correlation notes/);
   assert.match(editor, /Resistivity values do not automatically determine lithology/);
+  assert.match(editor, /aria-label="Provisional interpreted geological cross-section/);
+  assert.match(editor, /manual interpretation overlay, not an ERT inversion/);
+  assert.match(editor, /Record the basis for this interpretation/);
 });
