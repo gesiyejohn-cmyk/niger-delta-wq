@@ -220,3 +220,13 @@ test('Chadha coordinates remain unavailable when any required ion is unmeasured'
   });
   assert.deepEqual(result, { x: null, y: null, status: 'insufficient-measured-major-ions' });
 });
+
+
+test('Gibbs display guard keeps valid TDS values within the logarithmic chart domain', async () => {
+  const { isGibbsTdsWithinDisplayRange } = await import('../src/engine/hydrochemistry.js');
+  assert.equal(isGibbsTdsWithinDisplayRange(1), true);
+  assert.equal(isGibbsTdsWithinDisplayRange(10000), true);
+  assert.equal(isGibbsTdsWithinDisplayRange(0.5), false);
+  assert.equal(isGibbsTdsWithinDisplayRange(15000), false);
+  assert.equal(isGibbsTdsWithinDisplayRange(null), false);
+});
