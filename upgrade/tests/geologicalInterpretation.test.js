@@ -102,7 +102,10 @@ test('requires interpretation extents to match the linked imported ERT model', (
 });
 
 test('requires evidence metadata and explicit uncertainty categories', () => {
-  const missing = structuredClone(validInterpretation);
-  missing.units[0].confidence = 'certain';
-  assert.throws(() => validateGeologicalInterpretation(missing), /valid confidence level/);
+  const missingConfidence = structuredClone(validInterpretation);
+  missingConfidence.units[0].confidence = 'certain';
+  assert.throws(() => validateGeologicalInterpretation(missingConfidence), /valid confidence level/);
+  const missingEvidence = structuredClone(validInterpretation);
+  missingEvidence.units[1].evidence = '   ';
+  assert.throws(() => validateGeologicalInterpretation(missingEvidence), /needs evidence notes/);
 });
