@@ -166,3 +166,25 @@ test('coordinate conversions reject missing and non-finite values instead of coe
   assert.throws(() => utmToDecimal(500000, 500000, null, 'N'), /UTM zone must be a finite number/);
   assert.throws(() => decimalToUTM(4.92, 6.26, ''), /UTM zone must be a finite number/);
 });
+
+test('geographic coordinate limits accept exact poles and antimeridian but reject overflow', () => {
+  assert.equal(coordinateToDecimal('90', 'DD', 'N', 'latitude'), 90);
+  assert.equal(coordinateToDecimal('90 0 0', 'DMS', 'S', 'latitude'), -90);
+  assert.equal(coordinateToDecimal('180', 'DD', 'E', 'longitude'), 180);
+  assert.equal(coordinateToDecimal('180 0.0000', 'DDM', 'W', 'longitude'), -180);
+  assert.throws(() => coordinateToDecimal('90 0 0.01', 'DMS', 'N', 'latitude'), /between 0 and 90/);
+  assert.throws(() => coordinateToDecimal('180 0.0001', 'DDM', 'E', 'longitude'), /between 0 and 180/);
+});
+
+test('coordinate pair requires axis-appropriate hemisphere selectors', () => {
+  assert.throws(() => coordinateToDecimal('4.92', 'DD', 'E', 'latitude'), /valid hemisphere/);
+  assert.throws(() => coordinateToDecimal('6.26', 'DD', 'S', 'longitude'), /valid hemisphere/);
+  assert.throws(() => coordinateToDecimal('-4.92', 'DD', 'N', 'latitude'), /conflicts/);
+  assert.throws(() => coordinateToDecimal('-6.26', 'DD', 'E', 'longitude'), /conflicts/);
+});
+
+test('empty coordinate pair remains optional while a one-sided pair is rejected', () => {
+  assert.equal(validateCoordinatePair({ latitude: '', longitude: '' }), null);
+  assert.throws(() => validateCoordinatePair({ latitude: '4.92', longitude: '' }), /both latitude and longitude/);
+  assert.throws(() => validateCoordinatePair({ latitude: '', longitude: '6.26' }), /both latitude and longitude/);
+});
