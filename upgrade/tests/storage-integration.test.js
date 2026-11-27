@@ -38,7 +38,7 @@ test('IndexedDB separates raw VES readings and interpretations, preserves origin
   await saveERT({
     id: 'ert-model-1',
     lineId: 'ERT-01',
-    cells: [{ x: 0, depth: 1, resistivity: 75 }],
+    cells: [{ x: 0, depth: 0, resistivity: 75 }, { x: 10, depth: 0, resistivity: 90 }, { x: 0, depth: 20, resistivity: 65 }, { x: 10, depth: 20, resistivity: 80 }],
     source: 'Imported inverted resistivity model',
     sourceImport: { fileName: 'field-export.csv', content: 'x,depth,resistivity\\n0,1,75' }
   });
