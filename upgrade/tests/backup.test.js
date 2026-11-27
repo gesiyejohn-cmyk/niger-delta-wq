@@ -42,7 +42,7 @@ test('backup validator rejects unknown format and unsupported version', () => {
 
 test('backup validator rejects malformed stores and records without keys', () => {
   assert.throws(() => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { samples: {} } }));
-  assert.throws(() => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { samples: [{ sampleCode: 'S-1' }] }));
+  assert.throws(() => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { samples: [{ sampleCode: 'S-1' }] } }));
   assert.throws(() => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { settings: [{ id: 'wrong-key' }] } }));
 });
 
