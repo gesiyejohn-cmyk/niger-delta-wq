@@ -30,3 +30,22 @@ test('Durov analysis receives only measured canonical pH and TDS values from the
   assert.match(panel, /result\.auxiliary\.pH/);
   assert.match(panel, /result\.auxiliary\.tds/);
 });
+
+test('Piper diagram exposes accessible zoom, drag-pan, and reset interactions', () => {
+  assert.match(page, /aria-label="Piper diagram navigation"/);
+  assert.match(page, /aria-label="Zoom in on Piper diagram"/);
+  assert.match(page, /aria-label="Zoom out on Piper diagram"/);
+  assert.match(page, /setPiperView\(\{ x: 0, y: 0, zoom: 1 \}\)/);
+  assert.match(page, /setPointerCapture\(event\.pointerId\)/);
+  assert.match(page, /onPointerDown=\{startPiperPan\}/);
+  assert.match(page, /onPointerMove=\{movePiperPan\}/);
+  assert.match(page, /onPointerUp=\{endPiperPan\}/);
+  assert.match(page, /onPointerCancel=\{endPiperPan\}/);
+  assert.match(page, /touchAction:'none'/);
+});
+
+test('hydrochemistry page labels unmeasured ions and does not infer zero for missing Piper groups', () => {
+  assert.match(page, /Blank ions remain unmeasured/);
+  assert.match(page, /Unmeasured/);
+  assert.match(page, /Missing groups are not treated as zero/);
+});
