@@ -238,3 +238,14 @@ test('weighted arithmetic WQI rejects malformed nonblank readings even before li
     { key: 'nitrate', value: 10, standard: 50, ideal: 0 }
   ]), /lead: measurement must be a finite number/);
 });
+
+ 
+test('weighted arithmetic WQI rejects booleans, objects and non-finite numeric strings', () => {
+  const valid = { key: 'tds', label: 'TDS', value: 100, standard: 500, ideal: 0 };
+  const second = { key: 'nitrate', label: 'Nitrate', value: 10, standard: 50, ideal: 0 };
+  for (const invalid of [true, {}, 'Infinity']) {
+    assert.throws(() => calculateWeightedArithmeticWQI([
+      { ...valid, value: invalid }, second
+    ]), /measurement must be a finite number/);
+  }
+});
