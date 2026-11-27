@@ -47,6 +47,11 @@ export default function ERTGeologicalInterpretation({ model, notify }) {
 
   if (!draft) return <p className="muted" role="status">Loading geological interpretation…</p>;
 
+  const plot = { left: 54, right: 728, top: 24, bottom: 270 };
+  const xAt = x => plot.left + ((x - draft.xRange[0]) / (draft.xRange[1] - draft.xRange[0])) * (plot.right - plot.left);
+  const yAt = depth => plot.top + ((depth - draft.depthRange[0]) / (draft.depthRange[1] - draft.depthRange[0])) * (plot.bottom - plot.top);
+  const unitColours = ['#d8c39a', '#b8c7a5', '#9db9c9', '#c6acd2', '#d9a99b', '#b7b7b7'];
+
   function updateUnit(index, key, value) {
     setDraft(current => ({
       ...current,
@@ -133,6 +138,31 @@ export default function ERTGeologicalInterpretation({ model, notify }) {
     <h3>Manual geological interpretation — {model.lineId || 'Unlabelled ERT line'}</h3>
     <p className="muted">Draw layer boundaries at profile stations and document the evidence. Resistivity values do not automatically determine lithology. Treat this as provisional until correlated with borehole logs, samples and other geological control.</p>
     <p className="muted">Distance extent: {draft.xRange[0]}–{draft.xRange[1]} m · Depth extent: {draft.depthRange[0]}–{draft.depthRange[1]} m</p>
+    <h4>Interpreted geological cross-section</h4>
+    <p className="muted">Schematic layer geometry interpolated between your entered stations; this is a manual interpretation overlay, not an ERT inversion or an automatic lithology classification.</p>
+    <div style={{ width: '100%', overflowX: 'auto' }}>
+      <svg viewBox="0 0 760 310" role="img" aria-label="Provisional interpreted geological cross-section showing manually entered layer boundaries" style={{ width: '100%', minWidth: 420, display: 'block' }}>
+        <line x1={plot.left} y1={plot.top} x2={plot.left} y2={plot.bottom} stroke="currentColor" strokeWidth="1" />
+        <line x1={plot.left} y1={plot.bottom} x2={plot.right} y2={plot.bottom} stroke="currentColor" strokeWidth="1" />
+        {draft.units.map((unit, unitIndex) => {
+          const upper = draft.stations.map(station => xAt(station.x) + ',' + yAt(station.boundaries[unitIndex])).join(' ');
+          const lower = [...draft.stations].reverse().map(station => xAt(station.x) + ',' + yAt(station.boundaries[unitIndex + 1])).join(' ');
+          return <polygon key={unit.id} points={upper + ' ' + lower} fill={unitColours[unitIndex % unitColours.length]} fillOpacity="0.78" stroke="#475569" strokeWidth="1" />;
+        })}
+        {draft.stations.map(station => <line key={'station-' + station.x} x1={xAt(station.x)} x2={xAt(station.x)} y1={plot.top} y2={plot.bottom} stroke="#64748b" strokeDasharray="3 4" strokeOpacity="0.55" />)}
+        <text x={plot.left} y="296" fontSize="11" fill="currentColor">0</text>
+        <text x={plot.right} y="296" textAnchor="end" fontSize="11" fill="currentColor">{draft.xRange[1] - draft.xRange[0]} m profile distance</text>
+        <text x="12" y="18" fontSize="11" fill="currentColor">Depth (m)</text>
+        <text x="12" y={plot.top + 4} fontSize="10" fill="currentColor">{draft.depthRange[0]}</text>
+        <text x="12" y={plot.bottom} fontSize="10" fill="currentColor">{draft.depthRange[1]}</text>
+      </svg>
+    </div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, margin: '6px 0 14px' }}>
+      {draft.units.map((unit, index) => <span key={unit.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13 }}>
+        <span aria-hidden="true" style={{ width: 13, height: 13, background: unitColours[index % unitColours.length], border: '1px solid #64748b', display: 'inline-block' }} />
+        {unit.name || 'Unit ' + (index + 1)}
+      </span>)}
+    </div>
     <h4>Geological units (shallowest to deepest)</h4>
     {draft.units.map((unit, index) => <div key={unit.id} style={{ borderTop: '1px solid #e2e8f0', padding: '10px 0' }}>
       <strong>Unit {index + 1}</strong>
@@ -152,7 +182,7 @@ export default function ERTGeologicalInterpretation({ model, notify }) {
           </select>
         </label>
         <label className="span-two">Evidence / correlation notes
-          <textarea style={field} value={unit.evidence} onChange={event => updateUnit(index, 'evidence', event.target.value)} />
+          <textarea style={field} placeholder="Record the basis for this interpretation (e.g. borehole log, sample, outcrop, field observation, or stated absence of independent control)." value={unit.evidence} onChange={event => updateUnit(index, 'evidence', event.target.value)} />
         </label>
       </div>
       <button type="button" onClick={() => removeUnit(index)} disabled={draft.units.length <= 1}>Remove unit</button>
