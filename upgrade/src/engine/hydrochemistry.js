@@ -247,3 +247,11 @@ export function calculateChadhaCoordinates(sample) {
     status: 'complete'
   };
 }
+
+
+// The Gibbs plot uses a fixed logarithmic display domain. Values outside
+// this range remain valid measurements but must not be drawn beyond the axes.
+export const GIBBS_TDS_DISPLAY_RANGE = Object.freeze({ min: 1, max: 10000 });
+export function isGibbsTdsWithinDisplayRange(tds) {
+  return measured(tds) && Number(tds) >= GIBBS_TDS_DISPLAY_RANGE.min && Number(tds) <= GIBBS_TDS_DISPLAY_RANGE.max;
+}
