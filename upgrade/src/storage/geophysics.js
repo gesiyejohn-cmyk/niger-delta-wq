@@ -1,4 +1,5 @@
 import { validateERTMeasurements } from '../engine/ertAcquisition.js';
+import { validateGeologicalInterpretation } from '../engine/geologicalInterpretation.js';
 import { getDB } from './db.js';
 
 const makeId = () => globalThis.crypto?.randomUUID?.() || `geo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -156,8 +157,9 @@ export async function saveERTInterpretation(ertModelId, interpretation) {
     tx.abort();
     throw new Error('The selected raw ERT model no longer exists.');
   }
+  const validated = validateGeologicalInterpretation(interpretation, model);
   const saved = {
-    ...interpretation,
+    ...validated,
     id: ertModelId,
     ertModelId,
     updatedAt: new Date().toISOString()
