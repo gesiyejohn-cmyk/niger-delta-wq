@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const csv = readFileSync(new URL('../test-data/idw/ndu-campus-synthetic-idw.csv', import.meta.url), 'utf8').trim();
+const csv = readFileSync(new URL('../../../upgrade/test-data/idw/ndu-campus-synthetic-idw.csv', import.meta.url), 'utf8').trim();
 const [headerLine, ...lines] = csv.split(/\r?\n/);
 const headers = headerLine.split(',');
 const records = lines.map(line => Object.fromEntries(
