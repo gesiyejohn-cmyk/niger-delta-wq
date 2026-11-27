@@ -145,12 +145,12 @@ test('IDW rejects powers that underflow every distance weight to zero', () => {
 test('IDW rejects non-finite weighted contributions instead of returning NaN', () => {
   const extreme = [
     { x: 0, y: 0, value: Number.MAX_VALUE },
-    { x: 100, y: 0, value: Number.MAX_VALUE },
-    { x: 0, y: 100, value: Number.MAX_VALUE },
-    { x: 100, y: 100, value: Number.MAX_VALUE }
+    { x: 0.2, y: 0, value: Number.MAX_VALUE },
+    { x: 0, y: 0.2, value: Number.MAX_VALUE },
+    { x: 0.2, y: 0.2, value: Number.MAX_VALUE }
   ];
   assert.throws(
-    () => idwInterpolate(extreme, { x: 50, y: 50 }, {
+    () => idwInterpolate(extreme, { x: 0.1, y: 0.1 }, {
       power: 2, neighbours: 4, maxDistance: 1000
     }),
     /weighted sum is outside the supported numeric range/
