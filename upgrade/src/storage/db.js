@@ -3,15 +3,12 @@ import { openDB } from 'idb';
 export const DATABASE_NAME = 'niger-delta-wq';
 export const DATABASE_VERSION = 9;
 
-export function upgradeDatabase(db, oldVersion, newVersion, transaction) {
-  // Existing installations may already have the samples store but lack
-  // one or both indexes (for example, after an interrupted/older migration).
-  // Add missing indexes in-place without replacing or clearing user records.
-  const samples = db.objectStoreNames.contains('samples')
-    ? transaction.objectStore('samples')
-    : db.createObjectStore('samples', { keyPath: 'id' });
-  if (!samples.indexNames.contains('byCode')) samples.createIndex('byCode', 'sampleCode');
-  if (!samples.indexNames.contains('byDate')) samples.createIndex('byDate', 'collectionDate');
+export function upgradeDatabase(db) {
+  if (!db.objectStoreNames.contains('samples')) {
+    const store = db.createObjectStore('samples', { keyPath: 'id' });
+    store.createIndex('byCode', 'sampleCode');
+    store.createIndex('byDate', 'collectionDate');
+  }
   if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
   if (!db.objectStoreNames.contains('syncQueue')) db.createObjectStore('syncQueue', { keyPath: 'id', autoIncrement: true });
   if (!db.objectStoreNames.contains('ves')) db.createObjectStore('ves', { keyPath: 'id' });
