@@ -98,8 +98,8 @@ export function validateGeologicalInterpretation(input, expectedModel = null) {
     if (!AQUIFER_POTENTIAL.has(unit.aquiferPotential)) {
       throw new Error(`Geological unit ${index + 1} has an invalid aquifer-potential category.`);
     }
-    if (typeof unit.evidence !== 'string') {
-      throw new Error(`Geological unit ${index + 1} evidence must be text.`);
+    if (!nonEmpty(unit.evidence)) {
+      throw new Error(`Geological unit ${index + 1} needs evidence notes or an explicit statement that independent geological control is unavailable.`);
     }
   });
   if (!Array.isArray(input.stations) || input.stations.length < 2) {
