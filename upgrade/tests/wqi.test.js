@@ -64,7 +64,8 @@ test('weighted arithmetic WQI excludes blank and whitespace-only measurements an
     { key: 'manganese', value: 0.2, standard: 0.5, ideal: 0 }
   ]);
   assert.equal(result.parameterCount, 2);
-  assert.equal(result.missingExcluded, 2);
+  assert.equal(result.missingExcluded, 1);
+  assert.equal(result.unconfiguredCount, 1);
 });
 test('CCME WQI excludes whitespace-only readings instead of treating them as zero', async () => {
   const { computeDualWQI } = await import('../src/engine/wqi.js');
