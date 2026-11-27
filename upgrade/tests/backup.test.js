@@ -11,7 +11,7 @@ import { getDB } from '../src/storage/db.js';
 
 const STORE_NAMES = [
   'samples', 'settings', 'syncQueue', 'ves', 'vesInterpretations',
-  'ert', 'ertSource', 'ertFieldReadings', 'vulnerability', 'wqiAssessments'
+  'ert', 'ertSource', 'ertFieldReadings', 'ertInterpretations', 'vulnerability', 'wqiAssessments'
 ];
 
 async function clearStores(db, names = STORE_NAMES) {
@@ -31,7 +31,7 @@ test('full backup includes every current IndexedDB object store', async () => {
 });
 
 test('backup validator accepts an empty versioned database backup', () => {
-  const backup = { format: BACKUP_FORMAT, version: 1, stores: { samples: [], settings: [], syncQueue: [], ves: [], vesInterpretations: [], ert: [], ertSource: [], ertFieldReadings: [], vulnerability: [], wqiAssessments: [] } };
+  const backup = { format: BACKUP_FORMAT, version: 1, stores: { samples: [], settings: [], syncQueue: [], ves: [], vesInterpretations: [], ert: [], ertSource: [], ertFieldReadings: [], ertInterpretations: [], vulnerability: [], wqiAssessments: [] } };
   assert.equal(validateDatabaseBackup(backup), backup);
 });
 
@@ -64,7 +64,7 @@ test('backup validator rejects primary keys that IndexedDB cannot use', () => {
 });
 
 test('backup validator enforces each store primary-key type before restore', () => {
-  for (const store of ['samples', 'ves', 'vesInterpretations', 'ert', 'ertSource', 'ertFieldReadings', 'vulnerability', 'wqiAssessments']) {
+  for (const store of ['samples', 'ves', 'vesInterpretations', 'ert', 'ertSource', 'ertFieldReadings', 'ertInterpretations', 'vulnerability', 'wqiAssessments']) {
     assert.throws(
       () => validateDatabaseBackup({ format: BACKUP_FORMAT, version: 1, stores: { [store]: [{ id: 12 }] } }),
       /must have a non-empty string primary key/
@@ -113,6 +113,7 @@ test('full backup and replace restore preserve raw data, interpretations and mis
     ert: [{ id: 'ert-1', line: 'LINE-01', sourceImportId: 'ert-1', cells: [{ x: 0, depth: 1, resistivity: 50 }] }],
     ertSource: [{ id: 'ert-1', fileName: 'line.csv', contentType: 'text/csv', content: 'x,depth,resistivity\\n0,1,50' }],
     ertFieldReadings: [{ id: 'field-1', surveyId: 'LINE-01', array: 'Wenner', apparentResistivity: 62.83 }],
+    ertInterpretations: [],
     vulnerability: [{ id: 'vuln-1', method: 'DRASTIC', weightedScore: 120, ratings: { depth: 5 } }],
     wqiAssessments: [{ id: 'wqi-1', sample: { id: 'sample-1' }, measurements: [{ key: 'nitrate', measuredValue: null }], result: { wqi: 20, details: [] }, standardSource: 'Project reference' }]
   };
