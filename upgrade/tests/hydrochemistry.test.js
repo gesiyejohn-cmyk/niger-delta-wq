@@ -157,3 +157,20 @@ test('Schoeller series uses log10 meq/L and keeps zero and missing values distin
   assert.equal(result.find(x => x.key === 'NO3').status, 'unmeasured');
   assert.equal(result.find(x => x.key === 'F').log10MeqL, null);
 });
+
+ 
+test('hydrochemistry rejects boolean and object concentrations instead of coercing them to numbers', () => {
+  assert.throws(() => mgLToMeqL('Ca', true), /measured, non-negative mg\/L value/);
+  assert.throws(() => mgLToMeqL('Ca', {}), /measured, non-negative mg\/L value/);
+  assert.throws(() => mgLToMeqL('Ca', 'Infinity'), /measured, non-negative mg\/L value/);
+});
+
+test('Durov auxiliary pH and TDS ignore boolean and object values', () => {
+  const result = calculateDurovDiagram({
+    Ca: 40.078, Mg: 0, Na: 0, K: 0,
+    Cl: 0, SO4: 0, HCO3: 61.0168, CO3: 0
+  }, { pH: true, tds: {} });
+  assert.equal(result.auxiliary.pH, null);
+  assert.equal(result.auxiliary.tds, null);
+  assert.equal(result.extended, false);
+});
