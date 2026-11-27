@@ -17,11 +17,11 @@ export function createGeologicalInterpretation(model) {
   if (!model?.id) throw new Error('A saved ERT model is required.');
   const cells = Array.isArray(model.cells) ? model.cells : [];
   if (!cells.length) throw new Error('The ERT model has no imported cells.');
-  const xs = cells.map(cell => Number(cell.x));
-  const depths = cells.map(cell => Number(cell.depth));
-  if (![...xs, ...depths].every(Number.isFinite)) {
+  if (!cells.every(cell => cell && finite(cell.x) && finite(cell.depth))) {
     throw new Error('The ERT model contains invalid distance or depth coordinates.');
   }
+  const xs = cells.map(cell => cell.x);
+  const depths = cells.map(cell => cell.depth);
   const xRange = [Math.min(...xs), Math.max(...xs)];
   const depthRange = [Math.min(...depths), Math.max(...depths)];
   if (xRange[0] === xRange[1] || depthRange[0] === depthRange[1]) {
@@ -59,11 +59,11 @@ export function validateGeologicalInterpretation(input, expectedModel = null) {
   if (expectedModel) {
     const cells = Array.isArray(expectedModel.cells) ? expectedModel.cells : [];
     if (!cells.length) throw new Error('The associated ERT model has no imported cells.');
-    const xs = cells.map(cell => Number(cell.x));
-    const depths = cells.map(cell => Number(cell.depth));
-    if (![...xs, ...depths].every(Number.isFinite)) {
+    if (!cells.every(cell => cell && finite(cell.x) && finite(cell.depth))) {
       throw new Error('The associated ERT model contains invalid coordinates.');
     }
+    const xs = cells.map(cell => cell.x);
+    const depths = cells.map(cell => cell.depth);
     const modelXRange = [Math.min(...xs), Math.max(...xs)];
     const modelDepthRange = [Math.min(...depths), Math.max(...depths)];
     if (modelXRange[0] === modelXRange[1] || modelDepthRange[0] === modelDepthRange[1]) {
