@@ -27,11 +27,15 @@ export async function createDatabaseBackup() {
   };
 }
 
-function hasValidPrimaryKey(key) {
-  // NDWQ stores use string IDs; the auto-increment sync queue uses numbers.
-  // Reject values IndexedDB cannot use as keys before restore starts a transaction.
-  return (typeof key === 'string' && key.trim().length > 0)
-    || (typeof key === 'number' && Number.isFinite(key));
+function hasValidPrimaryKey(storeName, key) {
+  // Every store except syncQueue has a string keyPath. syncQueue is
+  // auto-incrementing and may contain numeric generated IDs (or valid
+  // explicitly supplied string keys).
+  if (storeName === 'syncQueue') {
+    return (typeof key === 'string' && key.trim().length > 0)
+      || (typeof key === 'number' && Number.isFinite(key));
+  }
+  return typeof key === 'string' && key.trim().length > 0;
 }
 
 export function validateDatabaseBackup(backup) {
@@ -47,8 +51,9 @@ export function validateDatabaseBackup(backup) {
     for (const record of backup.stores[name] || []) {
       if (!record || typeof record !== 'object' || Array.isArray(record)) throw new Error('Backup contains an invalid record in ' + name + '.');
       const key = name === 'settings' ? record.key : record.id;
-      if (!hasValidPrimaryKey(key)) {
-        throw new Error('A record in ' + name + ' must have a non-empty string or finite numeric primary key.');
+      if (!hasValidPrimaryKey(name, key)) {
+        const expected = name === 'syncQueue' ? 'a non-empty string or finite numeric' : 'a non-empty string';
+        throw new Error('A record in ' + name + ' must have ' + expected + ' primary key.');
       }
       if (keys.has(key)) throw new Error('Backup contains duplicate primary keys in ' + name + '.');
       keys.add(key);
