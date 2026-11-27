@@ -67,9 +67,23 @@ export function idwInterpolate(samples, target, options = {}) {
   if (!selected.length) return { value: null, status: 'No samples within maximum distance', used: 0 };
   const weighted = selected.reduce((acc,p) => {
     const w = 1 / Math.pow(p.distance, power);
-    acc.weighted += p.value*w; acc.weights += w; return acc;
+    if (!Number.isFinite(w) || w <= 0) {
+      throw new Error('IDW settings produce weights outside the supported numeric range. Reduce the power or review the coordinate scale.');
+    }
+    const contribution = p.value * w;
+    if (!Number.isFinite(contribution) || !Number.isFinite(acc.weighted + contribution)
+      || !Number.isFinite(acc.weights + w)) {
+      throw new Error('IDW weighted sum is outside the supported numeric range. Review the measured values and settings.');
+    }
+    acc.weighted += contribution;
+    acc.weights += w;
+    return acc;
   }, { weighted: 0, weights: 0 });
-  return { value: weighted.weighted/weighted.weights, status: 'Interpolated', used: selected.length };
+  const value = weighted.weighted / weighted.weights;
+  if (!Number.isFinite(value)) {
+    throw new Error('IDW result is outside the supported numeric range. Review the measured values and settings.');
+  }
+  return { value, status: 'Interpolated', used: selected.length };
 }
 
 export function generateIDWGrid(samples, options = {}) {
