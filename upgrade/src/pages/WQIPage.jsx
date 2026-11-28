@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react';
 import { listSamples } from '../storage/samples.js';
 import { calculateWeightedArithmeticWQI, computeDualWQI } from '../engine/wqi.js';
+import { PARAMETER_REGISTRY } from '../engine/parameters.js';
 import { saveWQIAssessment, listWQIAssessments, deleteWQIAssessment } from '../storage/wqi.js';
 
-const PARAMETERS = [
-  ['ph', 'pH', 'pH units'], ['ec', 'Electrical conductivity', 'µS/cm'],
-  ['tds', 'Total dissolved solids', 'mg/L'], ['no3', 'Nitrate', 'mg/L'],
-  ['fe', 'Iron', 'mg/L'], ['mn', 'Manganese', 'mg/L'], ['pb', 'Lead', 'mg/L']
-];
+// Keep the configurable WQI form aligned with every parameter the sample
+// editor can store. Limits and ideal values are entered in each sample's
+// canonical unit; no standards are silently assumed for newly exposed fields.
+const PARAMETERS = Object.entries(PARAMETER_REGISTRY)
+  .map(([key, definition]) => [key, definition.name]);
 const field = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
 
 export default function WQIPage() {
   const [samples, setSamples] = useState([]);
   const [sampleId, setSampleId] = useState('');
-  const [limits, setLimits] = useState(Object.fromEntries(PARAMETERS.map(([key]) => [key, { minStandard: '', maxStandard: '', ideal: '', weightStandard: '' }])));
+  const [limits, setLimits] = useState(() => Object.fromEntries(PARAMETERS.map(([key]) => [key, { minStandard: '', maxStandard: '', ideal: '', weightStandard: '' }])));
   const [standardSource, setStandardSource] = useState('');
   const [result, setResult] = useState(null);
   const [dualResult, setDualResult] = useState(null);
@@ -45,8 +46,9 @@ export default function WQIPage() {
     setError(''); setResult(null); setDualResult(null);
     try {
       if (!standardSource.trim()) throw new Error('Enter the standard source or reference used for the limits.');
-      const measurements = PARAMETERS.map(([key, label, unit]) => ({
-        key, label, unit,
+      const measurements = PARAMETERS.map(([key, label]) => ({
+        key, label,
+        unit: sample?.parameters?.[key]?.canonicalUnit || 'canonical unit',
         value: sample?.parameters?.[key]?.canonical,
         minStandard: limits[key].minStandard,
         maxStandard: limits[key].maxStandard,
@@ -79,7 +81,7 @@ export default function WQIPage() {
   return <div className="page">
     <p className="eyebrow">WATER QUALITY ASSESSMENT</p>
     <h1>Water Quality Index (WQI)</h1>
-    <p className="muted">Calculate a weighted arithmetic WQI from a saved sample. Enter lower and/or upper acceptable limits and an ideal value for each parameter, using the same units as the sample. For two-sided ranges such as pH, enter both limits. The weight reference is the permissible value used for Wi = 1 / Si; it defaults to the upper limit, or the only limit entered. Standards are user-entered so the assessment records the selected WHO, Nigerian or project-specific reference.</p>
+    <p className="muted">Calculate a weighted arithmetic WQI from a saved sample. Enter lower and/or upper acceptable limits and an ideal value for each parameter you intend to score, using the canonical unit shown for that saved sample. Parameters without configured limits and ideal values are not included. For two-sided ranges such as pH, enter both limits. The weight reference is the permissible value used for Wi = 1 / Si; it defaults to the upper limit, or the only limit entered. Standards are user-entered so the assessment records the selected WHO, Nigerian or project-specific reference.</p>
     {error && <p className="notice error" role="alert">{error}</p>}
     <section className="panel">
       <label>Select saved water sample
@@ -114,7 +116,8 @@ export default function WQIPage() {
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
           <thead><tr><th align="left">Parameter</th><th align="right">Measured</th><th align="right">Lower limit</th><th align="right">Upper limit</th><th align="right">Ideal</th><th align="right">Weight reference (Si)</th><th align="left">Unit</th></tr></thead>
-          <tbody>{PARAMETERS.map(([key, label, unit]) => {
+          <tbody>{PARAMETERS.map(([key, label]) => {
+            const unit = sample?.parameters?.[key]?.canonicalUnit || 'canonical unit';
             const raw = sample?.parameters?.[key]?.canonical;
             const isBlank = raw == null || (typeof raw === 'string' && raw.trim() === '');
             const isNumeric = (typeof raw === 'number'
