@@ -83,7 +83,7 @@ export default function WQIPage() {
     {error && <p className="notice error" role="alert">{error}</p>}
     <section className="panel">
       <label>Select saved water sample
-        <select style={field} value={sample?.id || ''} onChange={e => { setSampleId(e.target.value); setResult(null); }}>
+        <select style={field} value={sample?.id || ''} onChange={e => { setSampleId(e.target.value); setResult(null); setDualResult(null); }}>
           {samples.map(item => <option key={item.id} value={item.id}>{item.sampleCode || item.stationName || item.id} — {item.collectionDate || 'Undated'}</option>)}
         </select>
       </label>
@@ -91,7 +91,7 @@ export default function WQIPage() {
       {sample && <p className="muted">Sample: {sample.sampleCode || sample.stationName || sample.id}. Only measured numeric values are included; missing measurements are excluded, not treated as zero.</p>}
       <div className="notice" style={{ marginTop: 12 }}>
         <h2>Registry-based WHO / SON comparison (CCME method)</h2>
-        <p className="muted">Uses the parameter objectives already configured in the scientific registry and the sample's canonical stored values. Every registry parameter with an objective can be assessed, rather than limiting this comparison to the seven rows in the manual calculator below. Missing values are excluded. Confirm the applicable standard edition, local regulatory requirements, units and objective values before interpreting results.</p>
+        <p className="muted">Uses configured parameter objectives and this sample's canonical stored values. Only registry parameters with an objective and a measured value are assessed; missing values are excluded. For one sample, CCME F1 and F2 necessarily have the same percentage because each parameter contributes only one test. Use the dataset-level assessment across representative repeated samples to obtain distinct variable- and test-based coverage statistics. Confirm the standard edition, units and objective values before interpretation.</p>
         <button type="button" className="primary" disabled={!sample} onClick={calculateRegistryWQI}>Calculate registry-based comparison</button>
         {dualResult && <div role="status" style={{ marginTop: 12 }}>
           <h3>WHO-configured objectives</h3>
