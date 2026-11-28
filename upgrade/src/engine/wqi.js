@@ -41,6 +41,9 @@ function calculateForStandard(sample, standard, overrides) {
 
     const base = definition[standard];
     const override = overrides?.[id]?.[standard];
+    if (override != null && (typeof override !== 'object' || Array.isArray(override))) {
+      throw new Error(`${definition.name}: custom standard limits must be an object.`);
+    }
     const objective = base || override ? { ...(base || {}) } : null;
     if (override && objective) {
       if (typeof override !== 'object' || Array.isArray(override)) {
