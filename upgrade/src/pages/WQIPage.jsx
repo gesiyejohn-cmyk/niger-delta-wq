@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { listSamples } from '../storage/samples.js';
-import { calculateWeightedArithmeticWQI } from '../engine/wqi.js';
+import { calculateWeightedArithmeticWQI, computeDualWQI } from '../engine/wqi.js';
 import { saveWQIAssessment, listWQIAssessments, deleteWQIAssessment } from '../storage/wqi.js';
 
 const PARAMETERS = [
@@ -16,6 +16,7 @@ export default function WQIPage() {
   const [limits, setLimits] = useState(Object.fromEntries(PARAMETERS.map(([key]) => [key, { minStandard: '', maxStandard: '', ideal: '', weightStandard: '' }])));
   const [standardSource, setStandardSource] = useState('');
   const [result, setResult] = useState(null);
+  const [dualResult, setDualResult] = useState(null);
   const [error, setError] = useState('');
   const [history, setHistory] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -30,8 +31,18 @@ export default function WQIPage() {
   }, []);
   const sample = samples.find(item => String(item.id) === String(sampleId)) || samples[0] || null;
 
+  function calculateRegistryWQI() {
+    setError(''); setDualResult(null);
+    try {
+      if (!sample) throw new Error('Select a saved water sample first.');
+      const canonical = Object.fromEntries(Object.entries(sample.parameters || {}).map(([key, entry]) => [key, entry?.canonical ?? null]));
+      const calculation = computeDualWQI(canonical);
+      setDualResult(calculation);
+    } catch (e) { setError(e.message); }
+  }
+
   function calculate() {
-    setError(''); setResult(null);
+    setError(''); setResult(null); setDualResult(null);
     try {
       if (!standardSource.trim()) throw new Error('Enter the standard source or reference used for the limits.');
       const measurements = PARAMETERS.map(([key, label, unit]) => ({
@@ -78,6 +89,24 @@ export default function WQIPage() {
       </label>
       {!samples.length && <p className="notice">No saved samples are available. Record or import a water-quality sample first.</p>}
       {sample && <p className="muted">Sample: {sample.sampleCode || sample.stationName || sample.id}. Only measured numeric values are included; missing measurements are excluded, not treated as zero.</p>}
+      <div className="notice" style={{ marginTop: 12 }}>
+        <h2>Registry-based WHO / SON comparison (CCME method)</h2>
+        <p className="muted">Uses the parameter objectives already configured in the scientific registry and the sample's canonical stored values. Every registry parameter with an objective can be assessed, rather than limiting this comparison to the seven rows in the manual calculator below. Missing values are excluded. Confirm the applicable standard edition, local regulatory requirements, units and objective values before interpreting results.</p>
+        <button type="button" className="primary" disabled={!sample} onClick={calculateRegistryWQI}>Calculate registry-based comparison</button>
+        {dualResult && <div role="status" style={{ marginTop: 12 }}>
+          <h3>WHO-configured objectives</h3>
+          <p>CCME WQI: {dualResult.who.wqi == null ? 'Not calculated — no configured measured parameters' : dualResult.who.wqi.toFixed(1) + ' (' + dualResult.who.status + ')'}</p>
+          <p>Tested parameters: {dualResult.who.tests}; failed tests: {dualResult.who.failedTests}; F1: {dualResult.who.F1 ?? '—'}%; F2: {dualResult.who.F2 ?? '—'}%; F3: {dualResult.who.F3 ?? '—'}%.</p>
+          <p>Included registry keys: {dualResult.who.usedParams.join(', ') || 'None'}.</p>
+          <h3>SON-configured objectives</h3>
+          <p>CCME WQI: {dualResult.son.wqi == null ? 'Not calculated — no configured measured parameters' : dualResult.son.wqi.toFixed(1) + ' (' + dualResult.son.status + ')'}</p>
+          <p>Tested parameters: {dualResult.son.tests}; failed tests: {dualResult.son.failedTests}; F1: {dualResult.son.F1 ?? '—'}%; F2: {dualResult.son.F2 ?? '—'}%; F3: {dualResult.son.F3 ?? '—'}%.</p>
+          <p>Included registry keys: {dualResult.son.usedParams.join(', ') || 'None'}.</p>
+          {dualResult.who.failures.length > 0 && <p>WHO objective exceedances: {dualResult.who.failures.map(item => item.name + ' (' + item.value + ')').join('; ')}.</p>}
+          {dualResult.son.failures.length > 0 && <p>SON objective exceedances: {dualResult.son.failures.map(item => item.name + ' (' + item.value + ')').join('; ')}.</p>}
+          <p className="muted">{dualResult.disclaimer}</p>
+        </div>}
+      </div>
       <label>Standard / guideline reference
         <input style={field} value={standardSource} onChange={e => { setStandardSource(e.target.value); setResult(null); }} placeholder="e.g. WHO drinking-water guideline edition or NIS 554" />
       </label>
