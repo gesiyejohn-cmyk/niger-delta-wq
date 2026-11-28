@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { saveVES } from '../storage/geophysics.js';
+import { saveVESInterpretation } from '../storage/geophysics.js';
 import { classifyVESCurve, validateVESLayers } from '../engine/geophysics.js';
 
 const field = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
@@ -58,17 +58,14 @@ export default function VESInterpretation({ records, onSaved, notify }) {
       if (rmsValue !== null && (!Number.isFinite(rmsValue) || rmsValue < 0)) {
         throw new Error('RMS error must be a non-negative percentage, or left blank.');
       }
-      await saveVES({
-        ...selected,
-        interpretation: {
-          method: 'User-entered layered-earth model',
-          layers: clean,
-          inversionSoftware: software.trim() || null,
-          rmsErrorPercent: rmsValue,
-          notes: notes.trim(),
-          interpretedAt: new Date().toISOString(),
-          automaticInversionPerformedInApp: false
-        },
+      await saveVESInterpretation(selected.id, {
+        method: 'User-entered layered-earth model',
+        layers: clean,
+        inversionSoftware: software.trim() || null,
+        rmsErrorPercent: rmsValue,
+        notes: notes.trim(),
+        interpretedAt: new Date().toISOString(),
+        automaticInversionPerformedInApp: false,
         interpretationStatus: 'Layer model recorded; independently review against field data and borehole control'
       });
       notify('Layer interpretation saved against ' + (selected.stationId || 'the selected sounding') + '.', 'success');

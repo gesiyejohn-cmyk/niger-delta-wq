@@ -1,0 +1,157 @@
+import { useState } from 'react';
+import { coordinateToDecimal, decimalToCoordinate, decimalToUTM, getStandardUTMZone, convertCoordinatePairFormat, validateUTMDisplayCRS } from '../engine/coordinates.js';
+
+const field = { width: '100%', padding: 9, border: '1px solid #cbd5e1', borderRadius: 7, boxSizing: 'border-box' };
+
+export default function CoordinateFields({ value, onChange, label = 'Location coordinates' }) {
+  const [gpsMessage, setGpsMessage] = useState('');
+  const [gpsBusy, setGpsBusy] = useState(false);
+  const [formatMessage, setFormatMessage] = useState('');
+  let converted = null;
+  let latitudeError = '';
+  let longitudeError = '';
+  if (value.latitude !== '') {
+    try {
+      coordinateToDecimal(value.latitude, value.format, value.latitudeHemisphere, 'latitude');
+    } catch (error) {
+      latitudeError = error instanceof Error ? error.message : 'Enter a valid latitude.';
+    }
+  }
+  if (value.longitude !== '') {
+    try {
+      coordinateToDecimal(value.longitude, value.format, value.longitudeHemisphere, 'longitude');
+    } catch (error) {
+      longitudeError = error instanceof Error ? error.message : 'Enter a valid longitude.';
+    }
+  }
+  if (value.latitude !== '' && value.longitude !== '' && !latitudeError && !longitudeError) {
+    converted = {
+      latitude: coordinateToDecimal(value.latitude, value.format, value.latitudeHemisphere, 'latitude'),
+      longitude: coordinateToDecimal(value.longitude, value.format, value.longitudeHemisphere, 'longitude')
+    };
+  }
+  let utm = null;
+  let standardZone = null;
+  let selectedZone = null;
+  let utmError = '';
+  if (converted && value.crs.startsWith('UTM Zone')) {
+    try {
+      selectedZone = validateUTMDisplayCRS(converted.latitude, value.crs);
+      utm = decimalToUTM(converted.latitude, converted.longitude, selectedZone);
+      standardZone = getStandardUTMZone(converted.latitude, converted.longitude);
+    } catch (error) {
+      utm = null;
+      utmError = error instanceof Error ? error.message : 'The selected UTM reference system is invalid.';
+    }
+  }
+  const set = (key, next) => {
+    setFormatMessage('');
+    onChange(old => ({ ...old, [key]: next }));
+  };
+  return <div className="span-two" style={{ border: '1px solid #dbe3ea', borderRadius: 9, padding: 12, margin: '8px 0' }}>
+    <h3>{label}</h3>
+    <label>Coordinate input format
+      <select style={field} value={value.format} onChange={event => {
+        const nextFormat = event.target.value;
+        try {
+          const converted = convertCoordinatePairFormat({ ...value, nextFormat });
+          setFormatMessage('');
+          onChange(old => ({ ...old, ...converted }));
+        } catch (error) {
+          setFormatMessage('Format was not changed. Correct the entered coordinate first. ' +
+            (error instanceof Error ? error.message : 'Invalid coordinate.'));
+        }
+      }}>
+        <option value="DD">Decimal Degrees (DD)</option>
+        <option value="DMS">Degrees-Minutes-Seconds (DMS)</option>
+        <option value="DDM">Degrees-Decimal Minutes (DDM)</option>
+      </select>
+    </label>
+    {formatMessage && <p className="error" role="alert">{formatMessage}</p>}
+    <button type="button" style={{ ...field, marginTop: 8, cursor: 'pointer' }} disabled={gpsBusy} onClick={() => {
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        setGpsMessage('GPS location is not available in this browser.');
+        return;
+      }
+      setGpsBusy(true);
+      setGpsMessage('Requesting device location…');
+      try {
+        navigator.geolocation.getCurrentPosition(position => {
+          try {
+            const lat = Number(position?.coords?.latitude);
+            const lon = Number(position?.coords?.longitude);
+            const accuracy = Number(position?.coords?.accuracy);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+              throw new Error('The device returned invalid coordinates.');
+            }
+            onChange(old => ({
+              ...old,
+              latitude: decimalToCoordinate(lat, old.format),
+              longitude: decimalToCoordinate(lon, old.format),
+              latitudeHemisphere: lat < 0 ? 'S' : 'N',
+              longitudeHemisphere: lon < 0 ? 'W' : 'E'
+            }));
+            setGpsMessage('Location captured.' + (Number.isFinite(accuracy) && accuracy >= 0
+              ? ' Estimated accuracy: ' + Math.round(accuracy) + ' m.' : '') + ' Check the coordinates before saving.');
+          } catch {
+            setGpsMessage('The device location could not be converted or applied. Check the coordinate fields and try again.');
+          } finally {
+            setGpsBusy(false);
+          }
+        }, error => {
+          try {
+            setGpsMessage(error?.code === 1 ? 'Location permission was denied.'
+              : error?.code === 2 ? 'Device location is unavailable.'
+                : 'Location request timed out. Try again.');
+          } finally {
+            setGpsBusy(false);
+          }
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+      } catch {
+        setGpsMessage('The device location request could not be started. Check browser permissions and try again.');
+        setGpsBusy(false);
+      }
+    }}>{gpsBusy ? 'Getting GPS location…' : 'Use device GPS location'}</button>
+    {gpsMessage && <p className="muted" role="status">{gpsMessage}</p>}
+    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 90px', gap: 8, marginTop: 8 }}>
+      <label>Latitude ({value.format})
+        <input style={field} value={value.latitude} aria-invalid={Boolean(latitudeError)} aria-describedby={latitudeError ? 'coordinate-latitude-error' : undefined} placeholder={value.format === 'DD' ? 'e.g. 4.920000' : value.format === 'DMS' ? 'e.g. 4 55 12' : 'e.g. 4 55.2000'} onChange={event => set('latitude', event.target.value)} />
+        {latitudeError && <p id="coordinate-latitude-error" className="error" role="alert">{latitudeError}</p>}
+      </label>
+      <label>Hemisphere
+        <select style={field} value={value.latitudeHemisphere} onChange={event => set('latitudeHemisphere', event.target.value)}>
+          <option value="N">N</option><option value="S">S</option>
+        </select>
+      </label>
+      <label>Longitude ({value.format})
+        <input style={field} value={value.longitude} aria-invalid={Boolean(longitudeError)} aria-describedby={longitudeError ? 'coordinate-longitude-error' : undefined} placeholder={value.format === 'DD' ? 'e.g. 6.260000' : value.format === 'DMS' ? 'e.g. 6 15 36' : 'e.g. 6 15.6000'} onChange={event => set('longitude', event.target.value)} />
+        {longitudeError && <p id="coordinate-longitude-error" className="error" role="alert">{longitudeError}</p>}
+      </label>
+      <label>Hemisphere
+        <select style={field} value={value.longitudeHemisphere} onChange={event => set('longitudeHemisphere', event.target.value)}>
+          <option value="E">E</option><option value="W">W</option>
+        </select>
+      </label>
+    </div>
+    {converted && <><p className="muted">Canonical WGS84 decimal degrees (EPSG:4326): {converted.latitude.toFixed(8)}°, {converted.longitude.toFixed(8)}°</p>{utm && <p className="muted">Derived {utm.zone}{utm.hemisphere} UTM (EPSG:{utm.epsg}): Easting {utm.easting.toFixed(3)} m · Northing {utm.northing.toFixed(3)} m</p>}</>}
+    {utmError && <p className="error" role="alert">{utmError}</p>}
+    {utm && standardZone !== null && selectedZone !== standardZone && <p className="muted" role="status">The selected UTM Zone {selectedZone} differs from the standard zone {standardZone} for this location. Confirm the intended coordinate reference system before using or exporting these values. Adjacent-zone or custom-zone projections may still be intentional.</p>}
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
+      <label>Datum
+        <select style={field} value={value.datum} onChange={event => set('datum', event.target.value)}>
+          <option value="WGS84">WGS 84</option>
+        </select>
+      </label>
+      <label>Derived display CRS
+        <select style={field} value={value.crs} onChange={event => set('crs', event.target.value)}>
+          <option value="Geographic (WGS84)">Geographic (WGS84)</option>
+          <option value="UTM Zone 31N (WGS84)">UTM Zone 31N (WGS84)</option>
+          <option value="UTM Zone 31S (WGS84)">UTM Zone 31S (WGS84)</option>
+          <option value="UTM Zone 32N (WGS84)">UTM Zone 32N (WGS84)</option>
+          <option value="UTM Zone 32S (WGS84)">UTM Zone 32S (WGS84)</option>
+        </select>
+      </label>
+    </div>
+    <p className="muted">Enter coordinates in the selected DD, DMS or DDM geographic format. For DMS and DDM, enter whole degrees followed by minutes (and seconds for DMS); choose N/S/E/W with the separate hemisphere selectors rather than typing hemisphere letters into the coordinate fields. Canonical latitude/longitude values are stored as WGS84 geographic decimal degrees (EPSG:4326), and the original entry is retained. The selection below controls only the derived display CRS; when UTM is selected, its zone and N/S hemisphere must match the location. The selected display CRS is retained separately from the canonical storage CRS.</p>
+  </div>;
+}

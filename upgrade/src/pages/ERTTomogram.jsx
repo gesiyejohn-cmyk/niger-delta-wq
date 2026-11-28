@@ -1,17 +1,6 @@
-import React, { useMemo } from 'react';
-
-// Visual interpolation of imported inversion cells only. This is not an inversion solver.
-function interpolate(points, x, depth) {
-  let weighted = 0, weights = 0;
-  for (const p of points) {
-    const d2 = (p.x - x) ** 2 + (p.depth - depth) ** 2;
-    if (d2 < 1e-12) return p.resistivity;
-    const w = 1 / d2;
-    weighted += Math.log10(p.resistivity) * w;
-    weights += w;
-  }
-  return 10 ** (weighted / weights);
-}
+import React, { useMemo, useRef, useState } from 'react';
+import { buildERTGrid } from '../engine/ert.js';
+import { panERTView, zoomERTView } from '../engine/ertView.js';
 
 function colour(value, min, max) {
   const t = Math.max(0, Math.min(1, (Math.log10(value) - Math.log10(min)) /
@@ -25,32 +14,42 @@ function colour(value, min, max) {
 }
 
 export default function ERTTomogram({ models = [] }) {
+  const [view, setView] = useState({ x: 0, y: 0, zoom: 1 });
+  const drag = useRef(null);
   const points = useMemo(() => models.flatMap(model =>
     (model.cells || []).map(p => ({...p, lineId: model.lineId || 'Unlabelled line'}))
   ), [models]);
-  const grid = useMemo(() => {
-    if (points.length < 6) return null;
-    const xs = [...new Set(points.map(p => p.x))];
-    const zs = [...new Set(points.map(p => p.depth))];
-    const pairs = new Set(points.map(p => `${p.x}|${p.depth}`));
-    // Require a genuinely two-dimensional imported grid; do not turn a diagonal
-    // list of isolated points into a misleading section.
-    if (xs.length < 3 || zs.length < 2 || pairs.size / (xs.length * zs.length) < 0.35) return null;
-    const x0 = Math.min(...xs), x1 = Math.max(...xs);
-    const z0 = Math.min(...zs), z1 = Math.max(...zs);
-    const cols = Math.min(60, Math.max(24, xs.length * 3));
-    const rows = Math.min(36, Math.max(12, zs.length * 3));
-    const values = [];
-    for (let r=0; r<rows; r++) for (let c=0; c<cols; c++) {
-      const x = x0 + (c + 0.5) / cols * (x1 - x0);
-      const depth = z0 + (r + 0.5) / rows * (z1 - z0);
-      values.push({ c, r, value: interpolate(points, x, depth) });
-    }
-    return { cols, rows, values, x0, x1, z0, z1 };
-  }, [points]);
+  const grid = useMemo(() => buildERTGrid(points), [points]);
   if (!points.length) return null;
   const min = Math.min(...points.map(p => p.resistivity));
   const max = Math.max(...points.map(p => p.resistivity));
+  const viewWidth = 760 / view.zoom;
+  const viewHeight = 390 / view.zoom;
+
+  function zoom(factor) {
+    setView(current => zoomERTView(current, factor));
+  }
+
+  function startPan(event) {
+    if (view.zoom <= 1) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    drag.current = { clientX: event.clientX, clientY: event.clientY, view };
+  }
+
+  function movePan(event) {
+    if (!drag.current) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    setView(panERTView(
+      drag.current.view,
+      event.clientX - drag.current.clientX,
+      event.clientY - drag.current.clientY,
+      rect.width,
+      rect.height
+    ));
+  }
+
+  function endPan() { drag.current = null; }
+
   return <section aria-label="Interpolated ERT resistivity section" style={{marginTop:20}}>
     <h2>2D resistivity section (interpolated imported model)</h2>
     {!grid ? <p role="status" className="notice">
@@ -58,7 +57,13 @@ export default function ERTTomogram({ models = [] }) {
       Import a gridded inversion export with multiple distance positions at multiple depths. The original points remain available above.
     </p> : <>
       <p className="muted">Log-resistivity inverse-distance interpolation of imported inversion cells. This is visualisation only; no inversion is performed by this app. Interpret with the original inversion report and geological control.</p>
-      <svg viewBox="0 0 760 390" role="img" aria-label="Interpolated resistivity tomogram" style={{width:'100%',background:'#fff',border:'1px solid #cbd5e1'}}>
+      <div className="button-row" role="group" aria-label="ERT tomogram navigation" style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:8}}>
+        <button type="button" onClick={() => zoom(1.25)} disabled={view.zoom >= 5} aria-label="Zoom in on ERT tomogram">Zoom in +</button>
+        <button type="button" onClick={() => zoom(0.8)} disabled={view.zoom <= 1} aria-label="Zoom out on ERT tomogram">Zoom out −</button>
+        <button type="button" onClick={() => { drag.current = null; setView({x:0,y:0,zoom:1}); }} disabled={view.zoom === 1 && view.x === 0 && view.y === 0}>Reset view</button>
+        <span className="muted" aria-live="polite">{Math.round(view.zoom * 100)}% zoom · drag to pan when zoomed</span>
+      </div>
+      <svg viewBox={`${view.x} ${view.y} ${viewWidth} ${viewHeight}`} role="img" aria-label="Interpolated resistivity tomogram. Use zoom controls and drag to pan." onPointerDown={startPan} onPointerMove={movePan} onPointerUp={endPan} onPointerCancel={endPan} style={{width:'100%',background:'#fff',border:'1px solid #cbd5e1',touchAction:'none',cursor:view.zoom > 1 ? 'grab' : 'default',userSelect:'none'}}>
         <text x="65" y="16" fontSize="12" fill="#334155">Depth (m)</text>
         <text x="350" y="375" fontSize="12" fill="#334155">Distance along line (m)</text>
         <g transform="translate(65 28)">
